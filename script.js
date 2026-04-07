@@ -469,7 +469,7 @@ function updateTactical() {
   dash.style.display = 'grid';
   
   // 1. Get Matchup Data (Manual or Dynamic Generator)
-  let m = (PLAYER_MATCHUPS || []).find(x => x.batsman === batId && x.bowler === bowlId);
+  let m = (DETAILED_MATCHUPS || []).find(x => x.batsman === batId && x.bowler === bowlId);
   if (!m) m = getDynamicTactics(batId, bowlId);
   
   // 2. Update Wagon Wheel (8 Sectors)

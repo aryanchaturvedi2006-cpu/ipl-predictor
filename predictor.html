@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Match Predictor — IPL Predictor</title>
+  <meta name="description" content="AI-powered IPL match predictor using 7 advanced factors: squad strength, pitch, weather, wind, toss, dew, and team consistency."/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* ---- Predictor Layout ---- */
+    .pred-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    @media(max-width:760px){.pred-grid{grid-template-columns:1fr}}
+    
+    /* Team Selector */
+    .team-selector-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:24px}
+    .ts-badge{display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--radius-lg);border:1px solid;margin-top:12px;transition:all 0.4s}
+    .ts-short{font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:900;min-width:40px}
+    .ts-name{font-weight:600;font-size:0.9rem}
+    .ts-city{font-size:0.72rem;color:var(--text-2)}
+    
+    /* VS Separator */
+    .vs-separator{display:flex;align-items:center;justify-content:center}
+    .vs-ring{width:64px;height:64px;border-radius:50%;border:2px solid rgba(0,200,230,0.35);display:flex;align-items:center;justify-content:center;background:rgba(0,200,230,0.06);animation:pulse-glow 2s ease-in-out infinite;font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:var(--accent)}
+    
+    /* Conditions Grid */
+    .cond-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    @media(max-width:640px){.cond-grid{grid-template-columns:1fr}}
+    .cond-full{grid-column:1/-1}
+    .venue-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    
+    /* Results */
+    .winner-panel{
+      text-align:center;padding:36px 24px;border-radius:var(--radius-xl);
+      margin-bottom:24px;border:1px solid rgba(255,255,255,0.1);
+      background:var(--bg-card);position:relative;overflow:hidden;
+    }
+    .winner-panel::before{content:'';position:absolute;inset:0;background:var(--winner-gradient,none);opacity:0.07}
+    .winner-crown{font-size:2.8rem;display:inline-block;animation:float 2s ease-in-out infinite}
+    .winner-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:4px;color:var(--text-2);margin:8px 0 4px}
+    .winner-name{font-family:'Orbitron',sans-serif;font-size:clamp(1.4rem,3.5vw,2.2rem);font-weight:900}
+    .winner-confidence{display:inline-block;margin-top:12px;padding:6px 20px;border-radius:100px;font-size:0.82rem;font-weight:600;border:1px solid}
+    
+    /* Prob Bar */
+    .prob-row{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
+    .prob-team{display:flex;flex-direction:column;align-items:center;min-width:70px}
+    .prob-pct{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:700}
+    .prob-short{font-size:0.7rem;font-weight:600;color:var(--text-2)}
+    .prob-bar{height:14px;display:flex;border-radius:100px;overflow:hidden;gap:2px}
+    .prob-a{height:100%;transition:width 1.4s cubic-bezier(.4,0,.2,1)}
+    .prob-b{height:100%;transition:width 1.4s cubic-bezier(.4,0,.2,1)}
+    
+    /* Factor Cards */
+    .factor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+    .fc{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;transition:border-color 0.25s}
+    .fc:hover{border-color:var(--border-h)}
+    .fc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .fc-name{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-2)}
+    .fc-weight{font-size:0.68rem;color:var(--accent);border:1px solid rgba(0,200,230,0.25);padding:2px 8px;border-radius:100px}
+    .fc-bar{height:7px;display:flex;border-radius:100px;overflow:hidden;margin-bottom:8px}
+    .fc-bar-a{height:100%;transition:width 1.4s cubic-bezier(.4,0,.2,1)}
+    .fc-bar-b{height:100%;transition:width 1.4s cubic-bezier(.4,0,.2,1)}
+    .fc-pcts{display:flex;justify-content:space-between;font-size:0.78rem;font-weight:600}
+    .fc-note{font-size:0.68rem;color:var(--text-2);margin-top:6px;line-height:1.5;font-style:italic}
+    
+    /* Analysis */
+    .analysis-point{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:var(--radius);border-left:3px solid;margin-bottom:8px;font-size:0.85rem;color:var(--text-2);line-height:1.6;background:rgba(255,255,255,0.02)}
+    .ap-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
+    
+    /* Recent Form */
+    .form-badge-row{display:flex;gap:4px;margin-top:6px}
+    .form-dot{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:#fff}
+    .form-w{background:#10b981}
+    .form-l{background:#ef4444}
+    
+    /* Tactical Hub */
+    .tactical-hub{margin-top:40px;border-top:1px solid var(--border);padding-top:32px}
+    .tactical-grid{display:grid;grid-template-columns:300px 1fr;gap:24px}
+    @media(max-width:900px){.tactical-grid{grid-template-columns:1fr}}
+    
+    .wagon-wheel-container{position:relative;width:280px;height:280px;margin:20px auto;background:rgba(34,197,94,0.15);border-radius:50%;border:4px solid #16a34a;box-shadow:inset 0 0 40px rgba(0,0,0,0.3)}
+    .ground-line{position:absolute;top:50%;left:50%;width:100%;height:1px;background:rgba(255,255,255,0.15);transform-origin:left center}
+    .wagon-pct{position:absolute;font-size:0.68rem;font-weight:900;color:var(--text-1);background:rgba(0,0,0,0.45);padding:2px 5px;border-radius:3px;backdrop-filter:blur(2px);z-index:10}
+    .wagon-label{position:absolute;font-size:0.55rem;text-transform:uppercase;color:var(--text-2);font-weight:700;letter-spacing:0.5px}
+    
+    .strategy-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+    .strat-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:8px;display:block}
+    .strat-val{font-size:0.9rem;line-height:1.6;color:var(--text-1)}
+    
+    .zone-box{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .zone-name{font-size:0.8rem;color:var(--text-2)}
+    .zone-stat{font-size:0.8rem;font-weight:700;color:var(--text-1)}
+  </style>
+</head>
+<body>
+<script src="nav.js"></script>
+
+<main class="page">
+  <div class="container">
+    <section class="page-hero" style="padding-bottom:24px">
+      <div class="page-badge">⚡ Predictor</div>
+      <h1 class="page-title">Match <span class="gradient-text">Predictor</span></h1>
+      <p class="page-subtitle">Configure the match conditions and let our 8-factor AI engine calculate win probability.</p>
+    </section>
+
+    <!-- ---- STEP 1: Team Selection ---- -->
+    <p class="section-title">Step 1 — Select Teams</p>
+    <div class="pred-grid" style="margin-bottom:24px;align-items:center">
+      <div class="team-selector-panel">
+        <span class="label">Team A</span>
+        <select class="select" id="teamA" onchange="updateTeam('A')">
+          <option value="">-- Select Team A --</option>
+        </select>
+        <div class="ts-badge" id="badgeA" style="border-color:rgba(255,255,255,0.07);background:rgba(255,255,255,0.02)">
+          <div class="ts-short" id="badgeAShort" style="color:var(--text-2)">?</div>
+          <div>
+            <div class="ts-name" id="badgeAName" style="color:var(--text-2)">Select a team</div>
+            <div class="ts-city" id="badgeACity"></div>
+            <div class="form-badge-row" id="formA"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vs-separator"><div class="vs-ring">VS</div></div>
+
+      <div class="team-selector-panel">
+        <span class="label">Team B</span>
+        <select class="select" id="teamB" onchange="updateTeam('B')">
+          <option value="">-- Select Team B --</option>
+        </select>
+        <div class="ts-badge" id="badgeB" style="border-color:rgba(255,255,255,0.07);background:rgba(255,255,255,0.02)">
+          <div class="ts-short" id="badgeBShort" style="color:var(--text-2)">?</div>
+          <div>
+            <div class="ts-name" id="badgeBName" style="color:var(--text-2)">Select a team</div>
+            <div class="ts-city" id="badgeBCity"></div>
+            <div class="form-badge-row" id="formB"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- STEP 2: Match Conditions ---- -->
+    <p class="section-title">Step 2 — Match Conditions</p>
+    <div class="card" style="margin-bottom:24px">
+      <div class="cond-grid">
+        <!-- Venue -->
+        <div class="form-group cond-full">
+          <label class="label">🏟️ Venue</label>
+          <select class="select" id="venue" onchange="updateVenue()">
+            <option value="">-- Select Venue --</option>
+          </select>
+          <div class="venue-meta" id="venueMeta"></div>
+        </div>
+
+        <!-- Pitch -->
+        <div class="form-group">
+          <label class="label">🟫 Pitch Condition</label>
+          <div class="radio-row" id="pitchRow">
+            <label class="radio-pill active" data-val="flat"><input type="radio" name="pitch" value="flat" checked/><span class="rp-icon">🟧</span><span class="rp-title">Flat</span><span class="rp-sub">Batting paradise</span></label>
+            <label class="radio-pill" data-val="green"><input type="radio" name="pitch" value="green"/><span class="rp-icon">🟩</span><span class="rp-title">Green</span><span class="rp-sub">Pace friendly</span></label>
+            <label class="radio-pill" data-val="dry"><input type="radio" name="pitch" value="dry"/><span class="rp-icon">🟫</span><span class="rp-title">Dry/Dusty</span><span class="rp-sub">Spin friendly</span></label>
+          </div>
+        </div>
+
+        <!-- Weather -->
+        <div class="form-group">
+          <label class="label">🌤️ Weather</label>
+          <div class="radio-row" id="weatherRow">
+            <label class="radio-pill active" data-val="sunny"><input type="radio" name="weather" value="sunny" checked/><span class="rp-icon">☀️</span><span class="rp-title">Sunny</span><span class="rp-sub">No assist</span></label>
+            <label class="radio-pill" data-val="overcast"><input type="radio" name="weather" value="overcast"/><span class="rp-icon">☁️</span><span class="rp-title">Overcast</span><span class="rp-sub">Swing & seam</span></label>
+            <label class="radio-pill" data-val="humid"><input type="radio" name="weather" value="humid"/><span class="rp-icon">🌫️</span><span class="rp-title">Humid</span><span class="rp-sub">Slight swing</span></label>
+          </div>
+        </div>
+
+        <!-- Wind -->
+        <div class="form-group">
+          <label class="label">💨 Wind</label>
+          <div class="radio-row" id="windRow">
+            <label class="radio-pill active" data-val="calm"><input type="radio" name="wind" value="calm" checked/><span class="rp-icon">🌬️</span><span class="rp-title">Calm</span><span class="rp-sub">No effect</span></label>
+            <label class="radio-pill" data-val="breezy"><input type="radio" name="wind" value="breezy"/><span class="rp-icon">🍃</span><span class="rp-title">Breezy</span><span class="rp-sub">Slight swing</span></label>
+            <label class="radio-pill" data-val="high"><input type="radio" name="wind" value="high"/><span class="rp-icon">🌪️</span><span class="rp-title">High Wind</span><span class="rp-sub">Max swing</span></label>
+          </div>
+        </div>
+
+        <!-- Toss -->
+        <div class="form-group">
+          <label class="label">🪙 Toss Winner</label>
+          <select class="select" id="tossWinner"><option value="">-- Select --</option></select>
+        </div>
+        <div class="form-group">
+          <label class="label">🏏 Toss Decision</label>
+          <div class="radio-row" id="tossRow">
+            <label class="radio-pill active" data-val="bat"><input type="radio" name="toss" value="bat" checked/><span class="rp-icon">🏏</span><span class="rp-title">Bat First</span><span class="rp-sub">Set target</span></label>
+            <label class="radio-pill" data-val="bowl"><input type="radio" name="toss" value="bowl"/><span class="rp-icon">🎳</span><span class="rp-title">Bowl First</span><span class="rp-sub">Chase target</span></label>
+          </div>
+        </div>
+
+        <!-- Day / Night — full width -->
+        <div class="form-group cond-full">
+          <label class="label">🌅 Match Timing</label>
+          <div class="radio-row" id="timingRow">
+            <label class="radio-pill" data-val="day">
+              <input type="radio" name="timing" value="day"/>
+              <span class="rp-icon">☀️</span>
+              <span class="rp-title">Day Match</span>
+              <span class="rp-sub">Spin-friendly · No dew · Slower outfield</span>
+            </label>
+            <label class="radio-pill active" data-val="night">
+              <input type="radio" name="timing" value="night" checked/>
+              <span class="rp-icon">🌙</span>
+              <span class="rp-title">Day-Night / Night</span>
+              <span class="rp-sub">Dew active · Pacers help · Better batting</span>
+            </label>
+          </div>
+          <div id="timingHint" style="margin-top:8px;font-size:0.75rem;color:var(--text-2);padding:8px 12px;border-radius:var(--radius-sm);background:rgba(0,200,230,0.05);border:1px solid rgba(0,200,230,0.1)">
+            🌙 <strong>Night/Day-Night:</strong> Dew makes the ball slippery for spinners in 2nd innings. Pacers get extra advantage. Chase becomes easier.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- Predict Button ---- -->
+    <div style="text-align:center;margin:32px 0">
+      <button class="btn btn-primary btn-lg" id="predictBtn" onclick="runPrediction()" disabled>⚡ Predict Match Winner</button>
+      <p class="label" style="margin-top:10px;text-align:center;margin-bottom:0" id="predictHint">Select both teams to enable prediction</p>
+    </div>
+
+    <!-- ---- Results ---- -->
+    <div id="resultsSection" style="display:none">
+      <!-- Winner -->
+      <div class="winner-panel" id="winnerPanel">
+        <div class="winner-crown">👑</div>
+        <div class="winner-label">Predicted Winner</div>
+        <div class="winner-name gradient-text" id="winnerName">—</div>
+        <div class="winner-confidence" id="winnerConf">—</div>
+      </div>
+
+      <!-- Probability -->
+      <div class="card" style="margin-bottom:24px">
+        <p class="card-title">Win Probability</p>
+        <div class="prob-row">
+          <div class="prob-team">
+            <span class="prob-pct" id="probPctA">—</span>
+            <span class="prob-short" id="probShortA">A</span>
+          </div>
+          <div>
+            <div class="prob-bar" id="probBar">
+              <div class="prob-a" id="probFillA" style="width:50%"></div>
+              <div class="prob-b" id="probFillB" style="width:50%"></div>
+            </div>
+          </div>
+          <div class="prob-team">
+            <span class="prob-pct" id="probPctB">—</span>
+            <span class="prob-short" id="probShortB">B</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Factor Breakdown -->
+      <p class="section-title" style="margin-bottom:16px">📊 Factor Breakdown</p>
+      <div class="factor-grid" id="factorGrid" style="margin-bottom:28px"></div>
+
+      <!-- AI Analysis -->
+      <div class="card" style="margin-bottom:28px">
+        <div class="card-header">
+          <p class="card-title">🤖 AI Match Analysis</p>
+        </div>
+        <div id="analysisBody"></div>
+      </div>
+
+      <!-- Reset -->
+      <div style="text-align:center; margin-bottom: 40px;">
+        <button class="btn btn-outline" onclick="resetPrediction()">🔄 New Prediction</button>
+      </div>
+    </div> <!-- End of resultsSection -->
+
+    <!-- ---- STEP 3: Tactical Battleground (Always Accessible) ---- -->
+    <div class="tactical-hub" id="tacticalSection" style="display:none; border-top: 1px solid var(--border); padding-top: 40px; margin-top: 20px;">
+      <p class="section-title">🎯 Tactical Battleground: Player Matchups</p>
+      <div class="card" style="margin-bottom:24px">
+        <div class="cond-grid">
+          <div class="form-group">
+            <label class="label">Select Batsman (Team A)</label>
+            <select class="select" id="tacticalBatsman" onchange="updateTactical()"></select>
+          </div>
+          <div class="form-group">
+            <label class="label">Select Bowler (Team B)</label>
+            <select class="select" id="tacticalBowler" onchange="updateTactical()"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="tactical-grid" id="tacticalDashboard" style="display:none">
+        <!-- Wagon Wheel -->
+        <div style="text-align:center;padding:10px">
+          <span class="strat-label">🏏 8-Sector Wagon Wheel (Run Dist. %)</span>
+          <div class="wagon-wheel-container">
+            <div class="wagon-label" style="top:5%;left:50%;transform:translateX(-50%)">Long On/Off</div>
+            <div class="wagon-pct" style="top:12%;left:50%;transform:translateX(-50%)" id="ww-straight">0%</div>
+
+            <div class="wagon-label" style="top:20%;right:8%;transform:rotate(45deg)">Cover</div>
+            <div class="wagon-pct" style="top:25%;right:15%" id="ww-cover">0%</div>
+
+            <div class="wagon-label" style="top:50%;right:2%;transform:translateY(-50%)">Point</div>
+            <div class="wagon-pct" style="top:50%;right:10%;transform:translateY(-50%)" id="ww-point">0%</div>
+
+            <div class="wagon-label" style="bottom:20%;right:8%;transform:rotate(-45deg)">Third Man</div>
+            <div class="wagon-pct" style="bottom:25%;right:15%" id="ww-thirdman">0%</div>
+
+            <div class="wagon-label" style="bottom:5%;left:50%;transform:translateX(-50%)">Behind</div>
+            <div class="wagon-pct" style="bottom:12%;left:50%;transform:translateX(-50%)" id="ww-behind">0%</div>
+
+            <div class="wagon-label" style="bottom:20%;left:8%;transform:rotate(45deg)">Fine Leg</div>
+            <div class="wagon-pct" style="bottom:25%;left:15%" id="ww-fineleg">0%</div>
+
+            <div class="wagon-label" style="top:50%;left:2%;transform:translateY(-50%)">Square Leg</div>
+            <div class="wagon-pct" style="top:50%;left:10%;transform:translateY(-50%)" id="ww-squareleg">0%</div>
+
+            <div class="wagon-label" style="top:20%;left:8%;transform:rotate(-45deg)">Mid-Wicket</div>
+            <div class="wagon-pct" style="top:25%;left:15%" id="ww-midwicket">0%</div>
+            
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(0deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(45deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(90deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(135deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(180deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(225deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(270deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(315deg)"></div>
+            
+            <div style="position:absolute;inset:50px;border:1px dashed rgba(255,255,255,0.1);border-radius:50%"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:40px;background:rgba(255,255,255,0.7);border-radius:2px;box-shadow:0 0 10px rgba(0,0,0,0.5)"></div>
+          </div>
+          <div style="margin-top:16px">
+            <div class="zone-box"><span class="zone-name">Weak vs Short Ball</span><span class="zone-stat" id="weak-short">-</span></div>
+            <div class="zone-box"><span class="zone-name">Weak vs Yorker</span><span class="zone-stat" id="weak-yorker">-</span></div>
+            <div class="zone-box"><span class="zone-name">Weak vs Good Length</span><span class="zone-stat" id="weak-good">-</span></div>
+          </div>
+        </div>
+
+        <!-- Strategy Content -->
+        <div class="strategy-list" style="display:flex;flex-direction:column;gap:16px">
+          <div class="strategy-card">
+            <span class="strat-label">🎯 Outing Strategy (Bowler's Plan)</span>
+            <div class="strat-val" id="strat-bowler">Select players to see the blueprint...</div>
+          </div>
+          <div class="strategy-card">
+            <span class="strat-label">🛡️ Survival Guide (Batsman's Pov)</span>
+            <div class="strat-val" id="strat-batsman">How to play the dangerous deliveries...</div>
+          </div>
+          <div class="strategy-card" style="border-color:rgba(0,200,230,0.3)">
+            <span class="strat-label">⭐ Historical Insight</span>
+            <div class="strat-val" id="strat-insight" style="font-style:italic;color:var(--text-2)">Matchup details will appear here.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer"><p>🏏 IPL Predictor | 8-Factor AI Engine</p></footer>
+
+<script src="data.js"></script>
+<script src="squads_2026.js"></script>
+<script src="squads_2026b.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

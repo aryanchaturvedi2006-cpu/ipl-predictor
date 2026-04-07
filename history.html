@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>IPL History & Consistency — IPL Predictor</title>
+  <meta name="description" content="Complete IPL history with all champions (2008-2025), team consistency scores, playoff appearances and title analysis."/>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .champions-timeline{display:flex;flex-direction:column;gap:0;margin-bottom:40px}
+    .timeline-item{display:flex;gap:0;align-items:stretch;position:relative}
+    .timeline-year-col{display:flex;flex-direction:column;align-items:center;width:72px;flex-shrink:0}
+    .timeline-year{font-family:'Orbitron',sans-serif;font-size:0.75rem;font-weight:700;color:var(--text-2);padding:8px 0}
+    .timeline-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent);background:var(--bg);flex-shrink:0;z-index:1;margin:2px 0}
+    .timeline-line{width:2px;background:var(--border);flex:1;min-height:10px}
+    .timeline-card{flex:1;margin:4px 0 4px 16px;padding:14px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);transition:all 0.2s;display:flex;align-items:center;gap:14px}
+    .timeline-card:hover{border-color:var(--border-h);transform:translateX(4px)}
+    .tc-trophy{font-size:1.4rem;flex-shrink:0}
+    .tc-team{font-weight:700;font-size:0.95rem}
+    .tc-score{font-size:0.75rem;color:var(--text-2);margin-top:2px}
+    .tc-note{font-size:0.68rem;color:var(--text-3);font-style:italic}
+
+    /* Consistency Table */
+    .cons-table td,.cons-table th{padding:13px 16px}
+    .cons-rank{font-family:'Orbitron',sans-serif;font-size:0.8rem;font-weight:700;color:var(--text-2)}
+    .cons-rank.gold{color:var(--gold)}
+    .cons-rank.silver{color:#94a3b8}
+    .cons-rank.bronze{color:#b45309}
+    .prog-cell{width:140px}
+    .title-dots{display:flex;gap:3px;flex-wrap:wrap}
+    .title-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block}
+    .title-dot.empty{background:rgba(255,255,255,0.1)}
+
+    /* Charts */
+    .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px}
+    @media(max-width:700px){.chart-grid{grid-template-columns:1fr}}
+    .chart-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:24px}
+    .chart-title{font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:16px}
+    canvas{max-height:260px}
+  </style>
+</head>
+<body>
+<script src="nav.js"></script>
+
+<main class="page">
+  <div class="container">
+    <section class="page-hero">
+      <div class="page-badge">🏆 History</div>
+      <h1 class="page-title">IPL <span class="gradient-text">History & Consistency</span></h1>
+      <p class="page-subtitle">Every champion since 2008, team consistency scores based on playoff appearances and title wins, and visual analysis of team dominance.</p>
+    </section>
+
+    <!-- Summary Stats -->
+    <div class="stats-strip" style="margin-bottom:40px">
+      <div class="stat-box accent-gold"><span class="stat-value">19</span><span class="stat-label">Seasons Played</span></div>
+      <div class="stat-box accent-cyan"><span class="stat-value" id="champCount">—</span><span class="stat-label">Different Champions</span></div>
+      <div class="stat-box accent-purple"><span class="stat-value">5</span><span class="stat-label">Max Titles (MI/CSK)</span></div>
+      <div class="stat-box accent-green"><span class="stat-value" id="topCons">—</span><span class="stat-label">Most Consistent Team</span></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title">🏆 Titles Won by Team</div>
+        <canvas id="titlesChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📊 Playoff Appearances</div>
+        <canvas id="playoffsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Consistency Table -->
+    <p class="section-title">Team Consistency Rankings</p>
+    <p style="color:var(--text-2);font-size:0.85rem;margin-bottom:20px">Consistency Score = (Playoff Appearances ÷ Seasons × 60) + (Titles ÷ 5 × 40). Max 100.</p>
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:48px">
+      <div class="table-wrap" style="border:none;border-radius:0">
+        <table class="cons-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Team</th>
+              <th>Titles</th>
+              <th>Playoffs</th>
+              <th>Seasons</th>
+              <th>Consistency Score</th>
+              <th class="hide-sm">Founded</th>
+            </tr>
+          </thead>
+          <tbody id="consistencyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <p class="section-title">Champions Timeline (2008–2025)</p>
+    <div class="champions-timeline" id="timeline"></div>
+  </div>
+</main>
+
+<footer class="footer"><p>🏏 IPL Predictor | History & Analysis</p></footer>
+
+<script src="data.js"></script>
+<script src="squads_2026.js"></script>
+<script src="squads_2026b.js"></script>
+<script>
+function calcConsistency(h) {
+  return Math.min((h.playoffs / h.seasons) * 60 + (h.titles / 5) * 40, 100).toFixed(1);
+}
+
+// Summary stats
+const uniqueChamps = [...new Set(IPL_CHAMPIONS.map(c => c.team))];
+document.getElementById('champCount').textContent = uniqueChamps.length;
+
+const sorted = Object.entries(TEAM_HISTORY)
+  .map(([k, h]) => ({ key: k, ...h, score: +calcConsistency(h) }))
+  .sort((a, b) => b.score - a.score);
+document.getElementById('topCons').textContent = TEAMS[sorted[0].key]?.shortName || '—';
+
+// Consistency Table
+function rankClass(i) { return i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''; }
+const tbody = document.getElementById('consistencyBody');
+tbody.innerHTML = sorted.map((t, i) => {
+  const tm = TEAMS[t.key];
+  const pct = t.score;
+  const color = pct >= 70 ? 'var(--success)' : pct >= 50 ? 'var(--accent)' : 'var(--gold)';
+  const titleDots = Array.from({ length: 5 }, (_, j) => `<div class="title-dot${j < t.titles ? '' : ' empty'}"></div>`).join('');
+  return `<tr>
+    <td><span class="cons-rank ${rankClass(i)}">#${i + 1}</span></td>
+    <td>
+      <span style="font-weight:700;color:${tm?.primaryColor || '#fff'}">${t.fullName}</span>
+      ${t.note ? `<div style="font-size:0.7rem;color:var(--text-3);font-style:italic">${t.note}</div>` : ''}
+    </td>
+    <td>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="td-accent">${t.titles}</span>
+        <div class="title-dots">${titleDots}</div>
+      </div>
+    </td>
+    <td class="td-muted">${t.playoffs}</td>
+    <td class="td-muted">${t.seasons}</td>
+    <td>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="prog-wrap prog-cell"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
+        <span style="font-weight:700;color:${color};font-family:'Orbitron',sans-serif;font-size:0.85rem">${pct}</span>
+      </div>
+    </td>
+    <td class="td-muted hide-sm">${t.founded}</td>
+  </tr>`;
+}).join('');
+
+// Champions Timeline
+const timeline = document.getElementById('timeline');
+[...IPL_CHAMPIONS].reverse().forEach((c, idx) => {
+  const t = TEAMS[c.team];
+  const th = TEAM_HISTORY[c.team];
+  timeline.innerHTML += `
+    <div class="timeline-item">
+      <div class="timeline-year-col">
+        <span class="timeline-year">${c.year}</span>
+        <div class="timeline-dot" style="border-color:${t?.primaryColor || 'var(--accent)'}"></div>
+        ${idx < IPL_CHAMPIONS.length - 1 ? '<div class="timeline-line"></div>' : ''}
+      </div>
+      <div class="timeline-card">
+        <div class="tc-trophy">🏆</div>
+        <div style="flex:1">
+          <div class="tc-team" style="color:${t?.primaryColor || 'var(--text-1)'}">${th?.fullName || c.team}</div>
+          <div class="tc-score">${c.score || ''}</div>
+          ${c.note ? `<div class="tc-note">${c.note}</div>` : ''}
+        </div>
+        <div class="tag ${c.team === 'MI' || c.team === 'CSK' ? 'tag-gold' : 'tag-cyan'}">
+          ${th?.titles} 🏆 Total
+        </div>
+      </div>
+    </div>`;
+});
+
+// Charts
+const teamNames = sorted.map(t => TEAMS[t.key]?.shortName || t.key);
+const teamColors = sorted.map(t => TEAMS[t.key]?.primaryColor || '#666');
+
+new Chart(document.getElementById('titlesChart'), {
+  type: 'bar',
+  data: {
+    labels: sorted.map(t => TEAMS[t.key]?.shortName || t.key),
+    datasets: [{ label: 'IPL Titles', data: sorted.map(t => t.titles), backgroundColor: teamColors.map(c => c + 'cc'), borderColor: teamColors, borderWidth: 2, borderRadius: 6 }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#8892b0', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#8892b0' }, grid: { display: false } } } }
+});
+
+new Chart(document.getElementById('playoffsChart'), {
+  type: 'bar',
+  data: {
+    labels: sorted.map(t => TEAMS[t.key]?.shortName || t.key),
+    datasets: [{ label: 'Playoff Appearances', data: sorted.map(t => t.playoffs), backgroundColor: teamColors.map(c => c + 'aa'), borderColor: teamColors, borderWidth: 2, borderRadius: 6 }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#8892b0' }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#8892b0' }, grid: { display: false } } } }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>IPL 2026 News — IPL Predictor</title>
+  <meta name="description" content="Latest IPL 2026 news, match updates, scores and cricket headlines powered by live feeds."/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .news-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+    .news-tab{padding:8px 18px;border-radius:100px;border:1px solid var(--border);font-size:0.82rem;font-weight:600;color:var(--text-2);cursor:pointer;transition:all 0.2s;background:var(--bg-input)}
+    .news-tab.active,.news-tab:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,200,230,0.08)}
+    .news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+    .news-card{
+      background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);
+      padding:20px;display:flex;flex-direction:column;gap:12px;
+      transition:all 0.25s;cursor:pointer;text-decoration:none;color:inherit;
+    }
+    .news-card:hover{border-color:var(--border-h);transform:translateY(-3px);box-shadow:var(--shadow)}
+    .nc-source{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .nc-source-name{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent)}
+    .nc-date{font-size:0.68rem;color:var(--text-3)}
+    .nc-title{font-size:0.95rem;font-weight:700;line-height:1.4;color:var(--text-1)}
+    .nc-desc{font-size:0.82rem;color:var(--text-2);line-height:1.6;flex:1}
+    .nc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+    .nc-tag{font-size:0.68rem;font-weight:600;padding:3px 10px;border-radius:100px;border:1px solid rgba(0,200,230,0.3);color:var(--accent);background:rgba(0,200,230,0.06)}
+    .nc-link{font-size:0.75rem;color:var(--accent);font-weight:600}
+
+    /* Live Scores Strip */
+    .scores-strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;margin-bottom:28px;scrollbar-width:none}
+    .scores-strip::-webkit-scrollbar{display:none}
+    .score-chip{
+      flex-shrink:0;min-width:260px;padding:14px 18px;
+      background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);
+    }
+    .sc-live{font-size:0.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:2px 8px;border-radius:100px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;margin-bottom:8px;display:inline-block}
+    .sc-match{font-size:0.88rem;font-weight:700;margin-bottom:4px}
+    .sc-score{font-family:'Orbitron',sans-serif;font-size:0.82rem;color:var(--accent);margin-bottom:2px}
+    .sc-status{font-size:0.72rem;color:var(--text-2)}
+
+    /* Skeleton loader */
+    .skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:var(--radius);height:16px;margin-bottom:8px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    .sk-title{height:18px;width:90%}
+    .sk-desc{height:13px;width:100%}
+    .sk-desc2{height:13px;width:75%}
+
+    /* Refresh button state */
+    .refresh-spin{animation:spin 1s linear infinite}
+    .error-state{text-align:center;padding:60px 20px;color:var(--text-2)}
+    .error-icon{font-size:3rem;margin-bottom:12px}
+    .marquee-wrap{background:rgba(0,200,230,0.06);border:1px solid rgba(0,200,230,0.15);border-radius:var(--radius);padding:10px 0;margin-bottom:24px;overflow:hidden}
+    .marquee{display:flex;gap:40px;animation:marqueeAnim 35s linear infinite;white-space:nowrap;padding:0 20px}
+    .marquee:hover{animation-play-state:paused}
+    .marquee-item{font-size:0.8rem;color:var(--text-2)}.marquee-item span{color:var(--accent);font-weight:600}
+    @keyframes marqueeAnim{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+  </style>
+</head>
+<body>
+<script src="nav.js"></script>
+
+<main class="page">
+  <div class="container">
+    <section class="page-hero" style="padding-bottom:24px">
+      <div class="page-badge">📰 Live News</div>
+      <h1 class="page-title">IPL <span class="gradient-text">2026 News</span></h1>
+      <p class="page-subtitle">Latest cricket headlines, IPL 2026 match updates, transfer news and analysis — refreshed live.</p>
+    </section>
+
+    <!-- Ticker -->
+    <div class="marquee-wrap">
+      <div class="marquee" id="ticker">
+        <span class="marquee-item">🏏 <span>IPL 2026</span> — Season underway!</span>
+        <span class="marquee-item">🔥 <span>RCB</span> are the defending IPL 2025 champions</span>
+        <span class="marquee-item">⭐ <span>Virat Kohli</span> leads RCB's title defence</span>
+        <span class="marquee-item">💥 <span>Jasprit Bumrah</span> spearheads MI's bowling attack</span>
+        <span class="marquee-item">🏆 <span>KKR</span> won IPL 2024, seeking back-to-back titles</span>
+        <span class="marquee-item">🌟 <span>Yashasvi Jaiswal</span> continues to dazzle for RR</span>
+        <span class="marquee-item">🎯 <span>Pat Cummins</span> leads SRH as captain-bowler</span>
+        <!-- duplicated for seamless loop -->
+        <span class="marquee-item">🏏 <span>IPL 2026</span> — Season underway!</span>
+        <span class="marquee-item">🔥 <span>RCB</span> are the defending IPL 2025 champions</span>
+        <span class="marquee-item">⭐ <span>Virat Kohli</span> leads RCB's title defence</span>
+        <span class="marquee-item">💥 <span>Jasprit Bumrah</span> spearheads MI's bowling attack</span>
+        <span class="marquee-item">🏆 <span>KKR</span> won IPL 2024, seeking back-to-back titles</span>
+        <span class="marquee-item">🌟 <span>Yashasvi Jaiswal</span> continues to dazzle for RR</span>
+        <span class="marquee-item">🎯 <span>Pat Cummins</span> leads SRH as captain-bowler</span>
+      </div>
+    </div>
+
+    <!-- News Dashboard Status -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;border:1px solid rgba(0,220,130,0.3);padding:15px;border-radius:var(--radius);background:rgba(0,220,130,0.05)">
+      <div>
+        <h3 style="font-size:1rem;color:#00e5bc;margin-bottom:4px">📡 Official News Source</h3>
+        <p style="font-size:0.8rem;color:var(--text-3)">Live news is scraped from the official IPL site using the local backend. Run <strong>npm start</strong> and open this page through <strong>http://localhost:3000/news.html</strong>.</p>
+        <div id="feedStatus" style="display:none;align-items:center;gap:8px;margin-top:8px;font-size:0.75rem;color:#10b981">
+          <span>●</span> <span id="feedStatusText"></span>
+        </div>
+      </div>
+      <a href="https://www.iplt20.com/news" target="_blank" class="btn btn-accent" style="font-size:0.8rem;padding:8px 16px">
+        Visit Official iplt20.com News
+      </a>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+      <div class="news-tabs">
+        <button class="news-tab active" data-filter="all" onclick="filterNews('all',this)">🌐 All News</button>
+        <button class="news-tab" data-filter="ipl" onclick="filterNews('ipl',this)">🏏 IPL Official</button>
+        <button class="news-tab" data-filter="transfer" onclick="filterNews('transfer',this)">🔄 Official Trade</button>
+        <button class="news-tab" data-filter="match" onclick="filterNews('match',this)">📊 Match Reports</button>
+        <button class="news-tab" data-filter="player" onclick="filterNews('player',this)">⭐ Player News</button>
+      </div>
+      <button class="btn btn-outline" id="refreshBtn" onclick="loadNews()" style="gap:6px">
+        <span id="refreshIcon">🔄</span> Refresh Feed
+      </button>
+    </div>
+
+    <!-- News Grid -->
+    <div class="news-grid" id="newsGrid">
+      <!-- Skeleton loaders -->
+      ${[...Array(6)].map(() => `
+      <div class="news-card">
+        <div class="skeleton sk-title"></div>
+        <div class="skeleton sk-desc"></div>
+        <div class="skeleton sk-desc2"></div>
+      </div>`).join('')}
+    </div>
+  </div>
+</main>
+
+<footer class="footer"><p>🏏 IPL Predictor | Powered by iplt20.com Official Data Feeds</p></footer>
+
+<script src="news_data.js"></script>
+<script>
+let allNews = [...STATIC_NEWS];
+let currentFilter = 'all';
+
+// ---- Fetch live news from local API ----
+async function loadNews() {
+  const btn = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  icon.className = 'refresh-spin';
+  icon.textContent = '⏳';
+  btn.disabled = true;
+
+  // Show skeleton while loading live news
+  renderSkeletons();
+
+  try {
+    const response = await fetch('/api/news', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Live news API returned ' + response.status);
+    const payload = await response.json();
+    if (!payload.news || !Array.isArray(payload.news) || !payload.news.length) {
+      throw new Error('Live news API returned no news items.');
+    }
+
+    allNews = payload.news.filter((item, index, self) => self.findIndex(n => n.link === item.link) === index);
+    renderNews();
+    showStatus('📡 Live IPL news loaded from the official IPL site.', 'success');
+  } catch (error) {
+    console.warn(error);
+    allNews = [...STATIC_NEWS];
+    renderNews();
+    showStatus('⚠️ Could not fetch live news. Showing curated official news instead.', 'warn');
+  } finally {
+    icon.textContent = '🔄';
+    icon.className = '';
+    btn.disabled = false;
+  }
+}
+
+function guessTag(text) {
+  const t = text.toLowerCase();
+  if (t.includes('transfer') || t.includes('auction') || t.includes('sign') || t.includes('retain')) return 'transfer';
+  if (t.includes('ipl') || t.includes('indian premier')) return 'ipl';
+  if (t.includes('vs') || t.includes('beat') || t.includes('won') || t.includes('match') || t.includes('wicket') || t.includes('runs')) return 'match';
+  return 'player';
+}
+function guessCategory(text) { return guessTag(text); }
+
+function stripHtml(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
+function showStatus(msg, type='info') {
+  const el = document.getElementById('feedStatus');
+  const txt = document.getElementById('feedStatusText');
+  el.style.display = 'flex';
+  el.className = `alert alert-${type === 'warn' ? 'warn' : 'info'}`;
+  txt.textContent = msg;
+}
+
+function filterNews(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderNews();
+}
+
+function renderNews() {
+  const uniqueNews = allNews.filter((item, index, self) => self.findIndex(n => n.link === item.link) === index);
+  const filtered = currentFilter === 'all'
+    ? uniqueNews
+    : uniqueNews.filter(n => n.category === currentFilter);
+
+  const grid = document.getElementById('newsGrid');
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="error-state" style="grid-column:1/-1"><div class="error-icon">📭</div><p>No news in this category yet.</p></div>`;
+    return;
+  }
+
+  const tagColors = {
+    ipl:'tag-cyan', transfer:'tag-purple', match:'tag-green', player:'tag-gold'
+  };
+
+  grid.innerHTML = filtered.map((n, i) => `
+    <a href="${n.link || '#'}" target="${n.link && n.link !== '#' ? '_blank' : '_self'}" class="news-card fade-in" style="animation-delay:${i * 0.04}s">
+      <div class="nc-source">
+        <span class="nc-source-name">${n.isLive ? '🔴 LIVE · ' : ''}${n.source}</span>
+        <span class="nc-date">${formatDate(n.date)}</span>
+      </div>
+      <div class="nc-title">${n.title}</div>
+      <div class="nc-desc">${n.description}</div>
+      <div class="nc-footer">
+        <span class="tag ${tagColors[n.tag] || 'tag-cyan'}">${categoryLabel(n.tag)}</span>
+        <span class="nc-link">${n.link && n.link !== '#' ? 'Read more →' : '📌 Pinned'}</span>
+      </div>
+    </a>`).join('');
+}
+
+function renderSkeletons() {
+  document.getElementById('newsGrid').innerHTML = [...Array(9)].map(() => `
+    <div class="news-card">
+      <div class="skeleton" style="height:12px;width:40%;margin-bottom:12px"></div>
+      <div class="skeleton sk-title" style="height:20px;margin-bottom:12px"></div>
+      <div class="skeleton sk-desc"></div>
+      <div class="skeleton sk-desc2" style="margin-bottom:16px"></div>
+      <div class="skeleton" style="height:12px;width:30%"></div>
+    </div>`).join('');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return isNaN(d) ? dateStr : d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function categoryLabel(cat) {
+  return { ipl:'🏏 IPL', transfer:'🔄 Transfer', match:'📊 Match', player:'⭐ Player' }[cat] || '📰 News';
+}
+
+// Initial load
+loadNews();
+</script>
+</body>
+</html>

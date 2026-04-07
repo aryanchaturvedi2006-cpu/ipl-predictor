@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IPL Stats Center | Orange & Purple Cap History (2008-2025)</title>
+  <meta name="description" content="Explore the complete historical records of IPL Orange and Purple Cap winners from 2008 to 2025. Data-driven insights and player performance statistics.">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange-gradient: linear-gradient(135deg, #FF8C00, #FFA500);
+      --purple-gradient: linear-gradient(135deg, #8A2BE2, #4B0082);
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .stats-header {
+      padding: 120px 20px 60px;
+      text-align: center;
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 70%);
+    }
+
+    .stats-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(to right, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-fill-color: transparent;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stats-controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    /* Custom Dropdown Styling */
+    .dropdown-container {
+      position: relative;
+      width: 200px;
+      user-select: none;
+      z-index: 100;
+    }
+
+    .dropdown-trigger {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+    }
+
+    .dropdown-trigger:hover {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .dropdown-trigger.active {
+      border-color: var(--accent);
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+
+    .dropdown-trigger i {
+      transition: transform 0.3s ease;
+      font-size: 0.8rem;
+    }
+
+    .dropdown-trigger.active i {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #1e293b;
+      border: 1px solid var(--accent);
+      border-top: none;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #94a3b8;
+    }
+
+    .dropdown-item:hover {
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent);
+      padding-left: 25px;
+    }
+
+    .dropdown-item.selected {
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    /* Custom Scrollbar */
+    .dropdown-menu::-webkit-scrollbar {
+      width: 6px;
+    }
+    .dropdown-menu::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .dropdown-menu::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 10px;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      max-width: 1400px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+
+    .stats-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 30px;
+      backdrop-filter: blur(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .stats-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .cap-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .orange-cap-icon { background: var(--orange-gradient); }
+    .purple-cap-icon { background: var(--purple-gradient); }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 12px 15px;
+      color: #94a3b8;
+      font-weight: 500;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    td {
+      padding: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .rank { font-weight: 700; color: var(--accent); width: 30px; }
+    .player-name { font-weight: 600; color: #fff; }
+    .team-tag {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      margin-left: 8px;
+    }
+
+    .stat-primary { font-weight: 800; color: #fff; font-size: 1.1rem; }
+
+    #activeYearDisplay {
+      color: var(--accent);
+    }
+
+    @media (max-width: 1024px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+    }
+
+    .winner-highlight {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 25px;
+      border: 1px solid rgba(255, 140, 0, 0.2);
+    }
+
+    .purple-winner {
+      border-color: rgba(138, 43, 226, 0.2);
+    }
+
+    .winner-photo {
+      width: 80px;
+      height: 80px;
+      background: #334155;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+
+    .winner-info .name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: block;
+    }
+
+    .winner-info .metric {
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    /* View Switch Toggle */
+    .view-switch {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 40px;
+      gap: 10px;
+    }
+
+    .switch-btn {
+      padding: 10px 25px;
+      border-radius: 30px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: #94a3b8;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .switch-btn.active {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    }
+
+    /* Records Grid */
+    .records-container {
+      display: none;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .records-container.active {
+      display: block;
+    }
+
+    .record-section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      margin: 40px 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .record-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 50px;
+    }
+
+    .record-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 25px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .record-card:hover {
+      transform: translateY(-10px);
+      border-color: var(--accent);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+    }
+
+    .record-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .record-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+      display: block;
+      margin: 5px 0;
+      background: linear-gradient(to bottom, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .record-unit {
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .record-label {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-top: 15px;
+      display: block;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding-top: 15px;
+    }
+
+    .record-player {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .batting-record:hover { border-color: #FF8C00; box-shadow: 0 0 20px rgba(255, 140, 0, 0.2); }
+    .bowling-record:hover { border-color: #8A2BE2; box-shadow: 0 0 20px rgba(138, 43, 226, 0.2); }
+  </style>
+</head>
+<body>
+
+  <div class="stats-header">
+    <h1>IPL Stats Center</h1>
+    <p id="statsSubtitle">Complete historical records of Orange & Purple Cap holders</p>
+    
+    <div class="view-switch">
+      <button class="switch-btn active" onclick="switchView('season')">Seasonal History</button>
+      <button class="switch-btn" onclick="switchView('records')">All-Time Records</button>
+    </div>
+
+    <div id="seasonControls" class="stats-controls">
+      <div class="dropdown-container">
+        <div id="yearTrigger" class="dropdown-trigger">
+          <span id="selectedYearText">2025</span>
+          <i>▼</i>
+        </div>
+        <div id="yearMenu" class="dropdown-menu"></div>
+      </div>
+    </div>
+    <div id="seasonTitle">
+      <h2 style="font-family:'Outfit'; font-size: 2rem;">Season <span id="activeYearDisplay">2025</span></h2>
+    </div>
+  </div>
+
+  <!-- Seasonal Grid (Shown by default) -->
+  <main id="seasonalView" class="stats-grid">
+    <!-- Orange Cap Section -->
+    <section class="stats-card">
+      <div class="card-header">
+        <div class="cap-icon orange-cap-icon">🏏</div>
+        <h2 class="card-title">Orange Cap</h2>
+      </div>
+      
+      <div id="orangeCapWinner" class="winner-highlight">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>POS</th>
+              <th>PLAYER</th>
+              <th>RUNS</th>
+              <th>SR</th>
+              <th>AVG</th>
+            </tr>
+          </thead>
+          <tbody id="orangeCapTableBody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Purple Cap Section -->
+    <section class="stats-card">
+      <div class="card-header">
+        <div class="cap-icon purple-cap-icon">⚽</div>
+        <h2 class="card-title">Purple Cap</h2>
+      </div>
+
+      <div id="purpleCapWinner" class="winner-highlight purple-winner">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>POS</th>
+              <th>PLAYER</th>
+              <th>WKTS</th>
+              <th>ECON</th>
+              <th>AVG</th>
+            </tr>
+          </thead>
+          <tbody id="purpleCapTableBody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Records View (Hidden by default) -->
+  <main id="recordsView" class="records-container">
+    <div class="record-section-title">🏏 Batting Milestones</div>
+    <div id="battingRecordsGrid" class="record-grid"></div>
+
+    <div class="record-section-title">⚽ Bowling Milestones</div>
+    <div id="bowlingRecordsGrid" class="record-grid"></div>
+
+    <div class="record-section-title">🚀 Team Milestones</div>
+    <div id="teamRecordsGrid" class="record-grid"></div>
+
+    <div class="record-section-title">👑 Elite Captaincy</div>
+    <div id="leadershipRecordsGrid" class="record-grid"></div>
+  </main>
+
+  <footer class="footer" style="padding: 60px 20px; text-align: center; border-top: 1px solid var(--card-border);">
+    <p style="color:#64748b;">Powered by 8-FACTOR AI ENGINE • Data across 19 Seasons</p>
+  </footer>
+
+  <script src="stats_data.js"></script>
+  <script src="nav.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const yearTrigger = document.getElementById('yearTrigger');
+      const yearMenu = document.getElementById('yearMenu');
+      const selectedYearText = document.getElementById('selectedYearText');
+      const activeYearDisplay = document.getElementById('activeYearDisplay');
+      
+      // Populate Year Selector
+      const years = Object.keys(IPL_STATS).sort((a,b) => b - a);
+      
+      years.forEach(year => {
+        const item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.textContent = year;
+        item.onclick = () => {
+          selectYear(year);
+          toggleMenu();
+        };
+        yearMenu.appendChild(item);
+      });
+
+      function toggleMenu() {
+        yearMenu.classList.toggle('show');
+        yearTrigger.classList.toggle('active');
+      }
+
+      function selectYear(year) {
+        selectedYearText.textContent = year;
+        // Update selected class
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+          item.classList.toggle('selected', item.textContent === year);
+        });
+        loadStats(year);
+      }
+
+      yearTrigger.addEventListener('click', toggleMenu);
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!yearTrigger.contains(e.target) && !yearMenu.contains(e.target)) {
+          yearMenu.classList.remove('show');
+          yearTrigger.classList.remove('active');
+        }
+      });
+
+      function loadStats(year) {
+        year = parseInt(year);
+        activeYearDisplay.textContent = year;
+        const data = IPL_STATS[year];
+        if (!data) return;
+
+        // Render Orange Cap
+        const orangeWinner = data.orangeCap[0];
+        document.getElementById('orangeCapWinner').innerHTML = `
+          <div class="winner-photo">👤</div>
+          <div class="winner-info">
+            <span class="name">${orangeWinner.player}</span>
+            <span class="metric">${orangeWinner.team} • ${orangeWinner.runs} Runs • ${orangeWinner.avg} Avg</span>
+          </div>
+        `;
+
+        const orangeTbody = document.getElementById('orangeCapTableBody');
+        orangeTbody.innerHTML = data.orangeCap.map(p => `
+          <tr>
+            <td class="rank">${p.pos}</td>
+            <td>
+              <span class="player-name">${p.player}</span>
+              <span class="team-tag">${p.team}</span>
+            </td>
+            <td class="stat-primary">${p.runs}</td>
+            <td>${p.sr}</td>
+            <td>${p.avg}</td>
+          </tr>
+        `).join('');
+
+        // Render Purple Cap
+        const purpleWinner = data.purpleCap[0];
+        document.getElementById('purpleCapWinner').innerHTML = `
+          <div class="winner-photo" style="background:#4b0082">👤</div>
+          <div class="winner-info">
+            <span class="name">${purpleWinner.player}</span>
+            <span class="metric">${purpleWinner.team} • ${purpleWinner.wkts} Wickets • ${purpleWinner.econ} Econ</span>
+          </div>
+        `;
+
+        const purpleTbody = document.getElementById('purpleCapTableBody');
+        purpleTbody.innerHTML = data.purpleCap.map(p => `
+          <tr>
+            <td class="rank">${p.pos}</td>
+            <td>
+              <span class="player-name">${p.player}</span>
+              <span class="team-tag">${p.team}</span>
+            </td>
+            <td class="stat-primary">${p.wkts}</td>
+            <td>${p.econ}</td>
+            <td>${p.avg}</td>
+          </tr>
+        `).join('');
+      }
+
+      window.switchView = function(view) {
+        const seasonBtn = document.querySelector('.switch-btn:nth-child(1)');
+        const recordBtn = document.querySelector('.switch-btn:nth-child(2)');
+        const seasonalView = document.getElementById('seasonalView');
+        const recordsView = document.getElementById('recordsView');
+        const seasonControls = document.getElementById('seasonControls');
+        const seasonTitle = document.getElementById('seasonTitle');
+        const subtitle = document.getElementById('statsSubtitle');
+
+        if (view === 'season') {
+          seasonBtn.classList.add('active');
+          recordBtn.classList.remove('active');
+          seasonalView.classList.add('active');
+          seasonalView.style.display = 'grid';
+          recordsView.classList.remove('active');
+          seasonControls.style.display = 'flex';
+          seasonTitle.style.display = 'block';
+          subtitle.style.display = 'block';
+        } else {
+          recordBtn.classList.add('active');
+          seasonBtn.classList.remove('active');
+          seasonalView.style.display = 'none';
+          recordsView.classList.add('active');
+          seasonControls.style.display = 'none';
+          seasonTitle.style.display = 'none';
+          subtitle.style.display = 'none';
+          renderRecords();
+        }
+      }
+
+      function renderRecords() {
+        const battingGrid = document.getElementById('battingRecordsGrid');
+        const bowlingGrid = document.getElementById('bowlingRecordsGrid');
+        const teamGrid = document.getElementById('teamRecordsGrid');
+        const leadershipGrid = document.getElementById('leadershipRecordsGrid');
+
+        battingGrid.innerHTML = ALL_TIME_RECORDS.batting.map(r => `
+          <div class="record-card batting-record">
+            <span class="record-icon">${r.icon}</span>
+            <span class="record-value">${r.value}</span>
+            <span class="record-unit">${r.unit}</span>
+            <span class="record-label">
+              ${r.label}<br>
+              <span class="record-player">${r.player}</span>
+            </span>
+          </div>
+        `).join('');
+
+        bowlingGrid.innerHTML = ALL_TIME_RECORDS.bowling.map(r => `
+          <div class="record-card bowling-record">
+            <span class="record-icon">${r.icon}</span>
+            <span class="record-value">${r.value}</span>
+            <span class="record-unit">${r.unit}</span>
+            <span class="record-label">
+              ${r.label}<br>
+              <span class="record-player">${r.player}</span>
+            </span>
+          </div>
+        `).join('');
+
+        teamGrid.innerHTML = ALL_TIME_RECORDS.team.map(r => `
+          <div class="record-card" style="border-color: var(--accent)">
+            <span class="record-icon">${r.icon}</span>
+            <span class="record-value">${r.value}</span>
+            <span class="record-unit">${r.unit}</span>
+            <span class="record-label">
+              ${r.label}<br>
+              <span class="record-player">${r.player} (${r.year || 'Historic'})</span>
+            </span>
+          </div>
+        `).join('');
+
+        leadershipGrid.innerHTML = ALL_TIME_RECORDS.leadership.map(r => `
+          <div class="record-card" style="border-color: #FFD700; background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(0,0,0,0.5))">
+            <span class="record-icon">${r.icon}</span>
+            <span class="record-value">${r.value}</span>
+            <span class="record-unit">${r.unit}</span>
+            <span class="record-label">
+              ${r.label}<br>
+              <span class="record-player">${r.player}</span><br>
+              <small style="color: #FFD700; opacity: 0.8">${r.detail}</small>
+            </span>
+          </div>
+        `).join('');
+      }
+      
+      // Initial Load
+      selectYear(years[0]);
+    });
+  </script>
+</body>
+</html>

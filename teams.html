@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Team Squads — IPL Predictor</title>
+  <meta name="description" content="Browse all 10 IPL teams with complete squad rosters, player ratings, roles and nationalities."/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;margin-bottom:48px}
+    .team-card{
+      background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);
+      padding:24px;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;
+    }
+    .team-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.3s;background:radial-gradient(ellipse at 50% 0%,var(--tc) 0%,transparent 70%)}
+    .team-card:hover::before{opacity:0.08}
+    .team-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+    .team-card.expanded{border-color:var(--border-h)}
+    .tc-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+    .tc-avatar{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;font-family:'Orbitron',sans-serif;flex-shrink:0}
+    .tc-info{flex:1}
+    .tc-name{font-weight:700;font-size:0.95rem;line-height:1.2}
+    .tc-city{font-size:0.75rem;color:var(--text-2)}
+    .tc-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    .tc-expand{font-size:0.78rem;color:var(--accent);font-weight:600;cursor:pointer;background:none;border:none;padding:0;display:flex;align-items:center;gap:4px}
+    .squad-panel{display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+    .squad-panel.open{display:block}
+    .squad-table{width:100%;border-collapse:collapse}
+    .squad-table th{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-3);padding:4px 6px;text-align:left}
+    .squad-table td{font-size:0.8rem;padding:6px 6px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text-1)}
+    .squad-table tr:last-child td{border-bottom:none}
+    .captain-star{color:var(--gold);font-size:0.7rem;margin-left:4px}
+    .nat-flag{font-size:0.7rem;color:var(--text-2)}
+    .str-bar{height:4px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;margin-top:2px;width:52px}
+    .str-fill{height:100%;border-radius:100px}
+  </style>
+</head>
+<body>
+<script src="nav.js"></script>
+
+<main class="page">
+  <div class="container">
+    <section class="page-hero">
+      <div class="page-badge">🛡️ All Teams</div>
+      <h1 class="page-title">IPL <span class="gradient-text">Team Squads</span></h1>
+      <p class="page-subtitle">Explore all 10 IPL teams with full squad rosters, player roles, batting & bowling ratings. Click any team to expand its squad.</p>
+    </section>
+
+    <div class="teams-grid" id="teamsGrid"></div>
+  </div>
+</main>
+
+<footer class="footer"><p>🏏 IPL Predictor | Team Squads</p></footer>
+
+<script src="data.js"></script>
+<script src="squads_2026.js"></script>
+<script src="squads_2026b.js"></script>
+<script>
+const NAT_FLAGS = { IND:'🇮🇳', AUS:'🇦🇺', ENG:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', SA:'🇿🇦', NZ:'🇳🇿', WI:'🏝️', AFG:'🇦🇫', SL:'🇱🇰', SGP:'🇸🇬', ZIM:'🇿🇼', PAK:'🇵🇰' };
+
+function renderRatingBar(val, color) {
+  return `<div class="str-bar"><div class="str-fill" style="width:${val}%;background:${color}"></div></div>`;
+}
+
+function renderTeamCard(key) {
+  const t = TEAMS[key];
+  const h = TEAM_HISTORY[key];
+  const consistency = Math.min((h.playoffs/h.seasons)*60+(h.titles/5)*40, 100).toFixed(0);
+  const playersHTML = t.players.map(p => `
+    <tr>
+      <td>
+        <span style="font-weight:600">${p.name}</span>${p.isCaptain?'<span class="captain-star" title="Captain">★</span>':''}
+        <span class="nat-flag">${NAT_FLAGS[p.nat]||p.nat}</span>
+      </td>
+      <td><span class="role-badge role-${p.role.replace(' ','-')}">${p.role}</span></td>
+      <td>
+        <span style="font-size:0.72rem;color:var(--text-2)">BAT</span>
+        ${renderRatingBar(p.bat,'#10b981')}
+      </td>
+      <td>
+        <span style="font-size:0.72rem;color:var(--text-2)">BOWL</span>
+        ${renderRatingBar(p.bowl,'#f87171')}
+      </td>
+    </tr>`).join('');
+
+  return `
+    <div class="team-card" id="card-${key}" style="--tc:${t.primaryColor}" onclick="toggleSquad('${key}')">
+      <div class="tc-header">
+        <div class="tc-avatar" style="background:${t.primaryColor}20;color:${t.primaryColor};border:1px solid ${t.primaryColor}40">${t.shortName}</div>
+        <div class="tc-info">
+          <div class="tc-name">${t.name}</div>
+          <div class="tc-city">📍 ${t.city}</div>
+        </div>
+      </div>
+      <div class="tc-stats">
+        <span class="tag tag-gold">🏆 ${h.titles} Titles</span>
+        <span class="tag tag-cyan">${h.playoffs} Playoffs</span>
+        <span class="tag tag-green">⭐ ${consistency}% Consistency</span>
+      </div>
+      <button class="tc-expand" id="btn-${key}">
+        <span>View Squad (${t.players.length} players)</span>
+        <span id="arrow-${key}">▼</span>
+      </button>
+      <div class="squad-panel" id="squad-${key}">
+        <div style="overflow-x:auto">
+          <table class="squad-table">
+            <thead><tr><th>Player</th><th>Role</th><th>Batting</th><th>Bowling</th></tr></thead>
+            <tbody>${playersHTML}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleSquad(key) {
+  const panel = document.getElementById('squad-'+key);
+  const arrow = document.getElementById('arrow-'+key);
+  const card  = document.getElementById('card-'+key);
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  card.classList.toggle('expanded', !isOpen);
+  arrow.textContent = isOpen ? '▼' : '▲';
+}
+
+const grid = document.getElementById('teamsGrid');
+Object.keys(TEAMS).forEach(k => { grid.innerHTML += renderTeamCard(k); });
+</script>
+</body>
+</html>

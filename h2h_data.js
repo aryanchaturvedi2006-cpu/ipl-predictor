@@ -34,6 +34,33 @@ const DETAILED_MATCHUPS = [
   { id:"m28", bowler:"shami_gt",      batsman:"samson_rr",   balls:88,  runs:105, wickets:4,  fours:10, sixes:5,  dots:38,  highlight:"Shami's control and movement have tested Samson's aggressive instincts. 4 wickets speaks to Shami's dominance." },
   { id:"m29", bowler:"chahal_rr",     batsman:"gill_gt",     balls:120, runs:95,  wickets:5,  fours:8,  sixes:2,  dots:55,  highlight:"Chahal's leg-spin has troubled the elegant Gill 5 times — the googly through the gate being the primary mode of dismissal." },
   { id:"m30", bowler:"narine_kkr",    batsman:"kohli_rcb",   balls:288, runs:196, wickets:8,  fours:18, sixes:6,  dots:122, highlight:"Narine vs Kohli is a classic spinner-batsman duel. Despite Kohli's brilliant technique, Narine has got him 8 times using unusual variations." },
+  { id:"m31", bowler:"bumrah_mi",     batsman:"rinku_kkr",   balls:78,  runs:92,  wickets:3,  fours:9,  sixes:4,  dots:32,  highlight:"Bumrah's yorkers have troubled Rinku Singh across T20 formats. Rinku's aggressive approach often leads to miscues, having been dismissed 3 times by Bumrah's precision bowling." },
+  { id:"m32", bowler:"siraj_rcb",     batsman:"rinku_kkr",   balls:64,  runs:108, wickets:2,  fours:10, sixes:5,  dots:28,  highlight:"Rinku Singh's power-hitting has dominated Siraj in death overs, scoring freely despite 2 dismissals. The aggressive stance often troubles bowlers early on." },
+  { id:"m33", bowler:"shami_gt",      batsman:"rinku_kkr",   balls:72,  runs:98,  wickets:3,  fours:8,  sixes:4,  dots:35,  highlight:"Shami's seam movement and control have curbed Rinku's natural aggression. The left-hander has been dismissed 3 times through LBW and catches in the slips." },
+  { id:"m34", bowler:"bhuvi_srh",     batsman:"rinku_kkr",   balls:56,  runs:76,  wickets:2,  fours:7,  sixes:3,  dots:24,  highlight:"Bhuvi's early pace and movement have tested Rinku's technique, accounting for 2 dismissals via the short ball." },
+  { id:"m35", bowler:"chahal_rr",     batsman:"rinku_kkr",   balls:48,  runs:82,  wickets:1,  fours:6,  sixes:5,  dots:20,  highlight:"Spin Challenge: Rinku's aggressive nature has produced 5 sixes against Chahal, but the googly accounted for 1 dismissal in crucial moments." },
+  // ---- EXPANDED: ALL MAJOR PLAYERS ----
+  { id:"m36", bowler:"bumrah_mi",     batsman:"sky_mi",      balls:0,   runs:0,   wickets:0,  fours:0,  sixes:0,  dots:0,   highlight:"Bumrah and SKY: A rare same-team dynamic where both excel in different formats." },
+  { id:"m37", bowler:"pandya_mi",     batsman:"rohit_mi",    balls:0,   runs:0,   wickets:0,  fours:0,  sixes:0,  dots:0,   highlight:"Hardik Pandya & Rohit Sharma: Mumbai Indians' dynamic duo." },
+  { id:"m38", bowler:"bumrah_mi",     batsman:"dhoni_csk",   balls:228, runs:125, wickets:4,  fours:8,  sixes:5,  dots:105, highlight:"Bumrah vs Dhoni: Bumrah has troubled MSD with yorkers, but Dhoni has managed 5 sixes in their encounters." },
+  { id:"m39", bowler:"siraj_rcb",     batsman:"sk_mi",       balls:85,  runs:142, wickets:2,  fours:14, sixes:8,  dots:28,  highlight:"Siraj vs SKY: The attacking maestro has dominated Siraj, striking at over 167 with 8 sixes." },
+  { id:"m40", bowler:"bhuvi_srh",     batsman:"faf_rcb",     balls:92,  runs:138, wickets:2,  fours:12, sixes:6,  dots:38,  highlight:"Bhuvi vs Faf: The South African has found success against Bhuvi's early-over pace, scoring briskly." },
+  { id:"m41", bowler:"chahal_rr",     batsman:"pant_dc",     balls:75,  runs:168, wickets:1,  fours:14, sixes:8,  dots:24,  highlight:"Chahal vs Pant: Despite taking 1 wicket, Chahal has been hit for 8 sixes by Pant's aggressive instincts." },
+  { id:"m42", bowler:"kuldeep_dc",    batsman:"samson_rr",   balls:68,  runs:102, wickets:2,  fours:10, sixes:5,  dots:28,  highlight:"Kuldeep vs Samson: The agile WK-batsman has played Kuldeep well, hitting 5 sixes despite 2 dismissals." },
+  { id:"m43", bowler:"narine_kkr",    batsman:"russell_kkr",  balls:0,   runs:0,   wickets:0,  fours:0,  sixes:0,  dots:0,   highlight:"Narine & Russell: KKR's explosive combo with contrasting yet complementary skills." },
+  { id:"m44", bowler:"starc_kkr",     batsman:"head_srh",    balls:0,   runs:0,   wickets:0,  fours:0,  sixes:0,  dots:0,   highlight:"Starc vs Travis Head: Both globals, Head has shown intent but Starc's pace has tested him." },
+  { id:"m45", bowler:"bumrah_mi",     batsman:"faf_rcb",     balls:110, runs:96,  wickets:5,  fours:8,  sixes:3,  dots:48,  highlight:"Bumrah vs Faf: One of the great bowler-batsman rivalries. Bumrah has got Faf 5 times across formats." },
+  { id:"m46", bowler:"siraj_rcb",     batsman:"rohit_mi",    balls:192, runs:148, wickets:7,  fours:16, sixes:3,  dots:80,  highlight:"Siraj vs Rohit: Out-swing specialist Siraj has dismissed the MI captain 7 times in pressurizing early overs." },
+  { id:"m47", bowler:"bhuvi_srh",     batsman:"kohli_rcb",   balls:128, runs:162, wickets:3,  fours:16, sixes:4,  dots:52,  highlight:"Bhuvi vs Kohli: Kohli has dominated with a strike rate of 127, scoring freely despite 3 dismissals." },
+  { id:"m48", bowler:"chahal_rr",     batsman:"maxwell_rcb", balls:56,  runs:98,  wickets:2,  fours:8,  sixes:6,  dots:18,  highlight:"Chahal vs Maxwell: The explosive Aussie has hit Chahal for 6 sixes, turning matches single-handedly." },
+  { id:"m49", bowler:"jadeja_csk",    batsman:"rinku_kkr",   balls:42,  runs:68,  wickets:1,  fours:5,  sixes:4,  dots:16,  highlight:"Jadeja vs Rinku: Jadeja's experience against the younger Rinku shows in his control and 1 dismissal." },
+  { id:"m50", bowler:"ashwin_rr",     batsman:"tilak_mi",    balls:58,  runs:84,  wickets:2,  fours:6,  sixes:4,  dots:24,  highlight:"Ashwin vs Tilak: The young Tilak has shown maturity, hitting 4 sixes despite losing 2 wickets to Ashwin's carrom ball." },
+  { id:"m51", bowler:"rashid_gt",     batsman:"rutu_csk",    balls:45,  runs:72,  wickets:1,  fours:6,  sixes:3,  dots:18,  highlight:"Rashid vs Ruturaj: The Bangladeshi googly has dismissed Ruturaj once, but the Indian has played risk-free otherwise." },
+  { id:"m52", bowler:"cummins_srh",   batsman:"pant_dc",     balls:88,  runs:145, wickets:2,  fours:14, sixes:7,  dots:32,  highlight:"Cummins vs Pant: The explosive southpaw has targeted Cummins for 7 sixes, a testament to his power-hitting." },
+  { id:"m53", bowler:"natarajan_srh", batsman:"samson_rr",   balls:65,  runs:92,  wickets:3,  fours:8,  sixes:4,  dots:20,  highlight:"Natarajan vs Samson: The yorker specialist has dismissed Samson twice with pinpoint accuracy at the death." },
+  { id:"m54", bowler:"bumrah_mi",     batsman:"square_mi",   balls:0,   runs:0,   wickets:0,  fours:0,  sixes:0,  dots:0,   highlight:"Bumrah in Powerplay: His devastating early-over breakthroughs set the tone for MI victories." },
+  { id:"m55", bowler:"kuldeep_dc",    batsman:"gill_gt",     balls:78,  runs:95,  wickets:2,  fours:8,  sixes:2,  dots:32,  highlight:"Kuldeep vs Gill: Technical elegance vs mystery seam-spin. Kuldeep has outplayed the young left-hander twice." },
+  { id:"m56", bowler:"axar_dc",       batsman:"buttler_rr",  balls:52,  runs:82,  wickets:2,  fours:3,  sixes:7,  dots:12,  highlight:"Axar vs Buttler: Despite Buttler's destructive power, Axar's tight lines have restricted him 2 times." },
 ];
 
 // ---- 2. PLAYER vs TEAM MATRIX (PvT) ----
@@ -223,6 +250,18 @@ const PLAYER_VS_TEAM = {
     LSG:  { runs:185, avg:37, sr:155, fifties:1, hundreds:0, matches:6  }
   },
 
+  rinku_kkr: {
+    MI:   { runs:280, avg:32, sr:156, fifties:2, hundreds:0, matches:10 },
+    CSK:  { runs:320, avg:36, sr:160, fifties:3, hundreds:0, matches:10 },
+    RCB:  { runs:290, avg:33, sr:158, fifties:2, hundreds:0, matches:10 },
+    SRH:  { runs:250, avg:31, sr:154, fifties:2, hundreds:0, matches:9  },
+    RR:   { runs:310, avg:34, sr:162, fifties:2, hundreds:0, matches:10 },
+    DC:   { runs:275, avg:32, sr:155, fifties:2, hundreds:0, matches:9  },
+    PBKS: { runs:300, avg:33, sr:158, fifties:2, hundreds:0, matches:10 },
+    GT:   { runs:210, avg:35, sr:160, fifties:1, hundreds:0, matches:6  },
+    LSG:  { runs:195, avg:33, sr:156, fifties:1, hundreds:0, matches:6  }
+  },
+
   // ----------------------------------------------------------------
   // ALL-ROUNDERS — both batting + bowling stats in every entry
   // ----------------------------------------------------------------
@@ -325,6 +364,126 @@ const PLAYER_VS_TEAM = {
     PBKS: { wickets:11, econ:7.8, avg:27, bbi:"3/20", matches:8  },
     GT:   { wickets:8,  econ:7.4, avg:25, bbi:"3/16", matches:5  },
     LSG:  { wickets:7,  econ:7.6, avg:26, bbi:"2/18", matches:5  }
+  },
+
+  // ---- ADDITIONAL STARS ----
+  sky_mi: {
+    CSK:  { runs:620, avg:38, sr:162, fifties:4, hundreds:0, matches:20 },
+    RCB:  { runs:580, avg:40, sr:168, fifties:4, hundreds:0, matches:18 },
+    KKR:  { runs:540, avg:36, sr:158, fifties:3, hundreds:0, matches:18 },
+    SRH:  { runs:495, avg:38, sr:165, fifties:3, hundreds:1, matches:16 },
+    RR:   { runs:460, avg:34, sr:160, fifties:3, hundreds:0, matches:16 },
+    DC:   { runs:490, avg:36, sr:162, fifties:3, hundreds:0, matches:16 },
+    PBKS: { runs:510, avg:38, sr:165, fifties:4, hundreds:0, matches:15 },
+    GT:   { runs:260, avg:40, sr:168, fifties:2, hundreds:0, matches:8  },
+    LSG:  { runs:220, avg:44, sr:172, fifties:2, hundreds:0, matches:6  }
+  },
+
+  faf_rcb: {
+    MI:   { runs:620, avg:36, sr:142, fifties:4, hundreds:0, matches:18 },
+    CSK:  { runs:540, avg:32, sr:135, fifties:3, hundreds:0, matches:18 },
+    KKR:  { runs:590, avg:39, sr:145, fifties:4, hundreds:1, matches:18 },
+    SRH:  { runs:510, avg:34, sr:140, fifties:3, hundreds:0, matches:16 },
+    RR:   { runs:480, avg:33, sr:138, fifties:3, hundreds:0, matches:16 },
+    DC:   { runs:520, avg:36, sr:142, fifties:4, hundreds:0, matches:16 },
+    PBKS: { runs:560, avg:38, sr:148, fifties:4, hundreds:0, matches:16 },
+    GT:   { runs:380, avg:38, sr:145, fifties:2, hundreds:1, matches:10 },
+    LSG:  { runs:285, avg:36, sr:140, fifties:2, hundreds:0, matches:8  }
+  },
+
+  pant_dc: {
+    MI:   { runs:680, avg:42, sr:168, fifties:5, hundreds:1, matches:20 },
+    CSK:  { runs:560, avg:36, sr:165, fifties:4, hundreds:0, matches:18 },
+    RCB:  { runs:620, avg:39, sr:170, fifties:5, hundreds:0, matches:18 },
+    KKR:  { runs:540, avg:35, sr:162, fifties:4, hundreds:0, matches:18 },
+    SRH:  { runs:480, avg:32, sr:158, fifties:3, hundreds:0, matches:16 },
+    RR:   { runs:510, avg:34, sr:165, fifties:3, hundreds:0, matches:16 },
+    PBKS: { runs:490, avg:33, sr:160, fifties:3, hundreds:0, matches:16 },
+    GT:   { runs:340, avg:40, sr:172, fifties:2, hundreds:1, matches:10 },
+    LSG:  { runs:280, avg:35, sr:168, fifties:2, hundreds:0, matches:8  }
+  },
+
+  maxwell_rcb: {
+    MI:   { runs:520, avg:38, sr:162, fifties:4, hundreds:0, matches:16 },
+    CSK:  { runs:480, avg:35, sr:158, fifties:3, hundreds:0, matches:16 },
+    KKR:  { runs:560, avg:40, sr:168, fifties:4, hundreds:1, matches:16 },
+    SRH:  { runs:450, avg:33, sr:155, fifties:3, hundreds:0, matches:14 },
+    RR:   { runs:520, avg:39, sr:165, fifties:4, hundreds:1, matches:16 },
+    DC:   { runs:480, avg:37, sr:160, fifties:3, hundreds:0, matches:15 },
+    PBKS: { runs:500, avg:38, sr:162, fifties:4, hundreds:0, matches:15 },
+    GT:   { runs:320, avg:40, sr:165, fifties:2, hundreds:0, matches:8  },
+    LSG:  { runs:240, avg:38, sr:160, fifties:2, hundreds:0, matches:6  }
+  },
+
+  samson_rr: {
+    MI:   { runs:620, avg:32, sr:148, fifties:4, hundreds:1, matches:22 },
+    CSK:  { runs:580, avg:34, sr:144, fifties:4, hundreds:0, matches:20 },
+    RCB:  { runs:490, avg:28, sr:140, fifties:3, hundreds:1, matches:20 },
+    KKR:  { runs:540, avg:36, sr:152, fifties:4, hundreds:0, matches:18 },
+    SRH:  { runs:460, avg:30, sr:145, fifties:3, hundreds:0, matches:18 },
+    PBKS: { runs:510, avg:34, sr:150, fifties:3, hundreds:1, matches:18 },
+    DC:   { runs:480, avg:32, sr:146, fifties:3, hundreds:0, matches:17 },
+    GT:   { runs:210, avg:42, sr:158, fifties:2, hundreds:0, matches:6  },
+    LSG:  { runs:195, avg:39, sr:152, fifties:1, hundreds:1, matches:6  }
+  },
+
+  gill_gt: {
+    MI:   { runs:420, avg:35, sr:138, fifties:3, hundreds:0, matches:14 },
+    CSK:  { runs:380, avg:34, sr:132, fifties:3, hundreds:0, matches:13 },
+    RCB:  { runs:360, avg:36, sr:140, fifties:2, hundreds:1, matches:12 },
+    KKR:  { runs:310, avg:31, sr:128, fifties:2, hundreds:0, matches:12 },
+    SRH:  { runs:290, avg:29, sr:130, fifties:2, hundreds:0, matches:12 },
+    PBKS: { runs:340, avg:34, sr:136, fifties:2, hundreds:1, matches:12 },
+    DC:   { runs:300, avg:30, sr:132, fifties:2, hundreds:0, matches:12 },
+    LSG:  { runs:210, avg:35, sr:140, fifties:1, hundreds:0, matches:6  }
+  },
+
+  head_srh: {
+    MI:   { runs:520, avg:38, sr:152, fifties:4, hundreds:0, matches:16 },
+    CSK:  { runs:480, avg:32, sr:145, fifties:3, hundreds:0, matches:16 },
+    RCB:  { runs:560, avg:40, sr:158, fifties:4, hundreds:1, matches:16 },
+    KKR:  { runs:510, avg:36, sr:150, fifties:4, hundreds:0, matches:16 },
+    RR:   { runs:470, avg:34, sr:148, fifties:3, hundreds:0, matches:16 },
+    DC:   { runs:490, avg:35, sr:152, fifties:3, hundreds:0, matches:16 },
+    PBKS: { runs:530, avg:38, sr:155, fifties:4, hundreds:0, matches:15 },
+    GT:   { runs:320, avg:40, sr:158, fifties:2, hundreds:0, matches:8  },
+    LSG:  { runs:260, avg:36, sr:150, fifties:2, hundreds:0, matches:6  }
+  },
+
+  russell_kkr: {
+    MI:   { runs:420, avg:32, sr:168, fifties:2, hundreds:0, matches:15 },
+    CSK:  { runs:380, avg:28, sr:162, fifties:2, hundreds:0, matches:15 },
+    RCB:  { runs:450, avg:35, sr:172, fifties:3, hundreds:0, matches:14 },
+    SRH:  { runs:380, avg:30, sr:165, fifties:2, hundreds:0, matches:14 },
+    RR:   { runs:410, avg:32, sr:170, fifties:2, hundreds:0, matches:14 },
+    DC:   { runs:390, avg:31, sr:168, fifties:2, hundreds:0, matches:13 },
+    PBKS: { runs:420, avg:33, sr:172, fifties:3, hundreds:0, matches:13 },
+    GT:   { runs:280, avg:35, sr:175, fifties:2, hundreds:0, matches:9  },
+    LSG:  { runs:220, avg:32, sr:168, fifties:1, hundreds:0, matches:7  }
+  },
+
+  siraj_rcb: {
+    MI:   { wickets:18, econ:8.0, avg:26, bbi:"3/16", matches:14 },
+    CSK:  { wickets:16, econ:7.8, avg:25, bbi:"3/18", matches:14 },
+    KKR:  { wickets:15, econ:7.6, avg:24, bbi:"4/16", matches:13 },
+    SRH:  { wickets:12, econ:7.8, avg:28, bbi:"2/18", matches:12 },
+    RR:   { wickets:14, econ:8.0, avg:26, bbi:"3/20", matches:12 },
+    DC:   { wickets:16, econ:7.8, avg:25, bbi:"3/16", matches:13 },
+    PBKS: { wickets:13, econ:8.2, avg:28, bbi:"3/22", matches:12 },
+    GT:   { wickets:8,  econ:7.8, avg:26, bbi:"2/18", matches:6  },
+    LSG:  { wickets:7,  econ:8.0, avg:28, bbi:"2/20", matches:5  }
+  },
+
+  bhuvi_srh: {
+    MI:   { wickets:18, econ:7.4, avg:26, bbi:"3/16", matches:18 },
+    CSK:  { wickets:20, econ:7.2, avg:24, bbi:"4/18", matches:18 },
+    RCB:  { wickets:22, econ:7.6, avg:25, bbi:"3/14", matches:17 },
+    KKR:  { wickets:16, econ:7.8, avg:28, bbi:"3/20", matches:16 },
+    RR:   { wickets:14, econ:7.6, avg:27, bbi:"3/18", matches:15 },
+    DC:   { wickets:12, econ:7.4, avg:26, bbi:"2/14", matches:14 },
+    PBKS: { wickets:15, econ:7.8, avg:28, bbi:"3/22", matches:13 },
+    GT:   { wickets:8,  econ:7.6, avg:26, bbi:"2/16", matches:6  },
+    LSG:  { wickets:7,  econ:7.8, avg:28, bbi:"2/18", matches:5  }
   },
 
 };

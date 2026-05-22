@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import joblib
 import pandas as pd
 import numpy as np
@@ -8,6 +9,7 @@ import os
 from src.features import TEAM_MAPPING
 
 app = Flask(__name__)
+CORS(app)
 
 # Paths to the serialized model and metadata
 MODEL_PATH = "models/model.pkl"

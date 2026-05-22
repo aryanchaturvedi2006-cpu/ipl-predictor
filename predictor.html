@@ -61,7 +61,19 @@
     .fc-bar-b{height:100%;transition:width 1.4s cubic-bezier(.4,0,.2,1)}
     .fc-pcts{display:flex;justify-content:space-between;font-size:0.78rem;font-weight:600}
     .fc-note{font-size:0.68rem;color:var(--text-2);margin-top:6px;line-height:1.5;font-style:italic}
-    
+
+    /* H2H Section */
+    #h2hSection{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:20px 24px}
+    .h2h-header{font-size:0.72rem;font-weight:700;letter-spacing:0.12em;color:var(--text-2);margin-bottom:16px}
+    .h2h-label{font-size:0.65rem;font-weight:400;color:var(--text-3,#555);margin-left:8px;text-transform:none;letter-spacing:0}
+    .h2h-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+    .h2h-stat{text-align:center}
+    .h2h-val{display:block;font-size:1.5rem;font-weight:700;line-height:1}
+    .h2h-desc{display:block;font-size:0.62rem;color:var(--text-2);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em}
+    .h2h-last5{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .h2h-l5-label{font-size:0.7rem;color:var(--text-2)}
+    .h2h-dot{font-size:0.62rem;font-weight:700;padding:3px 8px;border-radius:100px;color:#fff;letter-spacing:0.04em}
+
     /* Analysis */
     .analysis-point{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:var(--radius);border-left:3px solid;margin-bottom:8px;font-size:0.85rem;color:var(--text-2);line-height:1.6;background:rgba(255,255,255,0.02)}
     .ap-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
@@ -256,8 +268,11 @@
       </div>
 
       <!-- Factor Breakdown -->
-      <p class="section-title" style="margin-bottom:16px">📊 Factor Breakdown</p>
+      <p class="section-title" style="margin-bottom:16px">FACTOR BREAKDOWN</p>
       <div class="factor-grid" id="factorGrid" style="margin-bottom:28px"></div>
+
+      <!-- Informational H2H -->
+      <div id="h2hSection" style="display:none;margin-bottom:28px"></div>
 
       <!-- AI Analysis -->
       <div class="card" style="margin-bottom:28px">

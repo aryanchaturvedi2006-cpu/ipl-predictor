@@ -37,7 +37,7 @@ team_encoder.fit(all_teams)
 train_df = df[df["season"] <= 2023]
 test_df = df[df["season"] >= 2024]
 
-features = ["elo_diff", "form_diff", "venue_diff"]
+features = ["elo_diff", "form_diff", "venue_diff", "batting_strength_diff", "bowling_strength_diff", "toss_impact"]
 target = "target"
 
 X_train = train_df[features]
@@ -54,10 +54,12 @@ print(f"Testing matches (2024-2025): {len(test_df)}")
 # Using simple shallow trees (max_depth=3) and small learning rate to avoid overfitting
 model = XGBClassifier(
     n_estimators=100,
-    learning_rate=0.03,
-    max_depth=3,
-    subsample=0.8,
-    colsample_bytree=0.8,
+    learning_rate=0.02,
+    max_depth=2,
+    subsample=0.7,
+    colsample_bytree=0.7,
+    reg_alpha=0.5,
+    reg_lambda=1.0,
     random_state=42,
     eval_metric="logloss"
 )
@@ -91,7 +93,10 @@ metadata = {
     "all_teams": all_teams,
     "elo": final_states["elo"],
     "recent_form": final_states["recent_form"],
-    "venue_stats": final_states["venue_stats"]
+    "venue_stats": final_states["venue_stats"],
+    "venue_overall": final_states.get("venue_overall", {}),
+    "h2h_stats": final_states.get("h2h_stats", {}),
+    "team_perf": final_states.get("team_perf", {})
 }
 joblib.dump(metadata, "models/encoders.pkl")
 

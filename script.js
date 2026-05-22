@@ -262,7 +262,8 @@ async function runPrediction() {
       pitch, weather, wind, tossDecision, tossWinner,
       venue: v,
       isDay: timing === 'day',
-      features: data.feature_values_used
+      features: data.feature_values_used,
+      h2h: data.informational_h2h || null
     };
     
     hideLoader();
@@ -319,21 +320,28 @@ function displayResults(r) {
     fB.style.background = tB.primaryColor;
   }, 80);
 
-  // Factor Cards
-  // Factor Cards - Driven by XGBoost Model Features
-  const eloA = Math.max(0, Math.min(100, 50 + (r.features.elo_diff / 5)));
-  const eloB = 100 - eloA;
-  
-  const formA = Math.max(0, Math.min(100, 50 + (r.features.form_diff * 50))); 
-  const formB = 100 - formA;
-  
-  const venueA = Math.max(0, Math.min(100, 50 + (r.features.venue_diff * 50)));
-  const venueB = 100 - venueA;
+  // Factor Cards - 6 XGBoost Features
+  const f = r.features;
+
+  // Normalize each diff value to a 0-100 scale for display
+  function normDiff(val, scale) {
+    return Math.max(0, Math.min(100, 50 + (val / scale) * 50));
+  }
+
+  const eloA   = normDiff(f.elo_diff, 200),   eloB   = 100 - eloA;
+  const formA  = normDiff(f.form_diff, 1),     formB  = 100 - formA;
+  const venueA = normDiff(f.venue_diff, 1),    venueB = 100 - venueA;
+  const batA   = normDiff(f.batting_strength_diff,  20), batB   = 100 - batA;
+  const bowlA  = normDiff(f.bowling_strength_diff,  15), bowlB  = 100 - bowlA;
+  const tossA  = normDiff(f.toss_impact, 0.3), tossB  = 100 - tossA;
 
   const factors = [
-    { name: 'Elo Rating Difference', weight: 'XGB', f: {a: eloA, b: eloB}, note: `Elo difference: ${r.features.elo_diff.toFixed(2)}. Represents historical team strength.` },
-    { name: 'Recent Form (Last 5)', weight: 'XGB', f: {a: formA, b: formB}, note: `Form win % difference: ${r.features.form_diff.toFixed(2)}. Represents current momentum.` },
-    { name: 'Venue Win Percentage', weight: 'XGB', f: {a: venueA, b: venueB}, note: `Venue win % difference: ${r.features.venue_diff.toFixed(2)}. Represents ground advantage.` }
+    { name: 'Elo Rating Difference',  weight: 'XGB', f: {a: eloA,   b: eloB},   note: `Elo diff: ${f.elo_diff.toFixed(0)} pts. Tracks long-run team quality through wins/losses.` },
+    { name: 'Recent Form (Last 5)',   weight: 'XGB', f: {a: formA,  b: formB},  note: `Form diff: ${(f.form_diff * 100).toFixed(0)}%. Win rate of last 5 matches. Current momentum.` },
+    { name: 'Venue Win %',            weight: 'XGB', f: {a: venueA, b: venueB}, note: `Venue diff: ${(f.venue_diff * 100).toFixed(0)}%. Ground-specific win history at this venue.` },
+    { name: 'Batting Strength',       weight: 'XGB', f: {a: batA,   b: batB},   note: `Diff: ${f.batting_strength_diff.toFixed(1)}. Composite of powerplay, middle & death overs run rate (last 10 games).` },
+    { name: 'Bowling Strength',       weight: 'XGB', f: {a: bowlA,  b: bowlB},  note: `Diff: ${f.bowling_strength_diff.toFixed(1)}. Composite of powerplay wkts, death economy & wicket-taking (last 10 games).` },
+    { name: 'Toss + Venue Advantage', weight: 'XGB', f: {a: tossA,  b: tossB},  note: `Toss impact: ${f.toss_impact.toFixed(3)}. Based on this venue's historical chase vs defend bias.` }
   ];
 
   const grid = document.getElementById('factorGrid');
@@ -358,6 +366,27 @@ function displayResults(r) {
         <div class="fc-note">${fac.note}</div>
       </div>`;
     }).join('');
+  }
+
+  // Informational H2H Section
+  const h2hEl = document.getElementById('h2hSection');
+  if (h2hEl && r.h2h) {
+    const h = r.h2h;
+    const last5HTML = (h.last_5 || []).slice(-5).map(w => {
+      const isA = w === tA.name;
+      return `<span class="h2h-dot" style="background:${isA ? tA.primaryColor : tB.primaryColor}">${isA ? tA.shortName : tB.shortName}</span>`;
+    }).join('');
+    h2hEl.style.display = 'block';
+    h2hEl.innerHTML = `
+      <div class="h2h-header">HEAD TO HEAD <span class="h2h-label">(Context only - not used in prediction)</span></div>
+      <div class="h2h-stats">
+        <div class="h2h-stat"><span class="h2h-val" style="color:${tA.primaryColor}">${h.team1_wins}</span><span class="h2h-desc">${tA.shortName} Wins</span></div>
+        <div class="h2h-stat"><span class="h2h-val" style="color:${tB.primaryColor}">${h.team2_wins}</span><span class="h2h-desc">${tB.shortName} Wins</span></div>
+        <div class="h2h-stat"><span class="h2h-val">${h.team1_max_margin}</span><span class="h2h-desc">${tA.shortName} Best Win (margin)</span></div>
+        <div class="h2h-stat"><span class="h2h-val">${h.team2_max_margin}</span><span class="h2h-desc">${tB.shortName} Best Win (margin)</span></div>
+      </div>
+      <div class="h2h-last5"><span class="h2h-l5-label">Last 5 meetings:</span> ${last5HTML || '<em>No data</em>'}</div>
+    `;
   }
 
   // AI Analysis

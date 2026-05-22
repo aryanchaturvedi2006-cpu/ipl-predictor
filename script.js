@@ -235,7 +235,7 @@ async function runPrediction() {
     // Use local backend for development, and the Render backend URL for production
     const API_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
       ? 'http://localhost:5000/predict' 
-      : 'https://YOUR-RENDER-BACKEND-URL.onrender.com/predict'; // We will update this soon!
+      : 'https://ipl-predictor-backend-04gv.onrender.com/predict';
 
     const response = await fetch(API_URL, {
       method: 'POST',

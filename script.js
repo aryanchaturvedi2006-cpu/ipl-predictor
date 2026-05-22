@@ -232,7 +232,12 @@ async function runPrediction() {
       toss_decision: tossDecision
     };
 
-    const response = await fetch('http://localhost:5000/predict', {
+    // Use local backend for development, and the Render backend URL for production
+    const API_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:5000/predict' 
+      : 'https://YOUR-RENDER-BACKEND-URL.onrender.com/predict'; // We will update this soon!
+
+    const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

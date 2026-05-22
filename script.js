@@ -189,132 +189,24 @@ function getMatchupData(aKey, bKey) {
   return { myDismissals: 85, theirDismissals: 85, myBatsmanAvg: 28, theirBatsmanAvg: 28 };
 }
 
-function pct(scoreA, scoreB, weight) {
-  const total = scoreA + scoreB || 1;
-  return { a: (scoreA / total) * weight, b: (scoreB / total) * weight };
-}
-
 function getConsistencyScore(teamKey) {
   const h = TEAM_HISTORY[teamKey];
   if (!h) return 50;
   return Math.min((h.playoffs / h.seasons) * 60 + (h.titles / 5) * 40, 100);
 }
 
-function predict(aKey, bKey, venueKey, pitch, weather, wind, tossWinner, tossDecision, matchTiming) {
-  const tA = TEAMS[aKey], tB = TEAMS[bKey];
-  const venue = VENUES[venueKey] || Object.values(VENUES)[0];
-  const isDay = matchTiming === 'day';
-
-  // Day match: spinner quality boosted by up to 15%, dew nullified
-  // Night match: pacers get swing boost, dew activates
-  const spinBoost = isDay ? 1.15 : 1.0;
-  const paceBoost = isDay ? 1.0  : 1.08;
-  const effectiveDew = isDay ? 'low' : venue.dewFactor;
-
-  // ---- F1: Squad Base Quality (13%) ----
-  const sqA = tA.battingDepth * 0.3 + tA.powerHitting * 0.25 + tA.fielding * 0.2 + tA.allRounderQuality * 0.25;
-  const sqB = tB.battingDepth * 0.3 + tB.powerHitting * 0.25 + tB.fielding * 0.2 + tB.allRounderQuality * 0.25;
-  const f1 = pct(sqA, sqB, 20); // Boosted from 13% to 20%
-
-  // ---- F2: Pitch-Situational (28%) ----
-  let pA, pB;
-  const effectivePitch = pitch || venue.defaultPitch;
-  if (effectivePitch === 'green') {
-    pA = tA.pacerQuality * paceBoost * 0.6 + tA.battingVsPace * 0.4;
-    pB = tB.pacerQuality * paceBoost * 0.6 + tB.battingVsPace * 0.4;
-  } else if (effectivePitch === 'dry') {
-    pA = tA.spinnerQuality * spinBoost * 0.6 + tA.battingVsSpin * 0.4;
-    pB = tB.spinnerQuality * spinBoost * 0.6 + tB.battingVsSpin * 0.4;
-  } else {
-    // Flat pitch: day → spin side gets slight lift; night → power hitting rules
-    const flatSpinFactor = isDay ? 0.2 : 0.1;
-    pA = tA.powerHitting * (0.55 - flatSpinFactor) + tA.battingDepth * 0.35 + tA.spinnerQuality * spinBoost * flatSpinFactor;
-    pB = tB.powerHitting * (0.55 - flatSpinFactor) + tB.battingDepth * 0.35 + tB.spinnerQuality * spinBoost * flatSpinFactor;
-  }
-  const f2 = pct(pA, pB, 40); // Boosted from 28% to 40%
-
-  // ---- F3: Bowler vs Batsman Matchups (12%) ----
-  const md = getMatchupData(aKey, bKey);
-  const mA = md.myDismissals * 0.6 + md.myBatsmanAvg * 0.4;
-  const mB = md.theirDismissals * 0.6 + md.theirBatsmanAvg * 0.4;
-  const f3 = pct(mA, mB, 12); // Kept for display, but 0% impact below
-
-  // ---- F4: Weather & Wind (13%) ----
-  let wA = 50, wB = 50;
-  if (weather === 'overcast') { wA = tA.pacerQuality * paceBoost; wB = tB.pacerQuality * paceBoost; }
-  else if (weather === 'humid') {
-    wA = 50 + tA.pacerQuality * 0.1 * paceBoost;
-    wB = 50 + tB.pacerQuality * 0.1 * paceBoost;
-  }
-  // Day match: add a spinner bonus on top of weather
-  if (isDay) { wA += tA.spinnerQuality * 0.08; wB += tB.spinnerQuality * 0.08; }
-  if (wind === 'high')   { wA += tA.pacerQuality * 0.2 * paceBoost; wB += tB.pacerQuality * 0.2 * paceBoost; }
-  else if (wind === 'breezy') { wA += tA.pacerQuality * 0.1 * paceBoost; wB += tB.pacerQuality * 0.1 * paceBoost; }
-  const f4 = pct(wA, wB, 15); // Boosted from 13% to 15%
-
-  // ---- F5: Ground Dynamics (12%) ----
-  let gA = venue.teamWinPct?.[aKey] || 50;
-  let gB = venue.teamWinPct?.[bKey] || 50;
-  if (venue.dimensions === 'small') { gA += tA.powerHitting * 0.08; gB += tB.powerHitting * 0.08; }
-  else if (venue.dimensions === 'large') { gA += tA.spinnerQuality * 0.08; gB += tB.spinnerQuality * 0.08; }
-  const f5 = pct(gA, gB, 15); // Boosted from 12% to 15%
-
-  // ---- F6: Toss + Dew + Bat First/Chase (10%) ----
-  const tossIsA = tossWinner === aKey;
-  let tA_score = 50, tB_score = 50;
-  if (tossDecision === 'bat') {
-    const adv = venue.batFirstWinPct > 50 ? 65 : 38;
-    tA_score = tossIsA ? adv : 100 - adv;
-    tB_score = 100 - tA_score;
-  } else {
-    let adv = venue.chaseWinPct > 50 ? 62 : 40;
-    // Dew boost only in night matches
-    if (!isDay) {
-      adv += effectiveDew === 'high' ? 14 : effectiveDew === 'medium' ? 7 : 0;
-    } else {
-      // Day match: no dew, bowling 2nd is easier (spinner advantage), slight bat-first boost
-      adv = Math.max(adv - 8, 35);
-    }
-    adv = Math.min(adv, 82);
-    tA_score = tossIsA ? adv : 100 - adv;
-    tB_score = 100 - tA_score;
-  }
-  const f6 = pct(tA_score, tB_score, 10);
-
-  // ---- F7: Team Consistency & History (12%) ----
-  const cA = getConsistencyScore(aKey);
-  const cB = getConsistencyScore(bKey);
-  const f7 = pct(cA, cB, 12); // Kept for display, but 0% impact below
-
-  // ---- F8: Current Form (0%) ----
-  const formA = (tA.recentForm || []).filter(x => x === 'W').length * 20;
-  const formB = (tB.recentForm || []).filter(x => x === 'W').length * 20;
-  const f8 = pct(formA, formB, 10); // Reference only
-
-  // ---- Total ----
-  // F3 and F7 are now excluded to neutralize historical bias
-  const totalA = f1.a + f2.a + f4.a + f5.a + f6.a;
-  const totalB = f1.b + f2.b + f4.b + f5.b + f6.b;
-
-  return {
-    totalA: +totalA.toFixed(2),
-    totalB: +totalB.toFixed(2),
-    winner: totalA >= totalB ? aKey : bKey,
-    f1, f2, f3, f4, f5, f6, f7, f8,
-    pitch: effectivePitch, weather, wind, tossDecision, tossWinner, venue, aKey, bKey,
-    matchTiming: matchTiming || 'night', isDay,
-  };
-}
-
 // ================================================================
 // UI — RUN PREDICTION
 // ================================================================
 
-function runPrediction() {
+async function runPrediction() {
   const aKey    = document.getElementById('teamA').value;
   const bKey    = document.getElementById('teamB').value;
   const venueKey = document.getElementById('venue').value;
-  if (!aKey || !bKey || aKey === bKey) return;
+  if (!aKey || !bKey || aKey === bKey) {
+    alert("Please select two different teams.");
+    return;
+  }
   const tossWinner  = document.getElementById('tossWinner').value || aKey;
   const tossDecision = document.querySelector('input[name="toss"]:checked')?.value
                      || document.querySelector('input[name="tossDecision"]:checked')?.value || 'bat';
@@ -324,12 +216,59 @@ function runPrediction() {
 
   const timing     = document.querySelector('input[name="timing"]:checked')?.value || 'night';
 
+  const tA = TEAMS[aKey];
+  const tB = TEAMS[bKey];
+  const v = VENUES[venueKey];
+  const tw = TEAMS[tossWinner];
+
   showLoader();
-  setTimeout(() => {
-    const result = predict(aKey, bKey, venueKey, pitch, weather, wind, tossWinner, tossDecision, timing);
+  
+  try {
+    const payload = {
+      team1: tA.name,
+      team2: tB.name,
+      venue: v.name,
+      toss_winner: tw.name,
+      toss_decision: tossDecision
+    };
+
+    const response = await fetch('http://localhost:5000/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || `HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Process API response
+    const probA = (data.probabilities[tA.name] || data.probabilities[tA.shortName] || 0) * 100;
+    const probB = (data.probabilities[tB.name] || data.probabilities[tB.shortName] || 0) * 100;
+    
+    const result = {
+      totalA: probA,
+      totalB: probB,
+      winner: probA >= probB ? aKey : bKey,
+      aKey, bKey,
+      pitch, weather, wind, tossDecision, tossWinner,
+      venue: v,
+      isDay: timing === 'day',
+      features: data.feature_values_used
+    };
+    
     hideLoader();
     displayResults(result);
-  }, 1600);
+  } catch (error) {
+    hideLoader();
+    const hint = document.getElementById('predictHint');
+    if (hint) hint.textContent = '❌ Error: ' + error.message;
+    alert('Prediction Error: ' + error.message + '\n\nMake sure the Flask server is running locally on port 5000.');
+    console.error('Fetch error:', error);
+  }
 }
 
 // ================================================================
@@ -376,15 +315,20 @@ function displayResults(r) {
   }, 80);
 
   // Factor Cards
+  // Factor Cards - Driven by XGBoost Model Features
+  const eloA = Math.max(0, Math.min(100, 50 + (r.features.elo_diff / 5)));
+  const eloB = 100 - eloA;
+  
+  const formA = Math.max(0, Math.min(100, 50 + (r.features.form_diff * 50))); 
+  const formB = 100 - formA;
+  
+  const venueA = Math.max(0, Math.min(100, 50 + (r.features.venue_diff * 50)));
+  const venueB = 100 - venueA;
+
   const factors = [
-    { name: 'Squad Base Quality',        weight: '20%', f: r.f1, note: `Batting depth, power hitting, fielding & all-round quality combined.` },
-    { name: 'Pitch Dynamics',            weight: '40%', f: r.f2, note: pitchNote(r.pitch, tA, tB, r.isDay) },
-    { name: 'Matchups (Reference Only)', weight: '0%',  f: r.f3, note: `Historical H2H info shown for context ONLY. (Current impact: 0%)` },
-    { name: 'Weather & Wind',            weight: '15%', f: r.f4, note: weatherNote(r.weather, r.wind, tA, tB, r.isDay) },
-    { name: 'Ground Dynamics',           weight: '15%', f: r.f5, note: groundNote(r.venue, tA, tB) },
-    { name: 'Toss, Dew & Conditions',    weight: '10%', f: r.f6, note: tossNote(r.tossWinner, r.tossDecision, r.venue, tA, tB, r.isDay) },
-    { name: 'Consistency (Ref Only)',    weight: '0%',  f: r.f7, note: `Historical "habit of winning" — Contextual ONLY. (Current impact: 0%)` },
-    { name: 'Current Form (Ref Only)',   weight: '0%',  f: r.f8, note: formNote(tA, tB) },
+    { name: 'Elo Rating Difference', weight: 'XGB', f: {a: eloA, b: eloB}, note: `Elo difference: ${r.features.elo_diff.toFixed(2)}. Represents historical team strength.` },
+    { name: 'Recent Form (Last 5)', weight: 'XGB', f: {a: formA, b: formB}, note: `Form win % difference: ${r.features.form_diff.toFixed(2)}. Represents current momentum.` },
+    { name: 'Venue Win Percentage', weight: 'XGB', f: {a: venueA, b: venueB}, note: `Venue win % difference: ${r.features.venue_diff.toFixed(2)}. Represents ground advantage.` }
   ];
 
   const grid = document.getElementById('factorGrid');

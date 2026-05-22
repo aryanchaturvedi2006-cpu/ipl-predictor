@@ -154,6 +154,15 @@
     <p class="section-title">Step 2 — Match Conditions</p>
     <div class="card" style="margin-bottom:24px">
       <div class="cond-grid">
+        <!-- Prediction Mode Switcher -->
+        <div class="form-group cond-full" style="border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+          <label class="label">🎯 Prediction Stage</label>
+          <div class="radio-row" id="modeRow">
+            <label class="radio-pill active" data-val="pre_toss"><input type="radio" name="pred_mode" value="pre_toss" checked onchange="toggleTossUI()"/><span class="rp-title">Pre-Toss Mode</span><span class="rp-sub">Before toss happens</span></label>
+            <label class="radio-pill" data-val="post_toss"><input type="radio" name="pred_mode" value="post_toss" onchange="toggleTossUI()"/><span class="rp-title">Post-Toss Mode</span><span class="rp-sub">Toss completed</span></label>
+          </div>
+        </div>
+
         <!-- Venue -->
         <div class="form-group cond-full">
           <label class="label">🏟️ Venue</label>
@@ -193,12 +202,12 @@
           </div>
         </div>
 
-        <!-- Toss -->
-        <div class="form-group">
+        <!-- Toss (Hidden in Pre-Toss Mode) -->
+        <div class="form-group toss-group" style="display: none;">
           <label class="label">🪙 Toss Winner</label>
           <select class="select" id="tossWinner"><option value="">-- Select --</option></select>
         </div>
-        <div class="form-group">
+        <div class="form-group toss-group" style="display: none;">
           <label class="label">🏏 Toss Decision</label>
           <div class="radio-row" id="tossRow">
             <label class="radio-pill active" data-val="bat"><input type="radio" name="toss" value="bat" checked/><span class="rp-icon">🏏</span><span class="rp-title">Bat First</span><span class="rp-sub">Set target</span></label>

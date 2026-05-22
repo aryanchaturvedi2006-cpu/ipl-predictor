@@ -21,6 +21,9 @@ metadata = None
 elo_dict = {}
 recent_form_dict = {}
 venue_stats_dict = {}
+venue_overall = {}
+h2h_stats = {}
+team_perf = {}
 valid_teams = []
 
 def load_assets():
@@ -28,7 +31,8 @@ def load_assets():
     Loads the trained XGBoost model and corresponding encoders/statistics metadata.
     Initializes helper data structures for rapid real-time lookup.
     """
-    global model, metadata, elo_dict, recent_form_dict, venue_stats_dict, valid_teams
+    global model, metadata, elo_dict, recent_form_dict, venue_stats_dict
+    global venue_overall, h2h_stats, team_perf, valid_teams
     
     if not os.path.exists(MODEL_PATH) or not os.path.exists(ENCODERS_PATH):
         raise FileNotFoundError(
@@ -39,10 +43,13 @@ def load_assets():
     model = joblib.load(MODEL_PATH)
     metadata = joblib.load(ENCODERS_PATH)
     
-    elo_dict = metadata["elo"]
-    recent_form_dict = metadata["recent_form"]
-    venue_stats_dict = metadata["venue_stats"]
-    valid_teams = metadata["all_teams"]
+    elo_dict = metadata.get("elo", {})
+    recent_form_dict = metadata.get("recent_form", {})
+    venue_stats_dict = metadata.get("venue_stats", {})
+    venue_overall = metadata.get("venue_overall", {})
+    h2h_stats = metadata.get("h2h_stats", {})
+    team_perf = metadata.get("team_perf", {})
+    valid_teams = metadata.get("all_teams", [])
 
 # Load the model assets immediately when the server starts
 load_assets()
@@ -60,16 +67,6 @@ def clean_team_name(name):
 def predict():
     """
     POST /predict
-    Expects a JSON payload:
-    {
-        "team1": "Team A Name",
-        "team2": "Team B Name",
-        "venue": "Venue Name",
-        "toss_winner": "Toss Winner Name",
-        "toss_decision": "bat/bowl"
-    }
-    
-    Returns structured JSON with probabilities and feature values.
     """
     # 1. Parse JSON payload
     data = request.get_json(silent=True)
@@ -93,84 +90,115 @@ def predict():
     toss_winner = clean_team_name(raw_toss_winner)
 
     # 3. Input Validation
-    # Validate team names
     invalid_teams = []
-    if t1 not in valid_teams:
-        invalid_teams.append(f"team1 ({raw_t1})")
-    if t2 not in valid_teams:
-        invalid_teams.append(f"team2 ({raw_t2})")
+    if t1 not in valid_teams: invalid_teams.append(f"team1 ({raw_t1})")
+    if t2 not in valid_teams: invalid_teams.append(f"team2 ({raw_t2})")
     if invalid_teams:
-        return jsonify({
-            "error": f"Unknown team(s) provided: {', '.join(invalid_teams)}. "
-                     f"Please use standard IPL team names."
-        }), 400
+        return jsonify({"error": f"Unknown team(s) provided: {', '.join(invalid_teams)}."}), 400
 
     if t1 == t2:
         return jsonify({"error": "team1 and team2 must be different teams."}), 400
 
-    # Validate toss winner
     if toss_winner not in [t1, t2]:
         return jsonify({"error": f"toss_winner must be either team1 ({raw_t1}) or team2 ({raw_t2})."}), 400
 
-    # Validate toss decision
-    if toss_decision not in ["bat", "bowl"]:
-        return jsonify({"error": "toss_decision must be either 'bat' or 'bowl'."}), 400
+    if toss_decision not in ["bat", "bowl", "field"]:
+        return jsonify({"error": "toss_decision must be either 'bat' or 'field'/'bowl'."}), 400
+    if toss_decision == "bowl": toss_decision = "field"
 
-    # Validate venue presence
     if not venue:
         return jsonify({"error": "venue field cannot be empty."}), 400
 
     # 4. Dynamic Online Feature Generation
-    # Compute Elo Rating Difference
-    elo_t1 = elo_dict.get(t1, 1500.0)
-    elo_t2 = elo_dict.get(t2, 1500.0)
-    elo_diff = elo_t1 - elo_t2
+    elo_diff = elo_dict.get(t1, 1500.0) - elo_dict.get(t2, 1500.0)
 
-    # Compute Recent Form Difference (last 5 matches win percentage)
-    form_t1_history = recent_form_dict.get(t1, [])[-5:]
-    form_t2_history = recent_form_dict.get(t2, [])[-5:]
-    
-    form_t1 = np.mean(form_t1_history) if len(form_t1_history) > 0 else 0.5
-    form_t2 = np.mean(form_t2_history) if len(form_t2_history) > 0 else 0.5
-    form_diff = form_t1 - form_t2
+    f1_hist = recent_form_dict.get(t1, [])[-5:]
+    f2_hist = recent_form_dict.get(t2, [])[-5:]
+    form_diff = (np.mean(f1_hist) if f1_hist else 0.5) - (np.mean(f2_hist) if f2_hist else 0.5)
 
-    # Compute Venue Win Percentage Difference
-    # venue_stats_dict maps (team_name, venue_name) -> [wins, matches_played]
-    wins1, matches1 = venue_stats_dict.get((t1, venue), [0, 0])
-    wins2, matches2 = venue_stats_dict.get((t2, venue), [0, 0])
+    v1_wins, v1_matches = venue_stats_dict.get(f"{t1}_{venue}", venue_stats_dict.get((t1, venue), [0, 0]))
+    v2_wins, v2_matches = venue_stats_dict.get(f"{t2}_{venue}", venue_stats_dict.get((t2, venue), [0, 0]))
+    venue_diff = (v1_wins / v1_matches if v1_matches > 0 else 0.5) - (v2_wins / v2_matches if v2_matches > 0 else 0.5)
+
+    # Toss Impact
+    vo = venue_overall.get(venue, {'matches': 0, 'bat_first_wins': 0, 'total_first_score': 0})
+    chase_adv = 0
+    if vo['matches'] >= 5:
+        chase_adv = 0.5 - (vo['bat_first_wins'] / vo['matches'])
     
-    venue_t1 = wins1 / matches1 if matches1 > 0 else 0.5
-    venue_t2 = wins2 / matches2 if matches2 > 0 else 0.5
-    venue_diff = venue_t1 - venue_t2
+    t1_toss_adv = 0
+    if toss_winner == t1:
+        t1_toss_adv = chase_adv if toss_decision == 'field' else -chase_adv
+    elif toss_winner == t2:
+        t1_toss_adv = -chase_adv if toss_decision == 'field' else chase_adv
+
+    # Batting & Bowling Strength
+    def get_strength(team):
+        perf = team_perf.get(team, [])
+        if not perf:
+            return {'bat_score': 50.0, 'bowl_score': 50.0}
+            
+        pp_rr = np.mean([p['bat'].get('powerplay_runs', 0) / 6.0 for p in perf])
+        mid_rr = np.mean([p['bat'].get('middle_runs', 0) / 9.0 for p in perf])
+        death_rr = np.mean([p['bat'].get('death_runs', 0) / 5.0 for p in perf])
+        avg_score = np.mean([sum(p['bat'].get(k, 0) for k in ['powerplay_runs', 'middle_runs', 'death_runs']) for p in perf])
+        chases = [p['chased_won'] for p in perf if p['chased_won'] is not None]
+        chase_pct = np.mean(chases) if chases else 0.5
+        
+        pp_wkts = np.mean([p['bowl'].get('powerplay_wkts', 0) for p in perf])
+        death_econ_list = [p['bowl'].get('death_runs', 0) / max(1, p['bowl'].get('death_overs', 5.0)) for p in perf]
+        death_econ = np.mean(death_econ_list) if death_econ_list else 10.0
+        avg_wkts = np.mean([sum(p['bowl'].get(k, 0) for k in ['powerplay_wkts', 'middle_wkts', 'death_wkts']) for p in perf])
+        defends = [p['defended_won'] for p in perf if p['defended_won'] is not None]
+        defend_pct = np.mean(defends) if defends else 0.5
+        
+        bat_score = (pp_rr * 2) + (mid_rr * 1) + (death_rr * 3) + (chase_pct * 20) + (avg_score * 0.1)
+        bowl_score = (pp_wkts * 10) - (death_econ * 2) + (avg_wkts * 2) + (defend_pct * 20)
+        
+        return {'bat_score': bat_score, 'bowl_score': bowl_score}
+
+    st1 = get_strength(t1)
+    st2 = get_strength(t2)
+    bat_diff = st1['bat_score'] - st2['bat_score']
+    bowl_diff = st1['bowl_score'] - st2['bowl_score']
 
     # 5. Model Inference
-    # Create input DataFrame matching the exact features used during training
     input_data = pd.DataFrame([{
         "elo_diff": elo_diff,
         "form_diff": form_diff,
-        "venue_diff": venue_diff
+        "venue_diff": venue_diff,
+        "batting_strength_diff": bat_diff,
+        "bowling_strength_diff": bowl_diff,
+        "toss_impact": t1_toss_adv
     }])
 
-    # Generate probabilities for target classes
-    # Target = 1 corresponds to team1 winning; target = 0 corresponds to team2 winning
     probabilities = model.predict_proba(input_data)[0]
     prob_team2 = float(probabilities[0])
     prob_team1 = float(probabilities[1])
-
-    # Determine predicted winner
     predicted_winner = raw_t1 if prob_team1 >= prob_team2 else raw_t2
 
-    # 6. Structured JSON Response
+    # Informational H2H
+    pair = tuple(sorted([t1, t2]))
+    h2h_key = f"{pair[0]}_vs_{pair[1]}"
+    h2h_data = h2h_stats.get(h2h_key, {'wins': {}, 'last_5': [], 'max_margin': {}})
+
     response = {
         "predicted_winner": predicted_winner,
-        "probabilities": {
-            raw_t1: round(prob_team1, 4),
-            raw_t2: round(prob_team2, 4)
-        },
+        "probabilities": {raw_t1: round(prob_team1, 4), raw_t2: round(prob_team2, 4)},
         "feature_values_used": {
             "elo_diff": round(elo_diff, 2),
             "form_diff": round(form_diff, 4),
-            "venue_diff": round(venue_diff, 4)
+            "venue_diff": round(venue_diff, 4),
+            "batting_strength_diff": round(bat_diff, 2),
+            "bowling_strength_diff": round(bowl_diff, 2),
+            "toss_impact": round(t1_toss_adv, 4)
+        },
+        "informational_h2h": {
+            "team1_wins": h2h_data['wins'].get(t1, 0),
+            "team2_wins": h2h_data['wins'].get(t2, 0),
+            "last_5": h2h_data['last_5'],
+            "team1_max_margin": h2h_data['max_margin'].get(t1, 0),
+            "team2_max_margin": h2h_data['max_margin'].get(t2, 0)
         }
     }
 

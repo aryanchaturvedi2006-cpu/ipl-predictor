@@ -11,11 +11,23 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById(id)?.addEventListener('change', checkReady);
   });
   // Wire timing hint update
+  // Wire timing hint update
   document.querySelectorAll('input[name="timing"]').forEach(r => {
     r.addEventListener('change', updateTimingHint);
   });
   wireTacticalSelectors();
 });
+
+// ---- Toggle Toss UI based on Prediction Mode ----
+function toggleTossUI() {
+  const mode = document.querySelector('input[name="pred_mode"]:checked')?.value || 'pre_toss';
+  const tossGroups = document.querySelectorAll('.toss-group');
+  if (mode === 'post_toss') {
+    tossGroups.forEach(g => g.style.display = 'block');
+  } else {
+    tossGroups.forEach(g => g.style.display = 'none');
+  }
+}
 
 // ---- Wire tactical select listeners ----
 function wireTacticalSelectors() {
@@ -224,13 +236,21 @@ async function runPrediction() {
   showLoader();
   
   try {
-    const payload = {
+    const mode = document.querySelector('input[name="pred_mode"]:checked')?.value || 'pre_toss';
+    
+    let payload = {
       team1: tA.name,
       team2: tB.name,
-      venue: v.name,
-      toss_winner: tw.name,
-      toss_decision: tossDecision
+      venue: v.name
     };
+    
+    if (mode === 'post_toss') {
+      payload.toss_winner = tw.name;
+      payload.toss_decision = tossDecision;
+    } else {
+      payload.toss_winner = '';
+      payload.toss_decision = '';
+    }
 
     // Use local backend for development, and the Render backend URL for production
     const API_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
@@ -263,7 +283,9 @@ async function runPrediction() {
       venue: v,
       isDay: timing === 'day',
       features: data.feature_values_used,
-      h2h: data.informational_h2h || null
+      h2h: data.informational_h2h || null,
+      mode: data.prediction_mode,
+      tossSwing: data.possible_toss_swing || null
     };
     
     hideLoader();
@@ -393,6 +415,15 @@ function displayResults(r) {
   const analysis = generateAnalysis(r, tA, tB, winner);
   const ab = document.getElementById('analysisBody');
   if (ab) ab.innerHTML = analysis;
+  
+  // Toss Swing Info (Pre-Toss Mode)
+  if (r.mode === 'pre_toss' && r.tossSwing) {
+    const tsDiv = document.createElement('div');
+    tsDiv.className = 'analysis-point';
+    tsDiv.style.borderLeftColor = '#00c8e6';
+    tsDiv.innerHTML = `<span class="ap-icon">🔮</span><span><strong>Possible Toss Swing:</strong> ${r.tossSwing}</span>`;
+    ab.appendChild(tsDiv);
+  }
 
   // Show
   const section = document.getElementById('resultsSection');
@@ -717,18 +748,26 @@ function generateAnalysis(r, tA, tB, winner) {
   }
 
   // Toss
-  const tw = TEAMS[r.tossWinner];
-  if (tw) {
-    const goodCall = (r.tossDecision === 'bat' && r.venue.batFirstWinPct > 50) || (r.tossDecision === 'bowl' && r.venue.chaseWinPct > 50);
-    const dewNote = r.venue.dewFactor === 'high' ? ' Heavy dew will make bowling in the 2nd innings very difficult.' : '';
-    const choiceText = r.tossDecision === 'bat' ? 'batting' : 'chasing';
-    const statPct = r.tossDecision === 'bat' ? r.venue.batFirstWinPct : r.venue.chaseWinPct;
-    const advantageText = statPct > 50 ? 'historically favours' : 'historically disfavours';
-    
+  if (r.mode === 'post_toss') {
+    const tw = TEAMS[r.tossWinner];
+    if (tw) {
+      const goodCall = (r.tossDecision === 'bat' && r.venue.batFirstWinPct > 50) || (r.tossDecision === 'bowl' && r.venue.chaseWinPct > 50);
+      const dewNote = r.venue.dewFactor === 'high' ? ' Heavy dew will make bowling in the 2nd innings very difficult.' : '';
+      const choiceText = r.tossDecision === 'bat' ? 'batting' : 'chasing';
+      const statPct = r.tossDecision === 'bat' ? r.venue.batFirstWinPct : r.venue.chaseWinPct;
+      const advantageText = statPct > 50 ? 'historically favours' : 'historically disfavours';
+      
+      points.push({
+        icon: goodCall ? '🪙' : '⚠️',
+        color: goodCall ? '#f59e0b' : '#ef4444',
+        text: `<strong>${tw.name}</strong> ${goodCall ? 'made the right call' : 'may regret the toss decision'} — choosing to <strong>${r.tossDecision === 'bat' ? 'bat' : 'bowl'} first</strong>. The venue ${advantageText} ${choiceText} (${statPct}% win rate).${dewNote}`
+      });
+    }
+  } else {
     points.push({
-      icon: goodCall ? '🪙' : '⚠️',
-      color: goodCall ? '#f59e0b' : '#ef4444',
-      text: `<strong>${tw.name}</strong> ${goodCall ? 'made the right call' : 'may regret the toss decision'} — choosing to <strong>${r.tossDecision === 'bat' ? 'bat' : 'bowl'} first</strong>. The venue ${advantageText} ${choiceText} (${statPct}% win rate).${dewNote}`
+      icon: '⏱️',
+      color: '#00c8e6',
+      text: `<strong>Pre-Toss Prediction:</strong> Toss advantage is neutralised for this prediction. Baseline probabilities reflect pure squad strength and form.`
     });
   }
 

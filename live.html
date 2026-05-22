@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Live Match Center — IPL Predictor</title>
+  <meta name="description" content="Real-time IPL live match analytics with AI-powered win probability, momentum tracking, and live scorecard."/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* =========================================
+       LIVE CENTER — SPECIFIC STYLES
+    ========================================= */
+
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35);
+      color: #ef4444; padding: 4px 12px; border-radius: 100px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+    }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #ef4444; animation: live-pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes live-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.75); }
+    }
+
+    /* Scorecard */
+    .scoreboard {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 28px; margin-bottom: 24px;
+    }
+    .sb-teams {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px;
+      align-items: center; margin-bottom: 24px;
+    }
+    .sb-team { text-align: center; }
+    .sb-team-name {
+      font-family: 'Orbitron', sans-serif; font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+      font-weight: 900; margin-bottom: 6px;
+    }
+    .sb-score {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 900; line-height: 1;
+    }
+    .sb-detail { font-size: 0.78rem; color: var(--text-2); margin-top: 4px; }
+    .sb-vs { font-size: 0.8rem; color: var(--text-3, #555); font-weight: 700; }
+
+    .sb-meta {
+      display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+      padding-top: 20px; border-top: 1px solid var(--border);
+    }
+    .sb-meta-item {
+      text-align: center; background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 10px 20px; min-width: 90px;
+    }
+    .sb-meta-val {
+      font-family: 'Orbitron', sans-serif; font-size: 1.1rem; font-weight: 700;
+    }
+    .sb-meta-label { font-size: 0.62rem; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+
+    /* Win Probability Bar */
+    .prob-live-wrap { margin-bottom: 24px; }
+    .prob-live-bar {
+      height: 28px; display: flex; border-radius: 100px;
+      overflow: hidden; gap: 0; position: relative;
+    }
+    .prob-live-a {
+      height: 100%; transition: width 1.2s cubic-bezier(.4,0,.2,1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; color: #fff;
+    }
+    .prob-live-b {
+      height: 100%; transition: width 1.2s cubic-bezier(.4,0,.2,1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; color: #fff;
+    }
+    .prob-live-labels {
+      display: flex; justify-content: space-between;
+      font-size: 0.72rem; color: var(--text-2); margin-top: 8px;
+    }
+
+    /* Momentum */
+    .momentum-bar-wrap { margin-top: 16px; }
+    .momentum-label-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.7rem; color: var(--text-2); margin-bottom: 6px;
+    }
+    .momentum-bar {
+      height: 8px; background: rgba(255,255,255,0.06);
+      border-radius: 100px; overflow: hidden;
+    }
+    .momentum-fill {
+      height: 100%; border-radius: 100px;
+      transition: width 1.2s cubic-bezier(.4,0,.2,1), background 0.5s;
+    }
+    .momentum-note {
+      font-size: 0.78rem; color: var(--text-2);
+      margin-top: 8px; text-align: center; font-style: italic;
+    }
+
+    /* Pressure Index */
+    .pressure-ring-wrap { text-align: center; padding: 20px; }
+    .pressure-ring {
+      width: 90px; height: 90px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.08);
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; margin: 0 auto 8px;
+      transition: border-color 0.6s, box-shadow 0.6s;
+    }
+    .pressure-val {
+      font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 900;
+    }
+    .pressure-lbl { font-size: 0.6rem; color: var(--text-2); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Phase Tag */
+    .phase-tag {
+      display: inline-block; padding: 3px 12px; border-radius: 100px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
+      border: 1px solid; margin-bottom: 8px;
+    }
+
+    /* Context Grid */
+    .ctx-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      margin-top: 16px;
+    }
+    .ctx-item { text-align: center; }
+    .ctx-val {
+      font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 700;
+    }
+    .ctx-lbl { font-size: 0.65rem; color: var(--text-2); margin-top: 2px; text-transform: uppercase; }
+
+    /* Fixtures */
+    .fixture-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .fixture-row:last-child { border-bottom: none; }
+    .fixture-teams { font-size: 0.88rem; font-weight: 600; }
+    .fixture-meta { font-size: 0.72rem; color: var(--text-2); margin-top: 3px; }
+    .fixture-date { font-size: 0.72rem; color: var(--accent); font-weight: 700; }
+
+    /* Manual Input */
+    .live-input-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px;
+    }
+    .refresh-btn {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      color: #ef4444; padding: 8px 20px; border-radius: var(--radius);
+      cursor: pointer; font-size: 0.82rem; font-weight: 600;
+      transition: all 0.25s;
+    }
+    .refresh-btn:hover { background: rgba(239,68,68,0.2); }
+
+    .status-banner {
+      text-align: center; padding: 12px;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: var(--radius); font-size: 0.8rem; color: var(--text-2);
+      margin-bottom: 24px;
+    }
+
+    .explainer-row {
+      display: flex; gap: 8px; align-items: flex-start;
+      padding: 10px; border-radius: var(--radius); font-size: 0.8rem;
+      color: var(--text-2); line-height: 1.55;
+      background: rgba(255,255,255,0.02); border-left: 3px solid;
+      margin-bottom: 8px;
+    }
+
+    @media(max-width:640px){
+      .sb-teams { grid-template-columns: 1fr; text-align: center; gap: 8px; }
+      .ctx-grid { grid-template-columns: repeat(3,1fr); }
+    }
+  </style>
+</head>
+<body>
+<script src="nav.js"></script>
+
+<main class="page">
+  <div class="container">
+
+    <!-- Hero -->
+    <section class="page-hero" style="padding-bottom:24px">
+      <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:12px">
+        <div class="page-badge">Live Center</div>
+        <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      </div>
+      <h1 class="page-title">Live Match <span class="gradient-text">Analytics</span></h1>
+      <p class="page-subtitle">Real-time win probability powered by a dedicated in-match XGBoost model trained on 23,000+ over snapshots.</p>
+    </section>
+
+    <!-- Auto-refresh status -->
+    <div class="status-banner" id="statusBanner">
+      Fetching live data from <strong>iplt20.com</strong>... Auto-refresh every 30 seconds.
+    </div>
+
+    <!-- Live Score Section (auto-filled when a match is live) -->
+    <div id="liveMatchSection">
+      <p class="section-title" style="margin-bottom:16px">LIVE SCORECARD</p>
+      <div class="scoreboard" id="scoreboard">
+        <div class="sb-teams">
+          <div class="sb-team">
+            <div class="sb-team-name" id="battingTeamName">Chennai Super Kings</div>
+            <div class="sb-score" id="liveScore">115/4</div>
+            <div class="sb-detail" id="liveOvers">14.2 Overs</div>
+          </div>
+          <div class="sb-vs">vs</div>
+          <div class="sb-team">
+            <div class="sb-team-name" id="bowlingTeamName">Mumbai Indians</div>
+            <div class="sb-score" style="color:var(--text-2);font-size:1.4rem" id="targetDisplay">Target: 185</div>
+            <div class="sb-detail" id="needDisplay">Need 70 off 34 balls</div>
+          </div>
+        </div>
+        <div class="sb-meta">
+          <div class="sb-meta-item">
+            <div class="sb-meta-val" id="crrDisplay">8.02</div>
+            <div class="sb-meta-label">Current RR</div>
+          </div>
+          <div class="sb-meta-item">
+            <div class="sb-meta-val" style="color:#ef4444" id="rrrDisplay">12.35</div>
+            <div class="sb-meta-label">Required RR</div>
+          </div>
+          <div class="sb-meta-item">
+            <div class="sb-meta-val" id="wicketsDisplay">4</div>
+            <div class="sb-meta-label">Wickets Lost</div>
+          </div>
+          <div class="sb-meta-item">
+            <div class="sb-meta-val" id="ballsDisplay">34</div>
+            <div class="sb-meta-label">Balls Left</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Win Probability -->
+      <div class="card" style="margin-bottom:24px">
+        <p class="card-title">Live Win Probability
+          <span id="phaseTag" class="phase-tag" style="margin-left:8px;border-color:rgba(0,200,230,0.4);color:var(--accent)">Death Overs</span>
+        </p>
+        <div class="prob-live-wrap">
+          <div class="prob-live-bar" id="probLiveBar">
+            <div class="prob-live-a" id="probLiveA" style="width:50%">50%</div>
+            <div class="prob-live-b" id="probLiveB" style="width:50%">50%</div>
+          </div>
+          <div class="prob-live-labels">
+            <span id="probLabelA">CSK Win</span>
+            <span id="probLabelB">MI Win</span>
+          </div>
+        </div>
+
+        <!-- Momentum -->
+        <div class="momentum-bar-wrap">
+          <div class="momentum-label-row">
+            <span>Batting Momentum</span>
+            <span>Bowling Momentum</span>
+          </div>
+          <div class="momentum-bar">
+            <div class="momentum-fill" id="momentumFill" style="width:50%"></div>
+          </div>
+          <div class="momentum-note" id="momentumNote">Balanced</div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+
+        <!-- Pressure Index -->
+        <div class="card">
+          <p class="card-title">Pressure Index</p>
+          <div class="pressure-ring-wrap">
+            <div class="pressure-ring" id="pressureRing">
+              <div class="pressure-val" id="pressureVal">0</div>
+              <div class="pressure-lbl">/ 100</div>
+            </div>
+            <div style="font-size:0.78rem;color:var(--text-2);max-width:200px;margin:0 auto" id="pressureDesc">
+              Low pressure — batters are comfortable.
+            </div>
+          </div>
+        </div>
+
+        <!-- Match Context -->
+        <div class="card">
+          <p class="card-title">Match Context</p>
+          <div class="ctx-grid">
+            <div class="ctx-item">
+              <div class="ctx-val" id="ctxWickets">6</div>
+              <div class="ctx-lbl">Wickets In Hand</div>
+            </div>
+            <div class="ctx-item">
+              <div class="ctx-val" id="ctxRuns">70</div>
+              <div class="ctx-lbl">Runs Needed</div>
+            </div>
+            <div class="ctx-item">
+              <div class="ctx-val" id="ctxBalls">34</div>
+              <div class="ctx-lbl">Balls Remaining</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Explainability -->
+      <div class="card" style="margin-bottom:24px">
+        <p class="card-title">Why Did Probability Change?</p>
+        <div id="explainerBody"></div>
+      </div>
+    </div>
+
+    <!-- Manual Input Override -->
+    <p class="section-title" style="margin-bottom:16px">MANUAL SITUATION ENTRY</p>
+    <div class="card" style="margin-bottom:24px">
+      <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:16px">Enter match situation manually to simulate any scenario. All values feed directly into the live ML model.</p>
+      <div class="live-input-grid">
+        <div class="form-group">
+          <label class="label">Batting Team</label>
+          <input class="select" id="inputBatTeam" type="text" placeholder="e.g. CSK" value="Chennai Super Kings"/>
+        </div>
+        <div class="form-group">
+          <label class="label">Bowling Team</label>
+          <input class="select" id="inputBowlTeam" type="text" placeholder="e.g. MI" value="Mumbai Indians"/>
+        </div>
+        <div class="form-group">
+          <label class="label">Inning (1 or 2)</label>
+          <input class="select" id="inputInning" type="number" min="1" max="2" value="2"/>
+        </div>
+        <div class="form-group">
+          <label class="label">Current Score</label>
+          <input class="select" id="inputScore" type="number" min="0" value="115"/>
+        </div>
+        <div class="form-group">
+          <label class="label">Wickets Lost</label>
+          <input class="select" id="inputWickets" type="number" min="0" max="10" value="4"/>
+        </div>
+        <div class="form-group">
+          <label class="label">Overs Completed</label>
+          <input class="select" id="inputOvers" type="number" min="0" max="20" step="0.1" value="14.2"/>
+        </div>
+        <div class="form-group">
+          <label class="label">Target (Inning 2 only)</label>
+          <input class="select" id="inputTarget" type="number" min="0" value="185"/>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="runManualLive()">Run Live Prediction</button>
+        <button class="refresh-btn" onclick="fetchLiveAndPredict()">Refresh from iplt20.com</button>
+      </div>
+    </div>
+
+    <!-- Fixtures -->
+    <p class="section-title" style="margin-bottom:16px">UPCOMING FIXTURES</p>
+    <div class="card" style="margin-bottom:40px">
+      <div id="fixturesBody">
+        <div style="text-align:center;padding:20px;color:var(--text-2)">Loading fixtures from iplt20.com...</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="footer"><p>IPL Predictor | Live Match Intelligence — Data from iplt20.com</p></footer>
+
+<script src="data.js"></script>
+<script src="live.js"></script>
+</body>
+</html>

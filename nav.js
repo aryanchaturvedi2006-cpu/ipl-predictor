@@ -5,12 +5,14 @@
   const links = [
     { href: 'index.html',     label: 'Home' },
     { href: 'predictor.html', label: 'Predictor' },
+    { href: 'live.html',      label: 'Live Center' },
     { href: 'teams.html',     label: 'Teams' },
     { href: 'players.html',   label: 'Player H2H' },
     { href: 'history.html',   label: 'IPL History' },
-    { href: 'stats.html',     label: '📊 Stats Center' },
-    { href: 'news.html',      label: '📰 News' },
+    { href: 'stats.html',     label: 'Stats Center' },
+    { href: 'news.html',      label: 'News' },
   ];
+
 
   const current = window.location.pathname.split('/').pop() || 'index.html';
 

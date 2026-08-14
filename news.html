@@ -8,9 +8,9 @@
   <link rel="stylesheet" href="style.css"/>
   <style>
     .news-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
-    .news-tab{padding:8px 18px;border-radius:100px;border:1px solid var(--border);font-size:0.82rem;font-weight:600;color:var(--text-2);cursor:pointer;transition:all 0.2s;background:var(--bg-input)}
-    .news-tab.active,.news-tab:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,200,230,0.08)}
-    .news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+    .news-tab{padding:10px 20px;border-radius:100px;border:1px solid var(--border);font-size:0.95rem;font-weight:700;color:var(--text-2);cursor:pointer;transition:all 0.2s;background:var(--bg-input);letter-spacing:0.5px}
+    .news-tab.active,.news-tab:hover{border-color:var(--accent);color:var(--accent);background:rgba(249, 115, 22,0.1)}
+    .news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px}
     .news-card{
       background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);
       padding:20px;display:flex;flex-direction:column;gap:12px;
@@ -20,8 +20,8 @@
     .nc-source{display:flex;align-items:center;justify-content:space-between;gap:8px}
     .nc-source-name{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent)}
     .nc-date{font-size:0.68rem;color:var(--text-3)}
-    .nc-title{font-size:0.95rem;font-weight:700;line-height:1.4;color:var(--text-1)}
-    .nc-desc{font-size:0.82rem;color:var(--text-2);line-height:1.6;flex:1}
+    .nc-title{font-size:1.15rem;font-weight:700;line-height:1.4;color:var(--text-1)}
+    .nc-desc{font-size:1rem;font-weight:500;color:var(--text-1);line-height:1.6;flex:1}
     .nc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
     .nc-tag{font-size:0.68rem;font-weight:600;padding:3px 10px;border-radius:100px;border:1px solid rgba(0,200,230,0.3);color:var(--accent);background:rgba(0,200,230,0.06)}
     .nc-link{font-size:0.75rem;color:var(--accent);font-weight:600}
@@ -148,7 +148,11 @@ async function loadNews() {
   renderSkeletons();
 
   try {
-    const response = await fetch('/api/news', { cache: 'no-store' });
+    const API_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:5000/api/news' 
+      : 'https://ipl-predictor-backend-04gv.onrender.com/api/news';
+      
+    const response = await fetch(API_URL, { cache: 'no-store' });
     if (!response.ok) throw new Error('Live news API returned ' + response.status);
     const payload = await response.json();
     if (!payload.news || !Array.isArray(payload.news) || !payload.news.length) {

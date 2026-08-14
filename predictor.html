@@ -188,7 +188,7 @@
           <div class="radio-row" id="weatherRow">
             <label class="radio-pill active" data-val="sunny"><input type="radio" name="weather" value="sunny" checked/><span class="rp-icon">☀️</span><span class="rp-title">Sunny</span><span class="rp-sub">No assist</span></label>
             <label class="radio-pill" data-val="overcast"><input type="radio" name="weather" value="overcast"/><span class="rp-icon">☁️</span><span class="rp-title">Overcast</span><span class="rp-sub">Swing & seam</span></label>
-            <label class="radio-pill" data-val="humid"><input type="radio" name="weather" value="humid"/><span class="rp-icon">🌫️</span><span class="rp-title">Humid</span><span class="rp-sub">Slight swing</span></label>
+            <label class="radio-pill" data-val="rain"><input type="radio" name="weather" value="rain"/><span class="rp-icon">🌧️</span><span class="rp-title">Rain</span><span class="rp-sub">Wet Outfield</span></label>
           </div>
         </div>
 
@@ -241,7 +241,7 @@
 
     <!-- ---- Predict Button ---- -->
     <div style="text-align:center;margin:32px 0">
-      <button class="btn btn-primary btn-lg" id="predictBtn" onclick="runPrediction()" disabled>⚡ Predict Match Winner</button>
+      <button class="btn btn-primary btn-lg" id="predictBtn" onclick="runPrediction()" disabled><span class="coin-icon">🪙</span> ⚡ Predict Match Winner</button>
       <p class="label" style="margin-top:10px;text-align:center;margin-bottom:0" id="predictHint">Select both teams to enable prediction</p>
     </div>
 
@@ -297,87 +297,6 @@
       </div>
     </div> <!-- End of resultsSection -->
 
-    <!-- ---- STEP 3: Tactical Battleground (Always Accessible) ---- -->
-    <div class="tactical-hub" id="tacticalSection" style="display:none; border-top: 1px solid var(--border); padding-top: 40px; margin-top: 20px;">
-      <p class="section-title">🎯 Tactical Battleground: Player Matchups</p>
-      <div class="card" style="margin-bottom:24px">
-        <div class="cond-grid">
-          <div class="form-group">
-            <label class="label">Select Batsman (Team A)</label>
-            <select class="select" id="tacticalBatsman" onchange="updateTactical()"></select>
-          </div>
-          <div class="form-group">
-            <label class="label">Select Bowler (Team B)</label>
-            <select class="select" id="tacticalBowler" onchange="updateTactical()"></select>
-          </div>
-        </div>
-      </div>
-
-      <div class="tactical-grid" id="tacticalDashboard" style="display:none">
-        <!-- Wagon Wheel -->
-        <div style="text-align:center;padding:10px">
-          <span class="strat-label">🏏 8-Sector Wagon Wheel (Run Dist. %)</span>
-          <div class="wagon-wheel-container">
-            <div class="wagon-label" style="top:5%;left:50%;transform:translateX(-50%)">Long On/Off</div>
-            <div class="wagon-pct" style="top:12%;left:50%;transform:translateX(-50%)" id="ww-straight">0%</div>
-
-            <div class="wagon-label" style="top:20%;right:8%;transform:rotate(45deg)">Cover</div>
-            <div class="wagon-pct" style="top:25%;right:15%" id="ww-cover">0%</div>
-
-            <div class="wagon-label" style="top:50%;right:2%;transform:translateY(-50%)">Point</div>
-            <div class="wagon-pct" style="top:50%;right:10%;transform:translateY(-50%)" id="ww-point">0%</div>
-
-            <div class="wagon-label" style="bottom:20%;right:8%;transform:rotate(-45deg)">Third Man</div>
-            <div class="wagon-pct" style="bottom:25%;right:15%" id="ww-thirdman">0%</div>
-
-            <div class="wagon-label" style="bottom:5%;left:50%;transform:translateX(-50%)">Behind</div>
-            <div class="wagon-pct" style="bottom:12%;left:50%;transform:translateX(-50%)" id="ww-behind">0%</div>
-
-            <div class="wagon-label" style="bottom:20%;left:8%;transform:rotate(45deg)">Fine Leg</div>
-            <div class="wagon-pct" style="bottom:25%;left:15%" id="ww-fineleg">0%</div>
-
-            <div class="wagon-label" style="top:50%;left:2%;transform:translateY(-50%)">Square Leg</div>
-            <div class="wagon-pct" style="top:50%;left:10%;transform:translateY(-50%)" id="ww-squareleg">0%</div>
-
-            <div class="wagon-label" style="top:20%;left:8%;transform:rotate(-45deg)">Mid-Wicket</div>
-            <div class="wagon-pct" style="top:25%;left:15%" id="ww-midwicket">0%</div>
-            
-            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(0deg)"></div>
-            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(45deg)"></div>
-            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(90deg)"></div>
-            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(135deg)"></div>
-            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(180deg)"></div>
-            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(225deg)"></div>
-            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(270deg)"></div>
-            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(315deg)"></div>
-            
-            <div style="position:absolute;inset:50px;border:1px dashed rgba(255,255,255,0.1);border-radius:50%"></div>
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:40px;background:rgba(255,255,255,0.7);border-radius:2px;box-shadow:0 0 10px rgba(0,0,0,0.5)"></div>
-          </div>
-          <div style="margin-top:16px">
-            <div class="zone-box"><span class="zone-name">Weak vs Short Ball</span><span class="zone-stat" id="weak-short">-</span></div>
-            <div class="zone-box"><span class="zone-name">Weak vs Yorker</span><span class="zone-stat" id="weak-yorker">-</span></div>
-            <div class="zone-box"><span class="zone-name">Weak vs Good Length</span><span class="zone-stat" id="weak-good">-</span></div>
-          </div>
-        </div>
-
-        <!-- Strategy Content -->
-        <div class="strategy-list" style="display:flex;flex-direction:column;gap:16px">
-          <div class="strategy-card">
-            <span class="strat-label">🎯 Outing Strategy (Bowler's Plan)</span>
-            <div class="strat-val" id="strat-bowler">Select players to see the blueprint...</div>
-          </div>
-          <div class="strategy-card">
-            <span class="strat-label">🛡️ Survival Guide (Batsman's Pov)</span>
-            <div class="strat-val" id="strat-batsman">How to play the dangerous deliveries...</div>
-          </div>
-          <div class="strategy-card" style="border-color:rgba(0,200,230,0.3)">
-            <span class="strat-label">⭐ Historical Insight</span>
-            <div class="strat-val" id="strat-insight" style="font-style:italic;color:var(--text-2)">Matchup details will appear here.</div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </main>
 

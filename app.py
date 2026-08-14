@@ -11,11 +11,13 @@ from src.iplt20_api import IPLT20API
 app = Flask(__name__)
 CORS(app)
 
-MODEL_PATH = "models/model.pkl"
+MODEL_PRE_PATH = "models/model_pre.pkl"
+MODEL_POST_PATH = "models/model_post.pkl"
 ENCODERS_PATH = "models/encoders.pkl"
 LIVE_MODEL_PATH = "models/live_model.pkl"
 
-model = None
+model_pre = None
+model_post = None
 metadata = None
 live_models = None
 elo_dict = {}
@@ -30,13 +32,14 @@ ipl_api = IPLT20API()
 
 
 def load_assets():
-    global model, metadata, live_models, elo_dict, recent_form_dict
+    global model_pre, model_post, metadata, live_models, elo_dict, recent_form_dict
     global venue_stats_dict, venue_overall, h2h_stats, team_perf, valid_teams
 
-    if not os.path.exists(MODEL_PATH) or not os.path.exists(ENCODERS_PATH):
+    if not os.path.exists(MODEL_PRE_PATH) or not os.path.exists(ENCODERS_PATH):
         raise FileNotFoundError("Model files not found. Run train.py first.")
 
-    model = joblib.load(MODEL_PATH)
+    model_pre = joblib.load(MODEL_PRE_PATH)
+    model_post = joblib.load(MODEL_POST_PATH)
     metadata = joblib.load(ENCODERS_PATH)
 
     elo_dict = metadata.get("elo", {})
@@ -104,17 +107,25 @@ def predict():
         if f not in data or not data[f]:
             return jsonify({"error": f"Missing required field: {f}"}), 400
 
-    raw_t1 = str(data.get('team1', '')).strip()
-    raw_t2 = str(data.get('team2', '')).strip()
-    venue = str(data.get('venue', '')).strip()
-    raw_toss_winner = str(data.get('toss_winner', '')).strip()
-    toss_decision = str(data.get('toss_decision', '')).strip().lower()
-
-    prediction_mode = 'pre_toss' if not raw_toss_winner or not toss_decision else 'post_toss'
+    data = request.json
+    raw_t1 = data['team1']
+    raw_t2 = data['team2']
+    t1 = clean_team_name(raw_t1)
+    t2 = clean_team_name(raw_t2)
+    venue = str(data['venue']).strip()
+    
+    toss_winner = data.get('toss_winner')
+    toss_decision = data.get('toss_decision')
+    pitch = data.get('pitch', 'flat').lower()
+    weather = data.get('weather', 'sunny').lower()
+    wind = data.get('wind', 'calm').lower()
+    timing = data.get('timing', 'night').lower()
+    
+    prediction_mode = 'post_toss' if toss_winner and toss_decision else 'pre_toss'
 
     t1 = clean_team_name(raw_t1)
     t2 = clean_team_name(raw_t2)
-    toss_winner = clean_team_name(raw_toss_winner)
+    toss_winner = clean_team_name(toss_winner)
 
     invalid_teams = []
     if t1 not in valid_teams: invalid_teams.append(f"team1 ({raw_t1})")
@@ -163,18 +174,62 @@ def predict():
     bat_diff = st1['bat_score'] - st2['bat_score']
     bowl_diff = st1['bowl_score'] - st2['bowl_score']
 
-    input_data = pd.DataFrame([{
+    toss_won = 0
+    if prediction_mode == 'post_toss':
+        toss_won = 1 if toss_winner == t1 else -1
+
+    input_data_pre = pd.DataFrame([{
+        "elo_diff": elo_diff,
+        "form_diff": form_diff,
+        "venue_diff": venue_diff,
+        "batting_strength_diff": bat_diff,
+        "bowling_strength_diff": bowl_diff
+    }])
+    
+    input_data_post = pd.DataFrame([{
         "elo_diff": elo_diff,
         "form_diff": form_diff,
         "venue_diff": venue_diff,
         "batting_strength_diff": bat_diff,
         "bowling_strength_diff": bowl_diff,
-        "toss_impact": t1_toss_adv
+        "toss_impact": t1_toss_adv,
+        "toss_won": toss_won
     }])
 
-    proba = model.predict_proba(input_data)[0]
+    if prediction_mode == 'pre_toss':
+        proba = model_pre.predict_proba(input_data_pre)[0]
+    else:
+        proba = model_post.predict_proba(input_data_post)[0]
+        
     prob_t2 = float(proba[0])
     prob_t1 = float(proba[1])
+    
+    # --- EXPERT OVERLAY: ENVIRONMENTAL SHIFT ---
+    shift_t1 = 0.0
+    shift_t2 = 0.0
+
+    if pitch in ['turning', 'green']:
+        if bowl_diff > 0: shift_t1 += 0.015
+        elif bowl_diff < 0: shift_t2 += 0.015
+    elif pitch == 'flat':
+        if bat_diff > 0: shift_t1 += 0.015
+        elif bat_diff < 0: shift_t2 += 0.015
+        
+    if weather == 'overcast' or wind == 'breezy':
+        if bowl_diff > 0: shift_t1 += 0.01
+        elif bowl_diff < 0: shift_t2 += 0.01
+
+    if timing == 'night' and prediction_mode == 'post_toss':
+        t1_chasing = (toss_winner == t1 and toss_decision == 'field') or (toss_winner == t2 and toss_decision == 'bat')
+        if t1_chasing: shift_t1 += 0.015
+        else: shift_t2 += 0.015
+
+    prob_t1 += shift_t1
+    prob_t2 += shift_t2
+    total = prob_t1 + prob_t2
+    prob_t1 /= total
+    prob_t2 /= total
+
     predicted_winner = raw_t1 if prob_t1 >= prob_t2 else raw_t2
 
     pair = tuple(sorted([t1, t2]))
@@ -191,7 +246,10 @@ def predict():
             "venue_diff": round(venue_diff, 4),
             "batting_strength_diff": round(bat_diff, 2),
             "bowling_strength_diff": round(bowl_diff, 2),
-            "toss_impact": round(t1_toss_adv, 4)
+            "toss_impact": round(t1_toss_adv, 4),
+            "toss_won": toss_won,
+            "env_shift_t1": round(shift_t1, 4),
+            "env_shift_t2": round(shift_t2, 4)
         },
         "informational_h2h": {
             "team1_wins": h2h_data['wins'].get(t1, 0),
@@ -342,6 +400,51 @@ def fixtures():
     except Exception as e:
         return jsonify({"error": str(e), "fixtures": []}), 500
 
+
+# ============================================================
+# GET /api/news  — Official IPL News Scraping Mock/Fallback
+# ============================================================
+@app.route("/api/news", methods=["GET"])
+def api_news():
+    news_items = [
+        {
+            "title": "BCCI Announces IPL 2026 Mega Auction Rules & Retention Policy",
+            "description": "Retention policy updated with a maximum of 4 players per franchise allowed. Auctions to be held in late December.",
+            "link": "https://www.iplt20.com/news",
+            "source": "IPLT20 Official",
+            "date": "2026-08-15",
+            "tag": "transfer",
+            "isLive": True
+        },
+        {
+            "title": "CSK Captaincy: Ruturaj Gaikwad officially confirmed for 2026 season",
+            "description": "The Chennai franchise officially announces Gaikwad at the helm, moving forward with their new era.",
+            "link": "https://www.iplt20.com/news",
+            "source": "Chennai Super Kings",
+            "date": "2026-08-14",
+            "tag": "player",
+            "isLive": False
+        },
+        {
+            "title": "Impact Player Rule Retained for IPL 2026 After Franchise Feedback",
+            "description": "Despite some pushback, the IPL governing council decides to keep the popular tactical rule.",
+            "link": "https://www.iplt20.com/news",
+            "source": "IPLT20 Official",
+            "date": "2026-08-12",
+            "tag": "ipl",
+            "isLive": False
+        },
+        {
+            "title": "RCB vs MI: A classic rivalry awaits in the season opener",
+            "description": "The iconic clash is set to open the 2026 season at the Chinnaswamy Stadium under lights.",
+            "link": "https://www.iplt20.com/news",
+            "source": "Match Preview",
+            "date": "2026-08-10",
+            "tag": "match",
+            "isLive": False
+        }
+    ]
+    return jsonify({"news": news_items}), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

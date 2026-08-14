@@ -102,6 +102,7 @@
     .zone-name{font-size:0.8rem;color:var(--text-2)}
     .zone-stat{font-size:0.8rem;font-weight:700;color:var(--text-1)}
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <script src="nav.js"></script>
@@ -258,20 +259,20 @@
       <!-- Probability -->
       <div class="card" style="margin-bottom:24px">
         <p class="card-title">Win Probability</p>
-        <div class="prob-row">
-          <div class="prob-team">
-            <span class="prob-pct" id="probPctA">—</span>
-            <span class="prob-short" id="probShortA">A</span>
+        <div class="prob-row" style="flex-direction: column; align-items: center; position: relative;">
+          <div style="width: 250px; height: 150px; position: relative;">
+            <canvas id="gaugeChart"></canvas>
+            <div id="gaugeText" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 700; color: #fff5c0;"></div>
           </div>
-          <div>
-            <div class="prob-bar" id="probBar">
-              <div class="prob-a" id="probFillA" style="width:50%"></div>
-              <div class="prob-b" id="probFillB" style="width:50%"></div>
+          <div style="display: flex; justify-content: space-between; width: 100%; margin-top: -10px;">
+            <div class="prob-team" style="text-align: left;">
+              <span class="prob-pct" id="probPctA" style="font-size: 1.5rem;">?</span>
+              <span class="prob-short" id="probShortA">A</span>
             </div>
-          </div>
-          <div class="prob-team">
-            <span class="prob-pct" id="probPctB">—</span>
-            <span class="prob-short" id="probShortB">B</span>
+            <div class="prob-team" style="text-align: right;">
+              <span class="prob-pct" id="probPctB" style="font-size: 1.5rem;">?</span>
+              <span class="prob-short" id="probShortB">B</span>
+            </div>
           </div>
         </div>
       </div>

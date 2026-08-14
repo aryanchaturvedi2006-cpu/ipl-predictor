@@ -1,3 +1,50 @@
+
+let predictionChart = null;
+
+function initGauge() {
+  const ctx = document.getElementById('gaugeChart');
+  if(!ctx) return;
+  predictionChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Team A', 'Team B'],
+      datasets: [{
+        data: [50, 50],
+        backgroundColor: ['#555', '#333'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      circumference: 180,
+      rotation: -90,
+      cutout: '80%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false }
+      },
+      animation: { animateRotate: true, animateScale: false, duration: 1000 }
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', initGauge);
+
+// Function to animate scoreboard numbers
+function initScoreboards() {
+  const nums = document.querySelectorAll('.scoreboard-num');
+  nums.forEach(num => {
+    const target = parseInt(num.getAttribute('data-target'));
+    if(isNaN(target)) return;
+    let current = 0;
+    const duration = 2000;
+    const stepTime = Math.abs(Math.floor(duration / target));
+    const timer = setInterval(() => {
+      current += 1;
+      num.textContent = current;
+      if (current >= target) clearInterval(timer);
+    }, stepTime);
+  });
+}
+document.addEventListener('DOMContentLoaded', initScoreboards);
 // ================================================================
 // IPL PREDICTOR — 8-FACTOR SIMULATION ENGINE  (script.js)
 // For use with predictor.html
@@ -7,7 +54,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   populateDropdowns();
   wireRadioPills();
-  ['teamA', 'teamB'].forEach(id => {
+  ['teamA', 'teamB', 'venue'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', checkReady);
   });
   // Wire timing hint update
@@ -154,9 +201,10 @@ function checkReady() {
   const btn = document.getElementById('predictBtn');
   const tA = document.getElementById('teamA')?.value;
   const tB = document.getElementById('teamB')?.value;
+  const venue = document.getElementById('venue')?.value;
   const hint = document.getElementById('predictHint');
   
-  if (tA && tB && tA !== tB) {
+  if (tA && tB && tA !== tB && venue) {
     btn.disabled = false;
     if (hint) hint.textContent = '✅ Ready! Adjust conditions above then click Predict.';
     
@@ -175,10 +223,10 @@ function checkReady() {
     }
   } else if (tA && tB && tA === tB) {
     btn.disabled = true;
-    if (hint) hint.textContent = '⚠️ Both teams cannot be the same.';
+    if (hint) hint.textContent = '⚡ Both teams cannot be the same.';
   } else {
     btn.disabled = true;
-    if (hint) hint.textContent = 'Select both teams to enable prediction';
+    if (hint) hint.textContent = 'Select both teams and a venue to enable prediction';
   }
 }
 
@@ -215,6 +263,10 @@ async function runPrediction() {
     alert("Please select two different teams.");
     return;
   }
+  if (!venueKey) {
+    alert("Please select a venue.");
+    return;
+  }
   const tossWinner  = document.getElementById('tossWinner').value || aKey;
   const tossDecision = document.querySelector('input[name="toss"]:checked')?.value
                      || document.querySelector('input[name="tossDecision"]:checked')?.value || 'bat';
@@ -230,7 +282,14 @@ async function runPrediction() {
   const tw = TEAMS[tossWinner];
 
   const btn = document.getElementById('predictBtn');
-  if (btn) btn.classList.add('loading');
+  let originalText = '';
+  if (btn) {
+    originalText = btn.innerHTML;
+    btn.classList.add('loading');
+    btn.innerHTML = '<span class="coin-icon">🏏</span> Analysing...';
+  }
+  const waitDelay = new Promise(r => setTimeout(r, 1500));
+  
   showLoader();
   
   try {
@@ -271,6 +330,7 @@ async function runPrediction() {
     }
     
     const data = await response.json();
+    await waitDelay;
     
     // Process API response
     const probA = (data.probabilities[tA.name] || data.probabilities[tA.shortName] || 0) * 100;
@@ -297,7 +357,7 @@ async function runPrediction() {
     const hint = document.getElementById('predictHint');
     if (hint) hint.textContent = '❌ Error: ' + error.message;
     btn.classList.remove('loading');
-    alert("Prediction failed. Please make sure the backend is running or check the logs.");
+    alert("Prediction failed: " + error.message);
   }
 }
 
@@ -331,7 +391,7 @@ function displayResults(r) {
   // Probability
   document.getElementById('probPctA').textContent  = r.totalA.toFixed(1) + '%';
   const btn = document.getElementById('predictBtn');
-  if (btn) btn.classList.remove('loading');
+  if (btn) { btn.classList.remove('loading'); btn.innerHTML = '⚡ Predict Now'; }
 
   const pA = Math.round(r.totalA);
   const pB = Math.round(r.totalB);
@@ -363,13 +423,15 @@ function displayResults(r) {
   document.getElementById('badgeA').style.boxShadow = `0 0 30px ${tA.primaryColor}88`;
   document.getElementById('badgeB').style.boxShadow = `0 0 30px ${tB.primaryColor}88`;
 
+
   setTimeout(() => {
-    const fA = document.getElementById('probFillA');
-    const fB = document.getElementById('probFillB');
-    fA.style.width = r.totalA + '%';
-    fB.style.width = r.totalB + '%';
-    fA.style.background = tA.primaryColor;
-    fB.style.background = tB.primaryColor;
+    if(typeof predictionChart !== 'undefined' && predictionChart) {
+      predictionChart.data.datasets[0].data = [r.totalA, r.totalB];
+      predictionChart.data.datasets[0].backgroundColor = [tA.primaryColor, tB.primaryColor];
+      predictionChart.update();
+    }
+    const gt = document.getElementById('gaugeText');
+    if(gt) gt.textContent = pA > pB ? tA.shortName + ' Favored' : (pB > pA ? tB.shortName + ' Favored' : 'Even Match');
   }, 80);
 
   // Factor Cards - 6 XGBoost Features
@@ -630,8 +692,13 @@ function hideLoader() {
 function resetPrediction() {
   const section = document.getElementById('resultsSection');
   if (section) section.style.display = 'none';
-  document.getElementById('probFillA').style.width = '0%';
-  document.getElementById('probFillB').style.width = '0%';
+  if(typeof predictionChart !== 'undefined' && predictionChart) {
+    predictionChart.data.datasets[0].data = [50, 50];
+    predictionChart.data.datasets[0].backgroundColor = ['#555', '#333'];
+    predictionChart.update();
+  }
+  const gt = document.getElementById('gaugeText');
+  if(gt) gt.textContent = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

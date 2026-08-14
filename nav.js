@@ -33,6 +33,7 @@
   <div class="mobile-menu" id="mobileMenu">
     ${links.map(l => `<a href="${l.href}" class="mobile-link${current === l.href ? ' active' : ''}">${l.label}</a>`).join('')}
     <a href="predictor.html" class="mobile-link" style="color:var(--accent);font-weight:600;">⚡ Predict Now</a>
+  </div>
   <div class="ticker-wrap">
     <div class="ticker-content">
       🏏 LIVE: CSK vs MI - Pitch: Turning | Dew: Heavy | Toss: CSK (Bat) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🔴 RECENT: RCB won by 12 runs &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 🏏 NEXT: KKR vs DC

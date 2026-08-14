@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('input[name="timing"]').forEach(r => {
     r.addEventListener('change', updateTimingHint);
   });
-  wireTacticalSelectors();
+
 });
 
 // ---- Toggle Toss UI based on Prediction Mode ----
@@ -29,13 +29,7 @@ function toggleTossUI() {
   }
 }
 
-// ---- Wire tactical select listeners ----
-function wireTacticalSelectors() {
-  const bSel = document.getElementById('tacticalBatsman');
-  const wSel = document.getElementById('tacticalBowler');
-  bSel?.addEventListener('change', updateTactical);
-  wSel?.addEventListener('change', updateTactical);
-}
+
 
 // ---- Update timing hint text ----
 function updateTimingHint() {
@@ -77,7 +71,11 @@ function wireRadioPills() {
       pill.addEventListener('click', () => {
         row.querySelectorAll('.radio-pill, .radio-card').forEach(p => p.classList.remove('active'));
         pill.classList.add('active');
-        pill.querySelector('input').checked = true;
+        const input = pill.querySelector('input');
+        if (!input.checked) {
+          input.checked = true;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
       });
     });
   });
@@ -94,10 +92,11 @@ function updateTeam(side) {
     document.getElementById(`badge${side}Short`).textContent = t.shortName;
     document.getElementById(`badge${side}Short`).style.color = t.primaryColor;
     document.getElementById(`badge${side}Name`).textContent = t.name;
-    document.getElementById(`badge${side}Name`).style.color = '#f0f4ff';
+    document.getElementById(`badge${side}Name`).style.color = '#ffffff';
     document.getElementById(`badge${side}City`).textContent = `📍 ${t.city}`;
-    badge.style.borderColor = t.primaryColor + '55';
-    badge.style.background = t.primaryColor + '0d';
+    badge.style.borderColor = t.primaryColor;
+    badge.style.background = `linear-gradient(135deg, rgba(0,0,0,0.8), ${t.primaryColor}33)`;
+    badge.style.boxShadow = `0 0 20px ${t.primaryColor}55, inset 0 0 10px ${t.primaryColor}33`;
   } else {
     document.getElementById(`badge${side}Short`).textContent = '?';
     document.getElementById(`badge${side}Short`).style.color = 'var(--text-2)';
@@ -106,28 +105,11 @@ function updateTeam(side) {
     document.getElementById(`badge${side}City`).textContent = '';
     badge.style.borderColor = 'rgba(255,255,255,0.07)';
     badge.style.background = 'rgba(255,255,255,0.02)';
+    badge.style.boxShadow = 'none';
   }
 
   refreshTossOptions();
   checkReady();
-  
-  // Tactical Update: Refresh selectors whenever a team changes
-  const aKey = document.getElementById('teamA').value;
-  const bKey = document.getElementById('teamB').value;
-  const tSec = document.getElementById('tacticalSection');
-  if (tSec && aKey && bKey && aKey !== bKey) {
-    populateTacticalSelectors(TEAMS[aKey], TEAMS[bKey]);
-    updateTactical();
-    tSec.style.display = 'block';
-    setTimeout(() => {
-      tSec.style.opacity = '1';
-      tSec.style.pointerEvents = 'auto';
-    }, 10);
-  } else if (tSec) {
-    tSec.style.opacity = '0';
-    tSec.style.pointerEvents = 'none';
-    setTimeout(() => { tSec.style.display = 'none'; }, 500);
-  }
 }
 
 // ---- Refresh Toss Winner Options ----
@@ -169,15 +151,29 @@ function updateVenue() {
 
 // ---- Check if prediction can run ----
 function checkReady() {
-  const a = document.getElementById('teamA')?.value;
-  const b = document.getElementById('teamB')?.value;
   const btn = document.getElementById('predictBtn');
+  const tA = document.getElementById('teamA')?.value;
+  const tB = document.getElementById('teamB')?.value;
   const hint = document.getElementById('predictHint');
-  if (!btn) return;
-  if (a && b && a !== b) {
+  
+  if (tA && tB && tA !== tB) {
     btn.disabled = false;
     if (hint) hint.textContent = '✅ Ready! Adjust conditions above then click Predict.';
-  } else if (a && b && a === b) {
+    
+    // UI Interaction: VS Clash Animation
+    const badgeA = document.getElementById('badgeA');
+    const badgeB = document.getElementById('badgeB');
+    const vsRing = document.querySelector('.vs-ring');
+    if(badgeA && badgeB && vsRing) {
+      badgeA.classList.remove('clash-animate-left');
+      badgeB.classList.remove('clash-animate-right');
+      vsRing.classList.remove('clash-ring-glow');
+      void badgeA.offsetWidth;
+      badgeA.classList.add('clash-animate-left');
+      badgeB.classList.add('clash-animate-right');
+      vsRing.classList.add('clash-ring-glow');
+    }
+  } else if (tA && tB && tA === tB) {
     btn.disabled = true;
     if (hint) hint.textContent = '⚠️ Both teams cannot be the same.';
   } else {
@@ -233,6 +229,8 @@ async function runPrediction() {
   const v = VENUES[venueKey];
   const tw = TEAMS[tossWinner];
 
+  const btn = document.getElementById('predictBtn');
+  if (btn) btn.classList.add('loading');
   showLoader();
   
   try {
@@ -241,7 +239,11 @@ async function runPrediction() {
     let payload = {
       team1: tA.name,
       team2: tB.name,
-      venue: v.name
+      venue: v.name,
+      pitch: pitch,
+      weather: weather,
+      wind: wind,
+      timing: timing
     };
     
     if (mode === 'post_toss') {
@@ -294,8 +296,8 @@ async function runPrediction() {
     hideLoader();
     const hint = document.getElementById('predictHint');
     if (hint) hint.textContent = '❌ Error: ' + error.message;
-    alert('Prediction Error: ' + error.message + '\n\nMake sure the Flask server is running locally on port 5000.');
-    console.error('Fetch error:', error);
+    btn.classList.remove('loading');
+    alert("Prediction failed. Please make sure the backend is running or check the logs.");
   }
 }
 
@@ -328,11 +330,39 @@ function displayResults(r) {
 
   // Probability
   document.getElementById('probPctA').textContent  = r.totalA.toFixed(1) + '%';
-  document.getElementById('probPctB').textContent  = r.totalB.toFixed(1) + '%';
+  const btn = document.getElementById('predictBtn');
+  if (btn) btn.classList.remove('loading');
+
+  const pA = Math.round(r.totalA);
+  const pB = Math.round(r.totalB);
+  
+  // Scoreboard Flip Animation class toggle
+  const pctAEl = document.getElementById('probPctA');
+  const pctBEl = document.getElementById('probPctB');
+  pctAEl.classList.remove('flip-animate');
+  pctBEl.classList.remove('flip-animate');
+  
+  // Trigger reflow
+  void pctAEl.offsetWidth;
+  
+  pctAEl.classList.add('flip-animate');
+  pctBEl.classList.add('flip-animate');
+
+  pctAEl.textContent = pA + '%';
+  pctBEl.textContent = pB + '%';
+
   document.getElementById('probShortA').textContent = tA.shortName;
   document.getElementById('probShortB').textContent = tB.shortName;
-  document.getElementById('probPctA').style.color = tA.primaryColor;
-  document.getElementById('probPctB').style.color = tB.primaryColor;
+  // Ensure legibility by making text bright and using team color as glow
+  document.getElementById('probPctA').style.color = 'var(--floodlight)';
+  document.getElementById('probPctA').style.textShadow = `0 0 10px ${tA.primaryColor}, 0 0 20px ${tA.primaryColor}`;
+  document.getElementById('probPctB').style.color = 'var(--floodlight)';
+  document.getElementById('probPctB').style.textShadow = `0 0 10px ${tB.primaryColor}, 0 0 20px ${tB.primaryColor}`;
+  
+  // Apply Jersey Glow
+  document.getElementById('badgeA').style.boxShadow = `0 0 30px ${tA.primaryColor}88`;
+  document.getElementById('badgeB').style.boxShadow = `0 0 30px ${tB.primaryColor}88`;
+
   setTimeout(() => {
     const fA = document.getElementById('probFillA');
     const fB = document.getElementById('probFillB');
@@ -354,16 +384,19 @@ function displayResults(r) {
   const formA  = normDiff(f.form_diff, 1),     formB  = 100 - formA;
   const venueA = normDiff(f.venue_diff, 1),    venueB = 100 - venueA;
   const batA   = normDiff(f.batting_strength_diff,  20), batB   = 100 - batA;
-  const bowlA  = normDiff(f.bowling_strength_diff,  15), bowlB  = 100 - bowlA;
+  const bowlA  = normDiff(f.bowling_strength_diff,  30), bowlB  = 100 - bowlA;
   const tossA  = normDiff(f.toss_impact, 0.3), tossB  = 100 - tossA;
 
+  const tossWonA = normDiff(f.toss_won, 1), tossWonB = 100 - tossWonA;
+
   const factors = [
-    { name: 'Elo Rating Difference',  weight: 'XGB', f: {a: eloA,   b: eloB},   note: `Elo diff: ${f.elo_diff.toFixed(0)} pts. Tracks long-run team quality through wins/losses.` },
-    { name: 'Recent Form (Last 5)',   weight: 'XGB', f: {a: formA,  b: formB},  note: `Form diff: ${(f.form_diff * 100).toFixed(0)}%. Win rate of last 5 matches. Current momentum.` },
-    { name: 'Venue Win %',            weight: 'XGB', f: {a: venueA, b: venueB}, note: `Venue diff: ${(f.venue_diff * 100).toFixed(0)}%. Ground-specific win history at this venue.` },
-    { name: 'Batting Strength',       weight: 'XGB', f: {a: batA,   b: batB},   note: `Diff: ${f.batting_strength_diff.toFixed(1)}. Composite of powerplay, middle & death overs run rate (last 10 games).` },
-    { name: 'Bowling Strength',       weight: 'XGB', f: {a: bowlA,  b: bowlB},  note: `Diff: ${f.bowling_strength_diff.toFixed(1)}. Composite of powerplay wkts, death economy & wicket-taking (last 10 games).` },
-    { name: 'Toss + Venue Advantage', weight: 'XGB', f: {a: tossA,  b: tossB},  note: `Toss impact: ${f.toss_impact.toFixed(3)}. Based on this venue's historical chase vs defend bias.` }
+    { name: 'Elo Rating Difference',  weight: 'RF', f: {a: eloA,   b: eloB},   note: `Elo diff: ${f.elo_diff.toFixed(0)} pts. Tracks long-run team quality through wins/losses.` },
+    { name: 'Recent Form (Last 5)',   weight: 'RF', f: {a: formA,  b: formB},  note: `Form diff: ${(f.form_diff * 100).toFixed(0)}%. Win rate of last 5 matches. Current momentum.` },
+    { name: 'Venue Win %',            weight: 'RF', f: {a: venueA, b: venueB}, note: `Venue diff: ${(f.venue_diff * 100).toFixed(0)}%. Ground-specific win history at this venue.` },
+    { name: 'Batting Strength',       weight: 'RF', f: {a: batA,   b: batB},   note: `Diff: ${f.batting_strength_diff.toFixed(1)}. Composite of powerplay, middle & death overs run rate (last 10 games).` },
+    { name: 'Bowling Strength',       weight: 'RF', f: {a: bowlA,  b: bowlB},  note: `Diff: ${f.bowling_strength_diff.toFixed(1)}. Composite of powerplay wkts, death economy & wicket-taking (last 10 games).` },
+    { name: 'Toss Advantage',         weight: 'RF', f: {a: tossA,  b: tossB},  note: `Toss impact: ${f.toss_impact.toFixed(3)}. Based on this venue's historical chase vs defend bias.` },
+    { name: 'Toss Winner',            weight: 'RF', f: {a: tossWonA, b: tossWonB}, note: `Direct flag indicating which team won the toss.` }
   ];
 
   const grid = document.getElementById('factorGrid');
@@ -451,213 +484,6 @@ function formNote(tA, tB) {
   return `${tA.shortName}: ${fA} | ${tB.shortName}: ${fB}. (Past 5 matches shown for reference).`;
 }
 
-// ---- Tactical Matchups ----
-function populateTacticalSelectors(tA, tB) {
-  const bSel = document.getElementById('tacticalBatsman');
-  const wSel = document.getElementById('tacticalBowler');
-  if (!bSel || !wSel) return;
-  
-  bSel.innerHTML = '<option value="">-- Choose Batsman (Team A) --</option>' + 
-    tA.players.filter(p => p.role.includes('Batsman') || p.role.includes('All-Rounder'))
-      .map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-      
-  wSel.innerHTML = '<option value="">-- Choose Bowler (Team B) --</option>' + 
-    tB.players.filter(p => p.role.includes('Pacer') || p.role.includes('Spinner') || p.role.includes('All-Rounder'))
-      .map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-
-  // Re-wire event listeners after rebuilding options
-  wireTacticalSelectors();
-  updateTactical();
-}
-
-function updateTactical() {
-  const batId = document.getElementById('tacticalBatsman').value;
-  const bowlId = document.getElementById('tacticalBowler').value;
-  const dash = document.getElementById('tacticalDashboard');
-  if (!batId || !bowlId) { dash.style.display = 'none'; return; }
-  dash.style.display = 'grid';
-  
-  // 1. Get Matchup Data (Manual or Dynamic Generator)
-  let m = (DETAILED_MATCHUPS || []).find(x => x.batsman === batId && x.bowler === bowlId);
-  if (!m) m = getDynamicTactics(batId, bowlId);
-  
-  // 2. Update Wagon Wheel (8 Sectors)
-  const sectors = ['straight','cover','point','thirdman','behind','fineleg','squareleg','midwicket'];
-  sectors.forEach(s => {
-    const val = m.wagonWheel[s] || 0;
-    const el = document.getElementById(`ww-${s}`);
-    if (el) el.textContent = val + '%';
-  });
-  
-  // 3. Update Weak Zones
-  document.getElementById('weak-short').textContent = m.weakZones.short || '-';
-  document.getElementById('weak-yorker').textContent = m.weakZones.yorker || '-';
-  document.getElementById('weak-good').textContent = m.weakZones.goodLength || '-';
-  
-  // 4. Update Strategies
-  document.getElementById('strat-bowler').textContent = m.bowlerPlan || "No specific blueprint.";
-  document.getElementById('strat-batsman').textContent = m.survivalTips || "Play on merit.";
-  document.getElementById('strat-insight').textContent = m.highlight || "Standard elite matchup.";
-}
-
-// ---- Dynamic Data Generator (Technical Engine) ----
-function getDynamicTactics(batId, bowlId) {
-  const batTeam = Object.values(TEAMS).find(t => t.players.find(p => p.id === batId));
-  const bowlTeam = Object.values(TEAMS).find(t => t.players.find(p => p.id === bowlId));
-  const batsman = batTeam?.players.find(p => p.id === batId) || { name: "Batsman", role: "Batsman" };
-  const bowler = bowlTeam?.players.find(p => p.id === bowlId) || { name: "Bowler", role: "Pacer" };
-
-  // 1. Base Seed
-  const seed = (batId.length * 7) + (bowlId.length * 3);
-  const rnd = (s) => Math.abs(Math.sin(seed + s));
-
-  // Generate consistent pseudo-random values if not present
-  const batSeed = (batId || "a").split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const bowlSeed = (bowlId || "b").split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const vulns = ["short", "swing", "full", "yorker", "spin", "wide"];
-  const zones = ["cover", "pull", "behind", "straight", "mid-wicket"];
-  const lengths = ["short", "good", "full", "yorker"];
-  
-  const bVuln = batsman.vulnerability || vulns[batSeed % vulns.length];
-  const bZone = batsman.strengthZone || zones[(batSeed * 3) % zones.length];
-  const bwPref = bowler.preferredLength || lengths[bowlSeed % lengths.length];
-
-  // 2. Technical Line & Length Mapping
-  const vuln = bVuln.toLowerCase();
-  const preferred = (batsman.preferredLength || lengths[(batSeed * 5) % lengths.length]).toLowerCase();
-  const bowlerLength = bwPref.toLowerCase();
-  const isPacer = bowler.role.toLowerCase().includes("pacer");
-  const isSpinner = bowler.role.toLowerCase().includes("spinner");
-  
-  let bPlan = "";
-  let sTips = "";
-  
-  // Base out percentages simulating length they got out most
-  let sOut = 15 + (batSeed % 12);
-  let yOut = 10 + ((batSeed * 2) % 15);
-  let gOut = 30 + ((batSeed * 3) % 20);
-
-  let weakShort = "Out: " + sOut + "%";
-  let weakYorker = "Out: " + yOut + "%";
-  let weakGood = "Out: " + gOut + "%";
-
-  const usesShort = vuln.includes("short") || vuln.includes("bouncer") || vuln.includes("pull") || vuln.includes("hook") || vuln.includes("back-foot");
-  const usesFull = vuln.includes("full") || vuln.includes("yorker") || vuln.includes("toss") || vuln.includes("drive") || vuln.includes("mid-wicket");
-  const usesSwing = vuln.includes("swing") || vuln.includes("in-swing") || vuln.includes("out-swing") || vuln.includes("move") || vuln.includes("off-stump") || vuln.includes("inswing") || vuln.includes("outswing");
-  const usesSpin = vuln.includes("spin") || vuln.includes("leg-spin") || vuln.includes("off-spin");
-  const usesWide = vuln.includes("wide") || vuln.includes("wide yorker");
-
-  if (usesShort) {
-    bPlan = `Attack his soft leg-side defence with short deliveries at the body. Force ${batsman.name} onto the back foot and follow with a fuller ball to make him play under pressure.`;
-    weakShort = `High Risk (${sOut + 35}% Out)`;
-    weakGood = `Warning (${gOut + 5}% Out)`;
-    if (isSpinner) bPlan += " Add an arm ball or quicker one to prevent the pull shot from being comfortable.";
-  } else if (usesSwing) {
-    const side = rnd(12)>0.5 ? 'outside off-stump' : 'middle-and-leg';
-    bPlan = `Use the corridor of uncertainty. Keep the line tight around ${side} and make him play off the seam. Early movement will expose his tendency against lateral swing.`;
-    weakGood = `Dangerous (${gOut + 25}% Out)`;
-    weakShort = `Warning (${sOut + 10}% Out)`;
-  } else if (usesFull) {
-    bPlan = `Bowling full and straight is the priority. Mix in yorkers and low full tosses at the toes to take away his scoring zone.`;
-    weakYorker = `Critical (${yOut + 45}% Out)`;
-    weakGood = `Solid (${gOut + 10}% Out)`;
-  } else if (usesSpin) {
-    bPlan = `Vary flight, drift, and pace to make him play across the line. Keep the ball tight to the stumps and look for the arm-ball or googly to break his rhythm.`;
-    weakGood = `High Risk (${gOut + 30}% Out)`;
-    weakShort = `Warning (${sOut + 5}% Out)`;
-  } else {
-    const line = preferred === 'short' ? 'back of a length' : 'full and straight';
-    bPlan = `Stay disciplined on ${line}. Pin him down with a narrow off-stump line and make him earn every run rather than giving him easy width.`;
-  }
-
-  // 3. Survival Guide logic
-  if (isPacer) {
-    if (usesSwing) {
-      sTips = `Play the ball late and off the back foot. Trust the umpires and leave anything darting outside off; wait for the one that straights to score.`;
-    } else if (usesFull) {
-      sTips = `Don't chase the wide ball. Stay balanced and drive only when the delivery is full and on the stumps. Be ready for toe-crushing yorkers at the death.`;
-    } else if (usesShort) {
-      sTips = `Keep your weight back and play the short ball with soft hands. Look for the fuller ball through the on-side rather than trying to muscle every delivery.`;
-    } else {
-      sTips = `Watch the release point and let the ball come to you. Use the crease to create room, but don't over-commit unless you have a true scoring length.`;
-    }
-  } else if (isSpinner) {
-    if (usesSpin) {
-      sTips = `Use soft hands and stay late. If the ball is turning, leave the line or play with the spin rather than across it. Read the wrist early.`;
-    } else {
-      sTips = `Attack the flight but do not reach for the ball. Use the depth of the crease to free your arms and look for the over-pitched delivery.`;
-    }
-  } else {
-    sTips = `Play on merit and stay balanced. Avoid premeditating shots; focus on timing and placement, especially against a bowler with clearly defined strengths.`;
-  }
-
-  if (bZone) {
-    sTips += ` Trust his strength through ${bZone}.`;
-  }
-  if (bowlerLength) {
-    sTips += ` ${bowler.name} prefers ${bowlerLength} lengths, so be ready for pressure there.`;
-  }
-
-  // 4. Wagon Wheel (Reflect Strength Zone)
-  const sz = bZone.toLowerCase();
-  let w;
-  if (sz.includes("cover") || sz.includes("off-side") || sz.includes("drive") || sz.includes("extra cover")) {
-    w = { straight:8, cover:30, point:20, thirdman:5, behind:5, fineleg:5, squareleg:10, midwicket:17 };
-  } else if (sz.includes("pull") || sz.includes("hook") || sz.includes("square") || sz.includes("leg-side")) {
-    w = { straight:5, cover:5, point:10, thirdman:5, behind:10, fineleg:10, squareleg:25, midwicket:30 };
-  } else if (sz.includes("behind") || sz.includes("scoop") || sz.includes("late cut") || sz.includes("scoop")) {
-    w = { straight:10, cover:10, point:10, thirdman:5, behind:25, fineleg:25, squareleg:10, midwicket:15 };
-  } else if (sz.includes("straight") || sz.includes("long-on") || sz.includes("lofted straight") || sz.includes("straight drive")) {
-    w = { straight:35, cover:20, point:10, thirdman:5, behind:10, fineleg:5, squareleg:5, midwicket:10 };
-  } else if (sz.includes("mid-wicket") || sz.includes("deep mid-wicket")) {
-    w = { straight:8, cover:8, point:10, thirdman:5, behind:5, fineleg:10, squareleg:15, midwicket:39 };
-  } else {
-    w = { straight:10, cover:12, point:12, thirdman:8, behind:10, fineleg:10, squareleg:16, midwicket:22 };
-  }
-
-  if (usesShort && weakShort.indexOf('High') === -1) {
-    weakShort = `High Risk (${sOut + 35}% Out)`;
-  }
-  if (usesFull && weakGood.indexOf('Dangerous') === -1) {
-    weakGood = `Dangerous (${gOut + 35}% Out)`;
-  }
-  if (usesSwing && weakGood.indexOf('Warning') === -1 && weakGood.indexOf('Dangerous') === -1) {
-    weakGood = `Warning (${gOut + 15}% Out)`;
-  }
-  if (usesSpin && weakGood.indexOf('High') === -1) {
-    weakGood = `High Risk (${gOut + 35}% Out)`;
-  }
-  if ((usesWide || vuln.includes('wide yorker')) && weakYorker.indexOf('High') === -1) {
-    weakYorker = `High Risk (${yOut + 30}% Out)`;
-  }
-  if ((vuln.includes('yorker') || vuln.includes('full toss') || vuln.includes('toe')) && weakYorker.indexOf('Severe') === -1) {
-    weakYorker = `Severe (${yOut + 50}% Out)`;
-  }
-  if (usesShort && !usesFull && weakGood.indexOf('Warning') === -1 && weakGood.indexOf('High') === -1) {
-    weakGood = `Warning (${gOut + 10}% Out)`;
-  }
-  if (usesFull && !usesShort && weakShort.indexOf('Warning') === -1 && weakShort.indexOf('High') === -1) {
-    weakShort = `Warning (${sOut + 10}% Out)`;
-  }
-
-  const total = Object.values(w).reduce((sum, value) => sum + value, 0);
-  Object.keys(w).forEach(key => {
-    w[key] = Math.max(5, Math.round((w[key] / total) * 100));
-  });
-  const adjustedTotal = Object.values(w).reduce((sum, value) => sum + value, 0);
-  if (adjustedTotal !== 100) {
-    const diff = 100 - adjustedTotal;
-    w.straight = Math.max(5, w.straight + diff);
-  }
-
-  return {
-    wagonWheel: w,
-    weakZones: { short: weakShort, yorker: weakYorker, goodLength: weakGood },
-    bowlerPlan: bPlan,
-    survivalTips: sTips,
-    highlight: `${batsman.name} (${batsman.bat || 80} Batting) vs ${bowler.name} (${bowler.bowl || 80} Bowling). A strategic battle focusing on ${batsman.vulnerability || 'standard technique'}.`
-  };
-}
 
 // ---- Note generators ----
 function pitchNote(pitch, tA, tB, isDay) {
@@ -808,3 +634,95 @@ function resetPrediction() {
   document.getElementById('probFillB').style.width = '0%';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+
+// ================================================================
+// HYPER-INTERACTIVE UI LOGIC
+// ================================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Inject Weather Overlay Div
+  const weatherOverlay = document.createElement('div');
+  weatherOverlay.className = 'weather-overlay';
+  document.body.prepend(weatherOverlay);
+
+  // 2. Button Ripple Effect
+  const buttons = document.querySelectorAll('.btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const circle = document.createElement('span');
+      circle.classList.add('ripple');
+      circle.style.left = x + 'px';
+      circle.style.top = y + 'px';
+      // Set size based on largest dimension
+      const d = Math.max(rect.width, rect.height);
+      circle.style.width = circle.style.height = d + 'px';
+      // Center the circle on the mouse click
+      circle.style.transform = `translate(-50%, -50%) scale(0)`;
+      
+      this.appendChild(circle);
+      setTimeout(() => circle.remove(), 600);
+    });
+  });
+
+  // 3. Setup 3D Tilt for all Cards
+  const cards = document.querySelectorAll('.card, .feature-card, .ts-badge, .stat-box');
+  cards.forEach(card => {
+    card.classList.add('tilt-card');
+    
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const rotateX = ((y - centerY) / centerY) * -10; // Max tilt 10deg
+      const rotateY = ((x - centerX) / centerX) * 10;
+      
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    });
+    
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+      card.style.transition = 'transform 0.5s ease-out';
+    });
+    
+    card.addEventListener('mouseenter', () => {
+      card.style.transition = 'none'; // Remove transition for instant mouse tracking
+    });
+  });
+  
+  // 4. Setup Weather Radio Listeners
+  const weatherRadios = document.querySelectorAll('input[name="weather"]');
+  if(weatherRadios.length) {
+    weatherRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        document.body.classList.remove('weather-rain', 'weather-dust');
+        if(e.target.value === 'rain') {
+          document.body.classList.add('weather-rain');
+        } else if(e.target.value === 'overcast') {
+          // You could add overcast styling if needed
+        }
+      });
+    });
+  }
+  
+  // Setup Pitch Radio Listeners (for Dust effect)
+  const pitchRadios = document.querySelectorAll('input[name="pitch"]');
+  if(pitchRadios.length) {
+    pitchRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        if(e.target.value === 'dry') {
+          document.body.classList.add('weather-dust');
+        } else {
+          document.body.classList.remove('weather-dust');
+        }
+      });
+    });
+  }
+});

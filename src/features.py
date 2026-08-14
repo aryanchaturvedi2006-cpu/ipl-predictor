@@ -87,7 +87,7 @@ def build_features(df):
     team_perf = {team: deque(maxlen=10) for team in unique_teams}
     
     elo_diffs, form_diffs, venue_diffs = [], [], []
-    batting_diffs, bowling_diffs, toss_impacts = [], [], []
+    batting_diffs, bowling_diffs, toss_impacts, toss_wons = [], [], [], []
     
     for idx, row in df.iterrows():
         t1 = row["team1"]
@@ -107,7 +107,9 @@ def build_features(df):
         v2_wins, v2_matches = team_venue[(t2, venue)]
         venue_diffs.append((v1_wins / v1_matches if v1_matches > 0 else 0.5) - (v2_wins / v2_matches if v2_matches > 0 else 0.5))
         
-        # Toss Impact
+        # Toss Impact & Toss Won Flag
+        toss_winner = row.get("toss_winner", "")
+        toss_wons.append(1 if toss_winner == t1 else (-1 if toss_winner == t2 else 0))
         vo = venue_overall[venue]
         chase_adv = 0
         if vo['matches'] >= 5:
@@ -211,6 +213,7 @@ def build_features(df):
     df["batting_strength_diff"] = batting_diffs
     df["bowling_strength_diff"] = bowling_diffs
     df["toss_impact"] = toss_impacts
+    df["toss_won"] = toss_wons
     
     serializable_form = {k: list(v) for k, v in recent_form.items()}
     serializable_h2h = {}

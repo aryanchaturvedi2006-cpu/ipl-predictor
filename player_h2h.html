@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Player H2H — IPL Predictor</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* H2H Layout */
+    .h2h-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media(max-width:760px){.h2h-grid{grid-template-columns:1fr}}
+    
+    .team-selector-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 24px; }
+    
+    .vs-separator { display: flex; align-items: center; justify-content: center; }
+    .vs-ring { width: 64px; height: 64px; border-radius: 50%; border: 2px solid rgba(0,200,230,0.35); display: flex; align-items: center; justify-content: center; background: rgba(0,200,230,0.06); animation: pulse-glow 2s ease-in-out infinite; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--accent); }
+    
+    .tactical-hub { margin-top: 40px; }
+    .tactical-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+    @media(max-width:900px){.tactical-grid{grid-template-columns:1fr}}
+    
+    .wagon-wheel-container { position: relative; width: 280px; height: 280px; margin: 20px auto; background: rgba(34,197,94,0.15); border-radius: 50%; border: 4px solid #16a34a; box-shadow: inset 0 0 40px rgba(0,0,0,0.3); }
+    .ground-line { position: absolute; top: 50%; left: 50%; width: 100%; height: 1px; background: rgba(255,255,255,0.15); transform-origin: left center; }
+    .wagon-pct { position: absolute; font-size: 0.68rem; font-weight: 900; color: var(--text-1); background: rgba(0,0,0,0.45); padding: 2px 5px; border-radius: 3px; backdrop-filter: blur(2px); z-index: 10; }
+    .wagon-label { position: absolute; font-size: 0.55rem; text-transform: uppercase; color: var(--text-2); font-weight: 700; letter-spacing: 0.5px; }
+    
+    .strategy-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+    .strat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 8px; display: block; }
+    .strat-val { font-size: 0.9rem; line-height: 1.6; color: var(--text-1); }
+    
+    .zone-box { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .zone-name { font-size: 0.8rem; color: var(--text-2); }
+    .zone-stat { font-size: 0.8rem; font-weight: 700; color: var(--text-1); }
+  </style>
+</head>
+<body>
+<script src="nav.js"></script>
+
+<main class="page">
+  <div class="container">
+    <section class="page-hero" style="padding-bottom:24px">
+      <div class="page-badge">🎯 Matchups</div>
+      <h1 class="page-title">Player <span >H2H</span></h1>
+      <p class="page-subtitle">Analyze deep tactical matchups between any batsman and bowler in the IPL.</p>
+    </section>
+
+    <!-- STEP 1: Select Teams -->
+    <div class="h2h-grid" style="margin-bottom:24px;align-items:center">
+      <div class="team-selector-panel">
+        <span class="label">Batting Team</span>
+        <select class="select" id="teamA" onchange="updateTeamSelections()">
+          <option value="">-- Select Team --</option>
+        </select>
+        <div style="margin-top: 16px;">
+          <label class="label">Select Batsman</label>
+          <select class="select" id="tacticalBatsman" onchange="updateTactical()" disabled>
+            <option value="">-- Choose Batsman --</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="vs-separator"><div class="vs-ring">VS</div></div>
+
+      <div class="team-selector-panel">
+        <span class="label">Bowling Team</span>
+        <select class="select" id="teamB" onchange="updateTeamSelections()">
+          <option value="">-- Select Team --</option>
+        </select>
+        <div style="margin-top: 16px;">
+          <label class="label">Select Bowler</label>
+          <select class="select" id="tacticalBowler" onchange="updateTactical()" disabled>
+            <option value="">-- Choose Bowler --</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="tactical-hub" id="tacticalSection" style="display:none;">
+      <div class="tactical-grid" id="tacticalDashboard">
+        <!-- Wagon Wheel -->
+        <div style="text-align:center;padding:10px">
+          <span class="strat-label">🏏 8-Sector Wagon Wheel (Run Dist. %)</span>
+          <div class="wagon-wheel-container">
+            <div class="wagon-label" style="top:5%;left:50%;transform:translateX(-50%)">Long On/Off</div>
+            <div class="wagon-pct" style="top:12%;left:50%;transform:translateX(-50%)" id="ww-straight">0%</div>
+
+            <div class="wagon-label" style="top:20%;right:8%;transform:rotate(45deg)">Cover</div>
+            <div class="wagon-pct" style="top:25%;right:15%" id="ww-cover">0%</div>
+
+            <div class="wagon-label" style="top:50%;right:2%;transform:translateY(-50%)">Point</div>
+            <div class="wagon-pct" style="top:50%;right:10%;transform:translateY(-50%)" id="ww-point">0%</div>
+
+            <div class="wagon-label" style="bottom:20%;right:8%;transform:rotate(-45deg)">Third Man</div>
+            <div class="wagon-pct" style="bottom:25%;right:15%" id="ww-thirdman">0%</div>
+
+            <div class="wagon-label" style="bottom:5%;left:50%;transform:translateX(-50%)">Behind</div>
+            <div class="wagon-pct" style="bottom:12%;left:50%;transform:translateX(-50%)" id="ww-behind">0%</div>
+
+            <div class="wagon-label" style="bottom:20%;left:8%;transform:rotate(45deg)">Fine Leg</div>
+            <div class="wagon-pct" style="bottom:25%;left:15%" id="ww-fineleg">0%</div>
+
+            <div class="wagon-label" style="top:50%;left:2%;transform:translateY(-50%)">Square Leg</div>
+            <div class="wagon-pct" style="top:50%;left:10%;transform:translateY(-50%)" id="ww-squareleg">0%</div>
+
+            <div class="wagon-label" style="top:20%;left:8%;transform:rotate(-45deg)">Mid-Wicket</div>
+            <div class="wagon-pct" style="top:25%;left:15%" id="ww-midwicket">0%</div>
+            
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(0deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(45deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(90deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(135deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(180deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(225deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(270deg)"></div>
+            <div class="ground-line" style="transform:translate(-50%,-50%) rotate(315deg)"></div>
+            
+            <div style="position:absolute;inset:50px;border:1px dashed rgba(255,255,255,0.1);border-radius:50%"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:40px;background:rgba(255,255,255,0.7);border-radius:2px;box-shadow:0 0 10px rgba(0,0,0,0.5)"></div>
+          </div>
+          <div style="margin-top:16px">
+            <div class="zone-box"><span class="zone-name">Weak vs Short Ball</span><span class="zone-stat" id="weak-short">-</span></div>
+            <div class="zone-box"><span class="zone-name">Weak vs Yorker</span><span class="zone-stat" id="weak-yorker">-</span></div>
+            <div class="zone-box"><span class="zone-name">Weak vs Good Length</span><span class="zone-stat" id="weak-good">-</span></div>
+          </div>
+        </div>
+
+        <!-- Strategy Content -->
+        <div class="strategy-list" style="display:flex;flex-direction:column;gap:16px">
+          <div class="strategy-card">
+            <span class="strat-label">🎯 Outing Strategy (Bowler's Plan)</span>
+            <div class="strat-val" id="strat-bowler">Select players to see the blueprint...</div>
+          </div>
+          <div class="strategy-card">
+            <span class="strat-label">🛡️ Survival Guide (Batsman's Pov)</span>
+            <div class="strat-val" id="strat-batsman">How to play the dangerous deliveries...</div>
+          </div>
+          <div class="strategy-card" style="border-color:rgba(0,200,230,0.3)">
+            <span class="strat-label">⭐ Historical Insight</span>
+            <div class="strat-val" id="strat-insight" style="font-style:italic;color:var(--text-2)">Matchup details will appear here.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="footer"><p> IPL Predictor | 8-Factor AI Engine</p></footer>
+
+<script src="data.js"></script>
+<script src="h2h_data.js"></script>
+<script src="squads_2026.js"></script>
+<script src="squads_2026b.js"></script>
+<script src="player_h2h.js"></script>
+</body>
+</html>

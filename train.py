@@ -34,57 +34,76 @@ team_encoder.fit(all_teams)
 # 5. Chronological Train-Test Split
 # We train on historical seasons (2008-2023) and validate on future seasons (2024-2025)
 # This mimics actual deployment scenario and prevents data leakage
+df["season"] = df["season"].astype(str).str[:4].astype(int)
 train_df = df[df["season"] <= 2023]
 test_df = df[df["season"] >= 2024]
 
-features = ["elo_diff", "form_diff", "venue_diff", "batting_strength_diff", "bowling_strength_diff", "toss_impact"]
+features_pre = ["elo_diff", "form_diff", "venue_diff", "batting_strength_diff", "bowling_strength_diff"]
+features_post = features_pre + ["toss_impact", "toss_won"]
 target = "target"
 
-X_train = train_df[features]
+# Double-stacking (Data Mirroring) to ensure symmetry and prevent team1 positional bias
+df_mirrored = df.copy()
+for f in features_post:
+    df_mirrored[f] = -df_mirrored[f]
+df_mirrored[target] = 1 - df_mirrored[target]
+df_combined = pd.concat([df, df_mirrored], ignore_index=True)
+
+train_df = df_combined[df_combined["season"] <= 2023]
+test_df = df_combined[df_combined["season"] >= 2024]
+
 y_train = train_df[target]
-X_test = test_df[features]
 y_test = test_df[target]
 
 print("Dataset Split Summary:")
 print(f"Training matches (2008-2023): {len(train_df)}")
 print(f"Testing matches (2024-2025): {len(test_df)}")
 
-# 6. Model Training
-# Initialize XGBoost Classifier with tuned regularization settings
-# Using simple shallow trees (max_depth=3) and small learning rate to avoid overfitting
-model = XGBClassifier(
-    n_estimators=100,
-    learning_rate=0.02,
-    max_depth=2,
-    subsample=0.7,
-    colsample_bytree=0.7,
-    reg_alpha=0.5,
-    reg_lambda=1.0,
-    random_state=42,
-    eval_metric="logloss"
-)
+from sklearn.ensemble import RandomForestClassifier
+import os
 
-model.fit(X_train, y_train)
-
-# 7. Model Evaluation
-# Predict target (1 if team1 wins, 0 if team2 wins)
-y_train_pred = model.predict(X_train)
-y_test_pred = model.predict(X_test)
-
-train_acc = accuracy_score(y_train, y_train_pred)
-test_acc = accuracy_score(y_test, y_test_pred)
-
-print(f"\nModel Performance:")
-print(f"Training Accuracy: {train_acc * 100:.2f}%")
-print(f"Testing Accuracy (2024-2025): {test_acc * 100:.2f}%")
-
-print("\nClassification Report (Test Data):")
-print(classification_report(y_test, y_test_pred))
-
-# 8. Serialization
-# Ensure models folder exists and save the trained classifier
 os.makedirs("models", exist_ok=True)
-joblib.dump(model, "models/model.pkl")
+
+# ----------------- PRE-TOSS MODEL -----------------
+X_train_pre = train_df[features_pre]
+X_test_pre = test_df[features_pre]
+
+model_pre = RandomForestClassifier(
+    n_estimators=200, 
+    max_depth=4, 
+    min_samples_leaf=10,
+    random_state=42
+)
+model_pre.fit(X_train_pre, y_train)
+
+y_train_pred_pre = model_pre.predict(X_train_pre)
+y_test_pred_pre = model_pre.predict(X_test_pre)
+
+print("\n--- Pre-Toss Model Performance ---")
+print(f"Training Accuracy: {accuracy_score(y_train, y_train_pred_pre) * 100:.2f}%")
+print(f"Testing Accuracy: {accuracy_score(y_test, y_test_pred_pre) * 100:.2f}%")
+joblib.dump(model_pre, "models/model_pre.pkl")
+
+
+# ----------------- POST-TOSS MODEL -----------------
+X_train_post = train_df[features_post]
+X_test_post = test_df[features_post]
+
+model_post = RandomForestClassifier(
+    n_estimators=200, 
+    max_depth=4, 
+    min_samples_leaf=10,
+    random_state=42
+)
+model_post.fit(X_train_post, y_train)
+
+y_train_pred_post = model_post.predict(X_train_post)
+y_test_pred_post = model_post.predict(X_test_post)
+
+print("\n--- Post-Toss Model Performance ---")
+print(f"Training Accuracy: {accuracy_score(y_train, y_train_pred_post) * 100:.2f}%")
+print(f"Testing Accuracy: {accuracy_score(y_test, y_test_pred_post) * 100:.2f}%")
+joblib.dump(model_post, "models/model_post.pkl")
 
 # Bundle the team list, encoder, and latest running statistics (Elo, recent form list, venue stats)
 # This bundle is required by the API at inference time to compute difference features on the fly

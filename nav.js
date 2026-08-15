@@ -11,6 +11,7 @@
     { href: 'history.html',   label: 'IPL History' },
     { href: 'stats.html',     label: 'Stats Center' },
     { href: 'news.html',      label: 'News' },
+    { href: 'captains_challenge.html', label: '🧠 Captain' },
   ];
 
 

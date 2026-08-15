@@ -6,6 +6,7 @@
   <title>Live Match Center — IPL Predictor</title>
   <meta name="description" content="Real-time IPL live match analytics with AI-powered win probability, momentum tracking, and live scorecard."/>
   <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* =========================================
        LIVE CENTER — SPECIFIC STYLES
@@ -192,166 +193,67 @@
       <p class="page-subtitle">Real-time win probability powered by a dedicated in-match XGBoost model trained on 23,000+ over snapshots.</p>
     </section>
 
-    <!-- Auto-refresh status -->
-    <div class="status-banner" id="statusBanner">
-      Fetching live data from <strong>iplt20.com</strong>... Auto-refresh every 30 seconds.
-    </div>
+    <!-- 
+      SETUP: Get free API key from https://cricapi.com (free tier = 100 calls/day)
+      Replace YOUR_CRICAPI_KEY_HERE in live.js line 1 with your actual key
+      Free tier is enough for personal/demo use during IPL matches
+    -->
 
-    <!-- Live Score Section (auto-filled when a match is live) -->
-    <div id="liveMatchSection">
-      <p class="section-title" style="margin-bottom:16px">LIVE SCORECARD</p>
-      <div class="scoreboard" id="scoreboard">
+    <!-- Status bar -->
+    <div id="live-status-bar" style="text-align:center; padding:12px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:24px;"></div>
+
+    <!-- Main content area -->
+    <div id="live-content">
+      <!-- Scorecard -->
+      <div id="scorecard-section" class="scoreboard">
         <div class="sb-teams">
           <div class="sb-team">
-            <div class="sb-team-name" id="battingTeamName">Chennai Super Kings</div>
-            <div class="sb-score" id="liveScore">115/4</div>
-            <div class="sb-detail" id="liveOvers">14.2 Overs</div>
+            <div class="sb-team-name" id="batting-team-name">Batting Team</div>
+            <div class="sb-score" id="live-score">0/0</div>
+            <div class="sb-detail" id="live-overs">0.0 Overs</div>
           </div>
           <div class="sb-vs">vs</div>
           <div class="sb-team">
-            <div class="sb-team-name" id="bowlingTeamName">Mumbai Indians</div>
-            <div class="sb-score" style="color:var(--text-2);font-size:1.4rem" id="targetDisplay">Target: 185</div>
-            <div class="sb-detail" id="needDisplay">Need 70 off 34 balls</div>
+            <div class="sb-team-name" id="bowling-team-name">Bowling Team</div>
+            <div class="sb-score" style="color:var(--text-2);font-size:1.4rem" id="target-display"></div>
+            <div class="sb-detail" id="need-display"></div>
           </div>
         </div>
         <div class="sb-meta">
           <div class="sb-meta-item">
-            <div class="sb-meta-val" id="crrDisplay">8.02</div>
+            <div class="sb-meta-val" id="current-rr">0.00</div>
             <div class="sb-meta-label">Current RR</div>
           </div>
           <div class="sb-meta-item">
-            <div class="sb-meta-val" style="color:#ef4444" id="rrrDisplay">12.35</div>
+            <div class="sb-meta-val" style="color:#ef4444" id="required-rr">0.00</div>
             <div class="sb-meta-label">Required RR</div>
           </div>
           <div class="sb-meta-item">
-            <div class="sb-meta-val" id="wicketsDisplay">4</div>
+            <div class="sb-meta-val" id="wickets-lost">0</div>
             <div class="sb-meta-label">Wickets Lost</div>
           </div>
           <div class="sb-meta-item">
-            <div class="sb-meta-val" id="ballsDisplay">34</div>
+            <div class="sb-meta-val" id="balls-left">0</div>
             <div class="sb-meta-label">Balls Left</div>
           </div>
         </div>
+        <div id="match-situation" style="text-align:center; margin-top:16px; font-weight:bold;"></div>
       </div>
 
-      <!-- Win Probability -->
-      <div class="card" style="margin-bottom:24px">
-        <p class="card-title">Live Win Probability
-          <span id="phaseTag" class="phase-tag" style="margin-left:8px;border-color:rgba(0,200,230,0.4);color:var(--accent)">Death Overs</span>
-        </p>
-        <div class="prob-live-wrap">
-          <div class="prob-live-bar" id="probLiveBar">
-            <div class="prob-live-a" id="probLiveA" style="width:50%">50%</div>
-            <div class="prob-live-b" id="probLiveB" style="width:50%">50%</div>
-          </div>
-          <div class="prob-live-labels">
-            <span id="probLabelA">CSK Win</span>
-            <span id="probLabelB">MI Win</span>
-          </div>
-        </div>
-
-        <!-- Momentum -->
-        <div class="momentum-bar-wrap">
-          <div class="momentum-label-row">
-            <span>Batting Momentum</span>
-            <span>Bowling Momentum</span>
-          </div>
-          <div class="momentum-bar">
-            <div class="momentum-fill" id="momentumFill" style="width:50%"></div>
-          </div>
-          <div class="momentum-note" id="momentumNote">Balanced</div>
+      <!-- Win probability -->
+      <div id="probability-section" class="card" style="margin-bottom:24px;">
+        <p class="card-title">Live Win Probability</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:20px;">
+          <span id="batting-prob" style="font-size:2rem; font-weight:bold; color:#22c55e;">50%</span>
+          <div id="gauge-needle" style="width:40px; height:40px; border-top:4px solid #22c55e; border-radius:50%; transition:transform 0.5s;"></div>
+          <span id="bowling-prob" style="font-size:2rem; font-weight:bold; color:#ef4444;">50%</span>
         </div>
       </div>
 
-      <!-- Stats Grid -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
-
-        <!-- Pressure Index -->
-        <div class="card">
-          <p class="card-title">Pressure Index</p>
-          <div class="pressure-ring-wrap">
-            <div class="pressure-ring" id="pressureRing">
-              <div class="pressure-val" id="pressureVal">0</div>
-              <div class="pressure-lbl">/ 100</div>
-            </div>
-            <div style="font-size:0.78rem;color:var(--text-2);max-width:200px;margin:0 auto" id="pressureDesc">
-              Low pressure — batters are comfortable.
-            </div>
-          </div>
-        </div>
-
-        <!-- Match Context -->
-        <div class="card">
-          <p class="card-title">Match Context</p>
-          <div class="ctx-grid">
-            <div class="ctx-item">
-              <div class="ctx-val" id="ctxWickets">6</div>
-              <div class="ctx-lbl">Wickets In Hand</div>
-            </div>
-            <div class="ctx-item">
-              <div class="ctx-val" id="ctxRuns">70</div>
-              <div class="ctx-lbl">Runs Needed</div>
-            </div>
-            <div class="ctx-item">
-              <div class="ctx-val" id="ctxBalls">34</div>
-              <div class="ctx-lbl">Balls Remaining</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- AI Explainability -->
-      <div class="card" style="margin-bottom:24px">
-        <p class="card-title">Why Did Probability Change?</p>
-        <div id="explainerBody"></div>
-      </div>
-    </div>
-
-    <!-- Manual Input Override -->
-    <p class="section-title" style="margin-bottom:16px">MANUAL SITUATION ENTRY</p>
-    <div class="card" style="margin-bottom:24px">
-      <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:16px">Enter match situation manually to simulate any scenario. All values feed directly into the live ML model.</p>
-      <div class="live-input-grid">
-        <div class="form-group">
-          <label class="label">Batting Team</label>
-          <input class="select" id="inputBatTeam" type="text" placeholder="e.g. CSK" value="Chennai Super Kings"/>
-        </div>
-        <div class="form-group">
-          <label class="label">Bowling Team</label>
-          <input class="select" id="inputBowlTeam" type="text" placeholder="e.g. MI" value="Mumbai Indians"/>
-        </div>
-        <div class="form-group">
-          <label class="label">Inning (1 or 2)</label>
-          <input class="select" id="inputInning" type="number" min="1" max="2" value="2"/>
-        </div>
-        <div class="form-group">
-          <label class="label">Current Score</label>
-          <input class="select" id="inputScore" type="number" min="0" value="115"/>
-        </div>
-        <div class="form-group">
-          <label class="label">Wickets Lost</label>
-          <input class="select" id="inputWickets" type="number" min="0" max="10" value="4"/>
-        </div>
-        <div class="form-group">
-          <label class="label">Overs Completed</label>
-          <input class="select" id="inputOvers" type="number" min="0" max="20" step="0.1" value="14.2"/>
-        </div>
-        <div class="form-group">
-          <label class="label">Target (Inning 2 only)</label>
-          <input class="select" id="inputTarget" type="number" min="0" value="185"/>
-        </div>
-      </div>
-      <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="runManualLive()">Run Live Prediction</button>
-        <button class="refresh-btn" onclick="fetchLiveAndPredict()">Refresh from iplt20.com</button>
-      </div>
-    </div>
-
-    <!-- Fixtures -->
-    <p class="section-title" style="margin-bottom:16px">UPCOMING FIXTURES</p>
-    <div class="card" style="margin-bottom:40px">
-      <div id="fixturesBody">
-        <div style="text-align:center;padding:20px;color:var(--text-2)">Loading fixtures from iplt20.com...</div>
+      <!-- Over-by-over chart -->
+      <div class="card" style="margin-bottom:24px;">
+        <p class="card-title">Over-by-Over Trend</p>
+        <canvas id="prob-chart" height="120"></canvas>
       </div>
     </div>
 

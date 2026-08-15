@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>IPL Predictor — Captain's Challenge</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* Custom styles for Captain's Challenge */
+    body {
+      background-color: #0a0f1e;
+      color: var(--text);
+    }
+    .page-header {
+      text-align: center;
+      padding: 40px 20px 20px;
+      position: relative;
+    }
+    .title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 900;
+      margin-bottom: 5px;
+      color: #fff;
+    }
+    .subtitle {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      color: var(--text-2);
+    }
+    .iq-badge {
+      position: absolute;
+      top: 40px;
+      right: 20px;
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid var(--gold);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-family: 'Orbitron', sans-serif;
+      color: var(--gold);
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .challenge-tracker {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--accent);
+      margin-top: 20px;
+      font-size: 1.1rem;
+    }
+
+    .challenge-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Situation Card */
+    .situation-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      border: 2px solid transparent;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+    }
+    .match-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 25px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: bold;
+      font-size: 1.4rem;
+      color: #fff;
+    }
+    .team-name {
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+    .vs {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.7);
+    }
+    .scorecard {
+      padding: 25px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      position: relative;
+    }
+    .scorecard::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 100px;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .score-main {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.6rem;
+      color: #fff;
+    }
+    .players-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .player-stat {
+      background: rgba(0,0,0,0.3);
+      padding: 12px;
+      border-radius: 8px;
+    }
+    .player-stat-label {
+      font-size: 0.9rem;
+      color: var(--text-2);
+      margin-bottom: 4px;
+    }
+    .player-stat-value {
+      font-weight: 600;
+      color: #fff;
+    }
+    .situation-statement {
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-align: center;
+      color: var(--accent);
+      margin-top: 10px;
+      padding: 15px;
+      background: rgba(0, 200, 230, 0.05);
+      border-radius: 8px;
+      border-left: 4px solid var(--accent);
+    }
+
+    /* Options */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .option-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      color: #fff;
+    }
+    .option-card:hover {
+      background: rgba(255,255,255,0.05);
+      transform: translateX(5px);
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(0, 200, 230, 0.2);
+    }
+    .option-card.selected {
+      background: rgba(0, 200, 230, 0.1);
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(0, 200, 230, 0.4);
+    }
+    .option-card.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .option-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--accent);
+      background: rgba(0,0,0,0.5);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .option-text {
+      flex: 1;
+    }
+    .option-icon {
+      font-size: 1.5rem;
+    }
+
+    /* Result Section */
+    .result-section {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      padding: 30px;
+      display: none;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .result-section.show {
+      display: block;
+      transform: translateY(0);
+      opacity: 1;
+      animation: slideUp 0.5s forwards;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .result-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .result-decision {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      color: #fff;
+    }
+    
+    /* Gauge Meter */
+    .gauge-container {
+      width: 200px;
+      height: 100px;
+      margin: 0 auto 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .gauge-bg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      border: 15px solid rgba(255,255,255,0.1);
+      box-sizing: border-box;
+    }
+    .gauge-fill {
+      position: absolute;
+      top: 0; left: 0;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      border: 15px solid;
+      border-color: transparent transparent var(--gauge-color) var(--gauge-color);
+      box-sizing: border-box;
+      transform: rotate(-45deg);
+      transition: transform 1s cubic-bezier(0.2, 1, 0.3, 1);
+    }
+    .gauge-score {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    
+    .expert-move {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .explanation-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px;
+    }
+    .explanation-list li {
+      margin-bottom: 12px;
+      font-size: 1.1rem;
+      line-height: 1.5;
+      display: flex;
+      gap: 10px;
+      color: #e0e0e0;
+    }
+    .iq-toast {
+      background: rgba(255, 215, 0, 0.15);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.5s ease;
+    }
+    .iq-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Bottom IQ Panel */
+    .iq-panel {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      border-radius: var(--radius-xl);
+    }
+    .iq-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      padding-right: 20px;
+    }
+    .iq-level-text {
+      font-family: 'Orbitron', sans-serif;
+      color: #fff;
+      font-size: 1.1rem;
+    }
+    .iq-progress-bg {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .iq-progress-fill {
+      height: 100%;
+      background: var(--gold);
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    .btn-next {
+      background: var(--accent);
+      color: #000;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: bold;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 24px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+    }
+    .btn-next:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0,200,230,0.5);
+    }
+
+    /* Season Complete Screen */
+    .season-complete {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--gold);
+      box-shadow: 0 0 30px rgba(255,215,0,0.1);
+    }
+    .season-complete h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+    .final-stats {
+      margin: 30px 0;
+      font-size: 1.5rem;
+    }
+    .final-stats span {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 3rem;
+      color: #fff;
+      display: block;
+      margin: 10px 0;
+    }
+    
+    @media (max-width: 600px) {
+      .iq-badge {
+        position: static;
+        margin: 15px auto 0;
+        width: fit-content;
+      }
+      .players-info {
+        grid-template-columns: 1fr;
+      }
+      .iq-panel {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+      .iq-info {
+        padding-right: 0;
+        width: 100%;
+      }
+    }
+    .argue-header {
+      font-family: 'Orbitron', sans-serif;
+      color: #f97316;
+      font-size: 16px;
+      margin: 24px 0 8px;
+      border-left: 3px solid #f97316;
+      padding-left: 12px;
+    }
+    .argue-sub { 
+      font-family: 'Rajdhani'; 
+      color: #94a3b8; 
+      font-size: 13px; 
+      display: block; 
+      margin-top: 4px; 
+    }
+    #user-argument {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Rajdhani';
+      font-size: 14px;
+      padding: 12px;
+      resize: none;
+      margin-top: 12px;
+    }
+    #user-argument:focus { border-color: #f97316; outline: none; }
+    #submit-argument {
+      margin-top: 8px;
+      background: #f97316;
+      color: #000;
+      font-family: 'Orbitron';
+      font-size: 12px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .arg-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .arg-card.top-arg { border-color: #f97316; }
+    .top-badge {
+      font-size: 11px;
+      color: #f97316;
+      font-family: 'Orbitron';
+      margin-bottom: 8px;
+    }
+    .arg-option-badge {
+      display: inline-block;
+      background: #334155;
+      color: #94a3b8;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+    .arg-text { color: #e2e8f0; font-family: 'Rajdhani'; font-size: 14px; line-height: 1.5; }
+    .arg-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .vote-btn {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 4px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .vote-btn.voted { border-color: #f97316; color: #f97316; }
+    .arg-time { font-size: 11px; color: #475569; }
+    .char-count { font-size: 11px; color: #64748b; text-align: right; margin-top: 4px; }
+    .no-args { text-align: center; color: #64748b; font-size: 13px; padding: 20px 0; }
+    .community-args-header { font-family: 'Orbitron'; font-size: 12px; color: #cbd5e1; margin: 24px 0 12px; }
+  </style>
+</head>
+<body>
+<script src="nav.js"></script>
+
+<main class="page">
+  <div class="container">
+    
+    <div class="page-header">
+      <h1 class="title">CAPTAIN'S CHALLENGE</h1>
+      <p class="subtitle">Make the call. Own the result.</p>
+      <div class="iq-badge">
+        <span>🧠 IQ:</span>
+        <span id="headerIqScore">0</span>
+      </div>
+      <div class="challenge-tracker" id="challengeTracker">Challenge 1/8</div>
+    </div>
+
+    <div class="challenge-container" id="gameArea">
+      <!-- Situation Card -->
+      <div class="situation-card" id="situationCard">
+        <div class="match-banner" id="matchBanner">
+          <span class="team-name" id="team1Name">CSK</span>
+          <span class="vs">VS</span>
+          <span class="team-name" id="team2Name">MI</span>
+        </div>
+        <div class="scorecard">
+          <div class="score-row">
+            <span class="score-main" id="situationScore">CSK 142/4 — Over 16.2</span>
+          </div>
+          <div class="score-row" style="color:var(--text-2); font-size:1rem; border:none; padding:0; margin-bottom:20px;">
+            <span id="situationTarget">Target: 187</span>
+            <span id="situationNeed">Need: 45 from 22 balls</span>
+          </div>
+          <div class="players-info">
+            <div class="player-stat">
+              <div class="player-stat-label">Batter on Strike</div>
+              <div class="player-stat-value" id="situationBatter">Jadeja — 28(19)</div>
+            </div>
+            <div class="player-stat">
+              <div class="player-stat-label">Current Bowling</div>
+              <div class="player-stat-value" id="situationBowler">Bumrah — 3.2 overs, 28 runs, 1 wkt</div>
+            </div>
+          </div>
+          <div class="situation-statement" id="situationQuestion">
+            Bumrah has 1 over left. Jadeja is set. What do you do?
+          </div>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="options-grid" id="optionsGrid">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- Result Section -->
+      <div class="result-section" id="resultSection">
+        <div class="result-header">
+          <div class="result-decision" id="resultDecisionText">YOUR DECISION: B — 78/100</div>
+          
+          <div class="gauge-container">
+            <div class="gauge-bg"></div>
+            <div class="gauge-fill" id="gaugeFill"></div>
+            <div class="gauge-score" id="gaugeScore">0</div>
+          </div>
+          
+          <div class="expert-move" id="expertMoveText">EXPERT MOVE: B</div>
+        </div>
+        
+        <ul class="explanation-list" id="explanationList">
+          <!-- Injected via JS -->
+        </ul>
+        
+        <div class="iq-toast" id="iqToast">
+          +15 Cricket IQ added
+        </div>
+      </div>
+
+      <!-- Argue Section -->
+      <div id="argue-section" style="display:none">
+        
+        <div class="argue-header">
+          🗣️ DISAGREE WITH AI?
+          <span class="argue-sub">Make your case — the community will judge</span>
+        </div>
+
+        <!-- User's argument input -->
+        <div class="argue-input-wrap">
+          <textarea 
+            id="user-argument" 
+            placeholder="Why do you think your decision was better? (e.g. 'Bumrah had already bowled 3 tight overs, saving him was too risky given Russell's form...')"
+            maxlength="280"
+            rows="3"
+          ></textarea>
+          <div class="char-count"><span id="char-left">280</span> chars left</div>
+          <button id="submit-argument">⚡ Submit My Take</button>
+        </div>
+
+        <!-- Community arguments (loaded from localStorage) -->
+        <div class="community-args-header">
+          💬 COMMUNITY TAKES — <span id="arg-count">0</span> arguments
+        </div>
+        
+        <div id="community-args-list">
+          <!-- Arguments render here -->
+        </div>
+
+      </div>
+
+      <!-- IQ Panel -->
+      <div class="iq-panel">
+        <div class="iq-info">
+          <div class="iq-level-text" id="iqLevelText">Level: Fan (0 IQ)</div>
+          <div class="iq-progress-bg">
+            <div class="iq-progress-fill" id="iqProgressFill"></div>
+          </div>
+        </div>
+        <button class="btn-next" id="btnNext" style="display:none;">NEXT CHALLENGE →</button>
+      </div>
+
+    </div>
+
+    <!-- Season Complete Screen -->
+    <div class="season-complete" id="seasonComplete">
+      <h2>SEASON COMPLETE</h2>
+      <p style="color:var(--text-2);font-size:1.2rem;">You've made all the tough calls.</p>
+      <div class="final-stats">
+        Total Cricket IQ
+        <span id="finalIqScore">250</span>
+      </div>
+      <div style="font-family:'Orbitron',sans-serif; color:var(--accent); font-size:1.5rem; margin-bottom:30px;" id="finalLevel">
+        Level: Enthusiast
+      </div>
+      <button class="btn-next" id="btnPlayAgain">Play Again</button>
+    </div>
+
+  </div>
+</main>
+
+<footer class="footer" style="margin-top: 60px;">
+  <p>🏏 IPL Predictor &nbsp;|&nbsp; Built for cricket enthusiasts &nbsp;|&nbsp; For educational purposes only</p>
+</footer>
+
+<script>
+const challenges = [
+  {
+    id: 1,
+    match: "CSK vs MI",
+    team1: "CSK", team1color: "#FFD700",
+    team2: "MI", team2color: "#004BA0",
+    situation: "CSK 142/4 — Over 16.2 | Target: 187 | Need: 45 from 22 balls",
+    batter: "Jadeja — 28(19)",
+    bowler: "Bumrah — 3.2 overs, 28 runs, 1 wkt",
+    question: "Bumrah has 1 over left. Jadeja is set. What do you do?",
+    options: [
+      { label: "A", text: "Bowl Bumrah now", icon: "⚡" },
+      { label: "B", text: "Save Bumrah for final over, bowl Krunal now", icon: "🧠" },
+      { label: "C", text: "Surprise change — bring Pollard", icon: "🎲" }
+    ],
+    correctOption: "B",
+    scores: { A: 55, B: 78, C: 40 },
+    explanation: {
+      A: ["⚡ Bumrah now protects these 6 balls but leaves death exposed (+10)", "⚠️ Jadeja scores well vs pace in middle overs (-15)", "📊 Teams using best bowler at 17th over win only 44% of these situations (-8)", "✅ Safe option but not optimal"],
+      B: ["✅ Bumrah's economy in death overs at Wankhede: 7.2 — saving him was smart (+22)", "✅ Krunal has dismissed Jadeja twice in T20s (+18)", "⚠️ Slight risk if Krunal goes for runs in over 17 (-8)", "📊 Teams saving best bowler for last over win 61% of such situations (+15)"],
+      C: ["🎲 Pollard is high variance — could work but risky (-20)", "⚠️ Breaking Bumrah's rhythm at this stage costly (-15)", "❌ No historical precedent favors this in chase defense (-10)", "📊 Surprise changes succeed only 29% of time in death situations"]
+    },
+    iqPoints: { A: 8, B: 15, C: 3 }
+  },
+  {
+    id: 2,
+    match: "RCB vs KKR",
+    team1: "RCB", team1color: "#E2231A",
+    team2: "KKR", team2color: "#3A225D",
+    situation: "KKR 170/5 — Over 17.0 | Target: 210 | Need: 40 from 18 balls",
+    batter: "Russell — 35(15)",
+    bowler: "Siraj & Harshal have 1 over each",
+    question: "Russell is striking at 230. Who bowls the critical 18th over?",
+    options: [
+      { label: "A", text: "Bowl Siraj (Pace on, target yorkers)", icon: "🔥" },
+      { label: "B", text: "Bowl Harshal (Off-cutters into the pitch)", icon: "🎯" },
+      { label: "C", text: "Bowl a Spinner (Take pace completely off)", icon: "🌀" }
+    ],
+    correctOption: "B",
+    scores: { A: 45, B: 85, C: 20 },
+    explanation: {
+      A: ["⚠️ Siraj's extra pace feeds into Russell's hitting arc (-15)", "✅ Good intent, but margin for error with yorkers is zero (+5)", "📊 Russell strikes at 210+ vs 140kmph+ pace at Chinnaswamy (-10)"],
+      B: ["✅ Harshal's slower dipping yorkers are highly effective vs power hitters (+25)", "✅ Forces Russell to generate his own pace (+15)", "📊 Historic data shows cutters on this pitch concede 20% fewer boundaries (+10)"],
+      C: ["❌ Suicidal move! Spinners get destroyed by Russell in the death (-25)", "⚠️ Ball might sit up perfectly for him (-15)", "📊 Spinners concede an average of 14 runs/over vs Russell here (-10)"]
+    },
+    iqPoints: { A: 6, B: 18, C: 0 }
+  },
+  {
+    id: 3,
+    match: "MI vs DC",
+    team1: "MI", team1color: "#004BA0",
+    team2: "DC", team2color: "#00008B",
+    situation: "DC 145/2 — Over 16.0 | Target: 190 | Need: 45 from 24 balls",
+    batter: "Pant — 60(38)",
+    bowler: "Bumrah — 2 overs left",
+    question: "Pant is well set. When do you bowl Bumrah's remaining two overs?",
+    options: [
+      { label: "A", text: "Overs 17 and 19 (Break momentum early)", icon: "⚔️" },
+      { label: "B", text: "Overs 18 and 20 (Save for absolute death)", icon: "🛡️" },
+      { label: "C", text: "Overs 17 and 20 (Mix it up)", icon: "🔀" }
+    ],
+    correctOption: "A",
+    scores: { A: 82, B: 50, C: 65 },
+    explanation: {
+      A: ["✅ Breaking the partnership NOW is crucial to defend 45 (+20)", "✅ The 19th over is often the most important over in a T20 chase (+15)", "📊 Defending teams win 68% when striking in the 17th over (+12)"],
+      B: ["⚠️ If 17th goes for 15+ runs, the game is practically over before 18th (-15)", "✅ Safe on paper, but lacks proactivity (+5)", "📊 Leaving a set batter for 18/20 increases chase success to 72% (-8)"],
+      C: ["✅ Good variation, but leaves the crucial 18th/19th vulnerable (+10)", "⚠️ Pant could target the other bowler in the 18th/19th (-5)", "📊 Slightly better than option B, but A is optimal (+5)"]
+    },
+    iqPoints: { A: 16, B: 5, C: 10 }
+  },
+  {
+    id: 4,
+    match: "SRH vs RR",
+    team1: "SRH", team1color: "#FF822A",
+    team2: "RR", team2color: "#EA1A85",
+    situation: "SRH 160/3 — Over 15.0 | Target: 215 | Need: 55 from 30 balls",
+    batter: "Klaasen — 45(18)",
+    bowler: "Ashwin, Boult, Sandeep available",
+    question: "Klaasen is destroying spin. Who bowls the 16th?",
+    options: [
+      { label: "A", text: "Boult (Pace, look for yorkers)", icon: "⚡" },
+      { label: "B", text: "Sandeep (Wide yorkers & slower ones)", icon: "🎯" },
+      { label: "C", text: "Ashwin (Turn it away from him)", icon: "🌀" }
+    ],
+    correctOption: "B",
+    scores: { A: 60, B: 80, C: 25 },
+    explanation: {
+      A: ["✅ Boult is world-class, but Klaasen handles pace on the stumps well (+10)", "⚠️ Missed yorkers will vanish into the stands (-10)", "📊 Pace on middle stump goes for 11.5 RPO vs Klaasen (-5)"],
+      B: ["✅ Wide slower balls force Klaasen to reach, mitigating his power (+20)", "✅ Sandeep executes wide yorkers at an elite level (+15)", "📊 Klaasen's strike rate drops from 210 to 140 against wide pace off (+10)"],
+      C: ["❌ Klaasen dominates spin, even turning away (-20)", "⚠️ Huge risk bringing spin to a set Klaasen (-15)", "📊 Spinners average 15 RPO against him in the death (-10)"]
+    },
+    iqPoints: { A: 10, B: 15, C: 2 }
+  },
+  {
+    id: 5,
+    match: "GT vs LSG",
+    team1: "GT", team1color: "#1B2133",
+    team2: "LSG", team2color: "#005087",
+    situation: "LSG 125/4 — Over 16.0 | Target: 165 | Need: 40 from 24 balls",
+    batter: "Pooran — 40(20)",
+    bowler: "Rashid (1 over), Mohit (2 overs)",
+    question: "Pooran is accelerating. How do you deploy Rashid Khan's final over?",
+    options: [
+      { label: "A", text: "Bowl Rashid NOW to get Pooran out", icon: "🧠" },
+      { label: "B", text: "Save Rashid for the 19th over", icon: "🛡️" },
+      { label: "C", text: "Bowl Mohit Sharma for 17th and 19th", icon: "🔥" }
+    ],
+    correctOption: "A",
+    scores: { A: 85, B: 40, C: 55 },
+    explanation: {
+      A: ["✅ Pooran is the only recognized batter left; getting him out ends the game (+25)", "✅ Rashid has dismissed Pooran 3 times in T20s (+15)", "📊 Attack over defense: taking wickets is the best way to defend low totals (+10)"],
+      B: ["⚠️ Waiting till the 19th might be too late if Pooran hits 15+ in the 17th (-15)", "❌ Pooran can safely play out Rashid in the 19th if the required rate drops (-10)"],
+      C: ["✅ Mohit's slower balls are good, but he lacks Rashid's strike ability (+10)", "⚠️ Pooran hits pace well square of the wicket (-5)"]
+    },
+    iqPoints: { A: 18, B: 5, C: 8 }
+  },
+  {
+    id: 6,
+    match: "PBKS vs CSK",
+    team1: "PBKS", team1color: "#ED1B24",
+    team2: "CSK", team2color: "#FFD700",
+    situation: "CSK 175/4 — Over 18.0 | Target: 200 | Need: 25 from 12 balls",
+    batter: "Dhoni — 18(8)",
+    bowler: "Arshdeep & Rabada have 1 over each",
+    question: "Dhoni is on strike. Who bowls the crucial 19th over?",
+    options: [
+      { label: "A", text: "Arshdeep (Left-arm angle, wide yorkers)", icon: "📐" },
+      { label: "B", text: "Rabada (Raw pace, hit the deck)", icon: "🔥" },
+      { label: "C", text: "Curran (Slower balls, cutters)", icon: "🎯" }
+    ],
+    correctOption: "A",
+    scores: { A: 88, B: 45, C: 60 },
+    explanation: {
+      A: ["✅ Left-arm angle across Dhoni is historically his biggest weakness (+20)", "✅ Arshdeep executes wide yorkers exceptionally well (+15)", "📊 Dhoni's strike rate vs left-arm pace wide outside off is under 110 (+15)"],
+      B: ["⚠️ Raw pace into the body is exactly what Dhoni uses for his trademark pulls/helicopters (-15)", "❌ Rabada at the death can be predictable with length (-10)"],
+      C: ["✅ Slower balls work, but Curran's angle isn't as challenging as Arshdeep's (+10)", "⚠️ If missed, slower balls sit up nicely for Dhoni (-5)"]
+    },
+    iqPoints: { A: 19, B: 5, C: 10 }
+  },
+  {
+    id: 7,
+    match: "KKR vs SRH",
+    team1: "KKR", team1color: "#3A225D",
+    team2: "SRH", team2color: "#FF822A",
+    situation: "SRH 190/6 — Over 18.0 | Target: 220 | Need: 30 from 12 balls",
+    batter: "Cummins — 25(10)",
+    bowler: "Narine (1), Starc (1)",
+    question: "Cummins is hitting cleanly. Who bowls the 19th?",
+    options: [
+      { label: "A", text: "Starc (Pace, yorkers)", icon: "⚡" },
+      { label: "B", text: "Narine (Spin, mystery)", icon: "🌀" },
+      { label: "C", text: "Russell (Wide yorkers)", icon: "💪" }
+    ],
+    correctOption: "B",
+    scores: { A: 75, B: 82, C: 40 },
+    explanation: {
+      A: ["✅ Starc is a premium death bowler, generally reliable (+15)", "⚠️ Cummins knows Starc's variations perfectly from Australian nets (-10)"],
+      B: ["✅ Mystery spin in the 19th over is a masterstroke; batters expect pace (+20)", "✅ Narine's economy in the 19th over is a staggering 6.8 (+18)", "📊 Spin vs lower-order pace hitters often induces mishits (+10)"],
+      C: ["❌ Russell's pace is too friendly for a set Cummins (-15)", "⚠️ High probability of boundary balls (-10)"]
+    },
+    iqPoints: { A: 12, B: 16, C: 4 }
+  },
+  {
+    id: 8,
+    match: "RCB vs MI",
+    team1: "RCB", team1color: "#E2231A",
+    team2: "MI", team2color: "#004BA0",
+    situation: "MI 185/3 — Over 17.0 | Target: 220 | Need: 35 from 18 balls",
+    batter: "SKY — 75(35)",
+    bowler: "Siraj & Topley available",
+    question: "SKY is playing 360 degrees. What's the plan?",
+    options: [
+      { label: "A", text: "Siraj wide outside off stump", icon: "📏" },
+      { label: "B", text: "Topley at the stumps", icon: "🎯" },
+      { label: "C", text: "Spinner to take pace off", icon: "🌀" }
+    ],
+    correctOption: "A",
+    scores: { A: 85, B: 30, C: 45 },
+    explanation: {
+      A: ["✅ SKY sweeps and scoops deliveries on the stumps easily. Wide line restricts him (+25)", "✅ Forces SKY to hit over covers where he has less power (+15)", "📊 SKY's strike rate on wide lines is 135 vs 220 on stumps (+10)"],
+      B: ["❌ Bowling at the stumps to SKY is playing into his hands (-20)", "⚠️ He will easily maneuver pace behind square (-15)"],
+      C: ["✅ Can work if the pitch is slow, but SKY is an excellent player of spin (+5)", "⚠️ Too risky with 35 needed, a bad over ends the game (-10)"]
+    },
+    iqPoints: { A: 18, B: 2, C: 6 }
+  },
+{
+  id: 9,
+  match: "MI vs DC",
+  team1: "MI", team1color: "#004BA0",
+  team2: "DC", team2color: "#0078BC",
+  situation: "DC 156/3 — Over 15.0 | Target: 189 | Need: 33 from 30 balls",
+  batter: "Warner — 67(45)",
+  bowler: "Bumrah — 3 overs, 22 runs, 1 wkt",
+  question: "Warner is set and dangerous. Bumrah has 1 over left. Do you bowl him now or save him?",
+  options: [
+    { label: "A", text: "Bowl Bumrah in over 16 — stop Warner now", icon: "⚡" },
+    { label: "B", text: "Save Bumrah for over 20 — bowl Hardik now", icon: "🧠" },
+    { label: "C", text: "Bring a spinner to break rhythm", icon: "🌀" }
+  ],
+  correctOption: "A",
+  scores: { A: 82, B: 58, C: 45 },
+  explanation: {
+    A: ["✅ Warner averages 156 SR in overs 15-17, must be stopped now (+25)", "✅ Bumrah's economy vs left-handers: 6.8 — best option (+20)", "📊 DC needs 33 off 30 — still gettable, need wicket urgently (+15)", "⚠️ Saving Bumrah risks Warner accelerating in overs 16-19 (-5)"],
+    B: ["⚠️ Warner in overs 16-19 averages 178 SR — too dangerous to let go (-20)", "✅ Saving best for death is textbook but Warner changes equations (-10)", "📊 33 off 30 becomes 20 off 12 if Warner bats through (-15)", "❌ Hardik has been hit for 2 sixes by Warner this match (-8)"],
+    C: ["❌ Warner averages 142 SR vs spin — not the weakness to target (-20)", "⚠️ Spinner gives Warner easy singles to stay on strike (-15)", "📊 Pitch is flat — no turn expected, spinner ineffective (-18)", "❌ This loses the match (-10)"]
+  },
+  iqPoints: { A: 18, B: 8, C: 2 }
+},
+{
+  id: 10,
+  match: "RR vs GT",
+  team1: "RR", team1color: "#EA1A85",
+  team2: "GT", team2color: "#1C4587",
+  situation: "RR 45/3 — Over 6.0 | Powerplay over | Target: 175",
+  batter: "Samson — 28(20)",
+  bowler: "Shami — 2 overs, 18 runs, 2 wkts",
+  question: "3 wickets down in powerplay. Samson is set. What is RR's batting strategy?",
+  options: [
+    { label: "A", text: "Consolidate — build partnership, accelerate later", icon: "🛡️" },
+    { label: "B", text: "Attack now — Samson must go big while set", icon: "💥" },
+    { label: "C", text: "Rotate strike — keep scoreboard moving steadily", icon: "🔄" }
+  ],
+  correctOption: "A",
+  scores: { A: 75, B: 55, C: 65 },
+  explanation: {
+    A: ["✅ 3 wickets down in PP — losing another wicket = match over (+20)", "✅ 130 needed off 84 balls is very gettable if 2 wickets stay (+18)", "📊 Teams reaching 8+ overs with 3 wickets in hand win 68% of such chases (+15)", "⚠️ Slightly conservative but mathematically correct (-5)"],
+    B: ["⚠️ One more wicket and tail exposed — too risky (-15)", "📊 Teams losing 4th wicket before over 10 in chases win only 31% (-20)", "✅ Samson's SR when set: 165 — he CAN do it (+10)", "❌ But variance too high with tail to come (-12)"],
+    C: ["✅ Rotation keeps pressure off batsmen (+10)", "⚠️ But RR need 7.9 RR — too high for pure rotation (-10)", "📊 Acceptable middle ground but doesn't address run rate pressure (-8)", "⚠️ Slightly too passive given required rate (+5)"]
+  },
+  iqPoints: { A: 15, B: 8, C: 12 }
+},
+{
+  id: 11,
+  match: "CSK vs PBKS",
+  team1: "CSK", team1color: "#FFD700",
+  team2: "PBKS", team2color: "#ED1B24",
+  situation: "CSK 142/2 — Over 14.0 | Target: 178 | Need: 36 from 36 balls",
+  batter: "Dhoni — 12(8)",
+  bowler: "Arshdeep — 3 overs, 28 runs, 0 wkts",
+  question: "CSK need 36 off 36. Dhoni just came in. PBKS captain — do you bowl Arshdeep now?",
+  options: [
+    { label: "A", text: "Bowl Arshdeep now — get Dhoni early", icon: "⚡" },
+    { label: "B", text: "Save Arshdeep for last 2 overs", icon: "🧠" },
+    { label: "C", text: "Bring spinner — Dhoni struggles vs spin", icon: "🌀" }
+  ],
+  correctOption: "B",
+  scores: { A: 48, B: 80, C: 62 },
+  explanation: {
+    A: ["⚠️ Arshdeep has 0 wickets so far — momentum not with him (-10)", "❌ Dhoni averages 210 SR in overs 15-17 vs pace — dangerous time to bowl him (-15)", "📊 36 off 36 — CSK not under pressure yet, save your best for crunch (-12)", "❌ Wasting Arshdeep now leaves death exposed (-15)"],
+    B: ["✅ 36 off 36 is manageable without special bowling (+15)", "✅ Dhoni is most dangerous in last 3 overs — save Arshdeep for then (+22)", "📊 Teams saving best bowler for overs 18-20 in 35-40 run defenses win 71% (+18)", "✅ Let medium pacers bowl 15-17, Arshdeep for 18-20 (+10)"],
+    C: ["✅ Dhoni does struggle vs quality spin — smart observation (+15)", "⚠️ But Wankhede flat track — spin ineffective here (-10)", "📊 Dhoni's SR vs spin at Wankhede: 142 — not as dominant but still dangerous (+5)", "⚠️ Reasonable option but venue makes it suboptimal (-8)"]
+  },
+  iqPoints: { A: 5, B: 18, C: 12 }
+},
+{
+  id: 12,
+  match: "SRH vs MI",
+  team1: "SRH", team1color: "#F7A721",
+  team2: "MI", team2color: "#004BA0",
+  situation: "SRH 98/1 — Over 10.0 | Target: 185 | Need: 87 from 60 balls",
+  batter: "Head — 55(32)",
+  bowler: "Bumrah — 2 overs, 14 runs, 1 wkt",
+  question: "Travis Head is destroying MI. You are MI captain — what do you do?",
+  options: [
+    { label: "A", text: "Bring Bumrah back immediately — stop Head now", icon: "⚡" },
+    { label: "B", text: "Set attacking field — invite the shot, take the risk", icon: "🎯" },
+    { label: "C", text: "Bowl wide outside off — dry up runs, frustrate Head", icon: "🛡️" }
+  ],
+  correctOption: "B",
+  scores: { A: 65, B: 78, C: 52 },
+  explanation: {
+    A: ["⚠️ Bumrah has only 2 overs left — using him at over 11 means no Bumrah in death (-15)", "✅ Head is dangerous — stopping him matters (+10)", "📊 SRH need 87 off 60 — still under control, don't panic use of Bumrah (-12)", "⚠️ Tactically premature (-8)"],
+    B: ["✅ Head's weakness: aerial shots off pace when set — can be caught (+20)", "✅ Attacking field creates wicket opportunity vs aggressive batter (+18)", "📊 Head has been dismissed pulling/hooking 6 times this season (+15)", "✅ Controlled aggression beats defensive bowling vs Head (+10)"],
+    C: ["❌ Head's wide-ball SR: 178 — he loves it outside off stump (-20)", "⚠️ Drying up runs just prolongs the problem (-10)", "📊 Head's boundary % on wide deliveries: 42% — don't give him width (-18)", "❌ This is exactly what Head wants (-15)"]
+  },
+  iqPoints: { A: 10, B: 16, C: 4 }
+},
+{
+  id: 13,
+  match: "LSG vs KKR",
+  team1: "LSG", team1color: "#A0522D",
+  team2: "KKR", team2color: "#3A225D",
+  situation: "KKR 12/2 — Over 2.0 | Powerplay | Target: 168",
+  batter: "Russell — 4(3)",
+  bowler: "Avesh — 2 overs, 8 runs, 2 wkts",
+  question: "KKR 12/2 in powerplay. Russell is at crease early. LSG captain — keep attacking or defensive field?",
+  options: [
+    { label: "A", text: "Keep attacking — 2 wickets in hand, finish them off", icon: "💥" },
+    { label: "B", text: "Defensive field — contain Russell, don't give him width", icon: "🛡️" },
+    { label: "C", text: "Bring spinner in powerplay — unusual move to confuse Russell", icon: "🌀" }
+  ],
+  correctOption: "A",
+  scores: { A: 80, B: 45, C: 60 },
+  explanation: {
+    A: ["✅ Russell in powerplay averages 35 — more risky for him early (+20)", "✅ 2 wickets already — tail not far, keep pressure (+22)", "📊 Teams taking 3+ wickets in powerplay win 78% of such matches (+18)", "✅ Attack while Russell not in rhythm (+15)"],
+    B: ["❌ Defensive to Russell = invitation to hit — he LOVES defensive fields (-20)", "📊 Russell's SR vs defensive fields: 195 — he reads it instantly (-18)", "⚠️ Giving him time to settle is dangerous (-15)", "❌ This strategy has failed vs Russell 70% of times historically (-12)"],
+    C: ["✅ Unusual — Russell uncomfortable vs slow left-arm sometimes (+10)", "⚠️ But powerplay restrictions make field setting tough for spinner (-12)", "📊 Russell vs spin in powerplay: SR 168 — still dangerous (-8)", "⚠️ Interesting idea but not optimal (-5)"]
+  },
+  iqPoints: { A: 18, B: 3, C: 10 }
+},
+{
+  id: 14,
+  match: "RCB vs DC",
+  team1: "RCB", team1color: "#EC1C24",
+  team2: "DC", team2color: "#0078BC",
+  situation: "RCB 168/4 — Over 18.0 | Batting first | Score to defend",
+  batter: "Maxwell — 42(22)",
+  bowler: "Axar — 3 overs, 24 runs, 1 wkt",
+  question: "Maxwell is on fire. Axar has 1 over left. As DC captain, when do you bowl Axar's last over?",
+  options: [
+    { label: "A", text: "Bowl Axar in over 19 — contain Maxwell now", icon: "⚡" },
+    { label: "B", text: "Save Axar for over 20 — keep Maxwell guessing", icon: "🧠" },
+    { label: "C", text: "Don't bowl Axar — pace is better vs Maxwell", icon: "💨" }
+  ],
+  correctOption: "A",
+  scores: { A: 76, B: 58, C: 40 },
+  explanation: {
+    A: ["✅ Maxwell averages 198 SR in over 20 vs pace — Axar is better option there (+20)", "✅ Axar's economy vs Maxwell: 6.2 in middle overs (+18)", "📊 Maxwell loves pace in death — spin in over 19 is smart (+15)", "✅ Use Axar while Maxwell is mid-innings, not at peak aggression (+12)"],
+    B: ["⚠️ Maxwell in over 20 is most dangerous — Axar might go for 20+ (-10)", "📊 Maxwell's over-20 SR vs pace: 210 — but vs spin: 165 (+8)", "⚠️ Saving Axar is logical but over 20 Maxwell in full flow is risky (-8)", "⚠️ Marginal difference but over 19 slightly safer (-5)"],
+    C: ["❌ Maxwell's SR vs pace in death: 218 — worst option (-25)", "📊 Maxwell has hit 8 sixes vs pace in death this season (-20)", "❌ Removing your best weapon vs this batter makes no sense (-15)", "❌ This would likely concede 25+ in last 2 overs (-10)"]
+  },
+  iqPoints: { A: 15, B: 10, C: 2 }
+},
+{
+  id: 15,
+  match: "GT vs PBKS",
+  team1: "GT", team1color: "#1C4587",
+  team2: "PBKS", team2color: "#ED1B24",
+  situation: "GT 145/6 — Over 17.0 | Target: 172 | Need: 27 from 18 balls",
+  batter: "Rashid — 8(5)",
+  bowler: "Arshdeep — 2 overs, 18 runs, 2 wkts",
+  question: "GT need 27 off 18. Rashid Khan is batting. PBKS — do you bowl Arshdeep to Rashid?",
+  options: [
+    { label: "A", text: "Yes — Arshdeep vs tail, get him out fast", icon: "⚡" },
+    { label: "B", text: "No — save Arshdeep for over 20, bowl medium pace now", icon: "🧠" },
+    { label: "C", text: "Bowl spinner — Rashid weak vs quality spin", icon: "🌀" }
+  ],
+  correctOption: "B",
+  scores: { A: 55, B: 79, C: 65 },
+  explanation: {
+    A: ["⚠️ Arshdeep in over 18 leaves over 20 unprotected (-12)", "✅ Rashid can hit — getting him out matters (+10)", "📊 27 off 18 needs 9 RPO — very hard for lower order without key batter (+12)", "⚠️ But wasting Arshdeep now vs saving for crunch is suboptimal (-15)"],
+    B: ["✅ 27 off 18 — GT need 2 big overs — save Arshdeep for over 20 (+20)", "✅ Medium pacers can bowl Rashid out too — he's not a finisher (+15)", "📊 Teams saving best bowler for over 20 in 25-30 run defenses win 66% (+18)", "✅ Arshdeep in over 20 is match-winning move (+12)"],
+    C: ["✅ Rashid does struggle vs quality wrist spin (+12)", "⚠️ But GT need 27 off 18 — spinner might concede too (+5)", "📊 Rashid vs spin SR: 118 — significantly lower, good observation (+15)", "⚠️ Valid option but Arshdeep strategy slightly better (-5)"]
+  },
+  iqPoints: { A: 8, B: 17, C: 12 }
+},
+{
+  id: 16,
+  match: "MI vs RR",
+  team1: "MI", team1color: "#004BA0",
+  team2: "RR", team2color: "#EA1A85",
+  situation: "MI 52/0 — Over 6.0 | Powerplay complete | Target: 165",
+  batter: "Rohit — 34(22), Ishan — 18(16)",
+  bowler: "Chahal — 1 over, 8 runs, 0 wkts",
+  question: "MI 52/0 after powerplay — perfect start. RR captain — what is your plan for overs 7-10?",
+  options: [
+    { label: "A", text: "Attack with pace — break the partnership now", icon: "💥" },
+    { label: "B", text: "Flood the field with spinners — dry up runs in middle overs", icon: "🌀" },
+    { label: "C", text: "Defensive field, bowl to Ishan — he's the weak link", icon: "🎯" }
+  ],
+  correctOption: "B",
+  scores: { A: 48, B: 82, C: 65 },
+  explanation: {
+    A: ["❌ Rohit averages 148 SR vs pace in overs 7-10 — dangerous (-18)", "⚠️ MI need only 7.5 RPO — attack risks boundaries (-12)", "📊 Bowling pace to set Rohit in middle overs wins only 35% (-15)", "❌ Playing into MI's strength (-10)"],
+    B: ["✅ Rohit's SR vs spin in overs 7-10: 108 — significantly lower (+22)", "✅ Jaiswal wicket or Rohit dot balls = pressure builds (+18)", "📊 Spin-heavy middle overs strategy works 71% vs left-right combo (+15)", "✅ Dry up runs, force error, take wicket (+15)"],
+    C: ["✅ Ishan has lower average vs accurate bowling — valid (+12)", "⚠️ But Rohit on 34 is the bigger threat — wrong priority (-10)", "📊 Bowling to weaker batter in a partnership rarely works if set batter scores freely (-8)", "⚠️ Partially correct thinking but wrong execution (-5)"]
+  },
+  iqPoints: { A: 5, B: 18, C: 12 }
+},
+{
+  id: 17,
+  match: "CSK vs KKR",
+  team1: "CSK", team1color: "#FFD700",
+  team2: "KKR", team2color: "#3A225D",
+  situation: "KKR 134/4 — Over 15.0 | Target: 178 | Need: 44 from 30 balls",
+  batter: "Narine — 18(10)",
+  bowler: "Jadeja — 3 overs, 22 runs, 1 wkt",
+  question: "Narine promoting himself to bat. Jadeja has 1 over left. CSK captain — use him now vs Narine?",
+  options: [
+    { label: "A", text: "Bowl Jadeja vs Narine immediately — he's played him before", icon: "⚡" },
+    { label: "B", text: "Save Jadeja for death — bowl pace to Narine", icon: "💨" },
+    { label: "C", text: "Bring Chahar — swing bowler vs Narine's unconventional style", icon: "🎯" }
+  ],
+  correctOption: "A",
+  scores: { A: 83, B: 52, C: 60 },
+  explanation: {
+    A: ["✅ Narine vs Jadeja: dismissed 3 times in last 4 T20 encounters (+25)", "✅ Jadeja knows his angles and can vary pace to confuse Narine (+20)", "📊 Narine's SR vs left-arm spin: 118 vs pace: 178 — massive difference (+18)", "✅ This is the perfect match-up — use it now (+12)"],
+    B: ["❌ Narine LOVES pace bowling — worst decision (-22)", "📊 Narine's SR vs pace in death: 205 — he will destroy it (-20)", "❌ Saving Jadeja while Narine feasts on pace is match-losing (-18)", "❌ Do not bowl pace to Narine (-15)"],
+    C: ["✅ Chahar's swing can trouble Narine sometimes (+10)", "⚠️ But Jadeja's specific record vs Narine is far superior (-10)", "📊 When you have a proven match-up, use it — don't experiment (+5)", "⚠️ Reasonable but inferior to Jadeja option (-8)"]
+  },
+  iqPoints: { A: 20, B: 2, C: 10 }
+},
+{
+  id: 18,
+  match: "DC vs LSG",
+  team1: "DC", team1color: "#0078BC",
+  team2: "LSG", team2color: "#A0522D",
+  situation: "DC 88/2 — Over 10.0 | Batting first | Pitch: Balanced | Venue: Kotla",
+  batter: "Pant — 45(30)",
+  bowler: "Bishnoi — 2 overs, 14 runs, 1 wkt",
+  question: "Pant is set at Kotla. LSG captain — continue Bishnoi or change?",
+  options: [
+    { label: "A", text: "Continue Bishnoi — he's bowling well, got a wicket", icon: "✅" },
+    { label: "B", text: "Bring Krunal — left-arm spin vs Pant's aggressive style", icon: "🌀" },
+    { label: "C", text: "Bring pace — Avesh to challenge Pant with short balls", icon: "💥" }
+  ],
+  correctOption: "A",
+  scores: { A: 77, B: 65, C: 48 },
+  explanation: {
+    A: ["✅ Bishnoi on a wicket — never change a winning formula (+20)", "✅ Kotla turns — leg spin effective here at over 10 (+18)", "📊 Bowler who just took wicket takes another in next 2 overs: 58% probability (+15)", "✅ Pant has faced Bishnoi, is respecting him — keep pressure (+12)"],
+    B: ["✅ Krunal vs Pant is good match-up on paper (+12)", "⚠️ But Bishnoi is currently HOT — changing now breaks rhythm (-10)", "📊 Krunal's economy at Kotla: 7.8 — worse than Bishnoi's current spell (-8)", "⚠️ Valid option but timing is wrong (-5)"],
+    C: ["❌ Pant's SR vs pace at Kotla: 172 — terrible idea (-20)", "📊 Short balls to Pant: he averages 185 SR against them (-18)", "❌ Playing into Pant's strength completely (-15)", "❌ This would likely result in 20+ over from Avesh (-12)"]
+  },
+  iqPoints: { A: 16, B: 12, C: 3 }
+},
+{
+  id: 19,
+  match: "SRH vs GT",
+  team1: "SRH", team1color: "#F7A721",
+  team2: "GT", team2color: "#1C4587",
+  situation: "SRH 178/3 — Over 20.0 | Innings complete | Target set: 179",
+  batter: "Head — 89(48)",
+  bowler: "Innings complete",
+  question: "GT need 179. Toss winner chose to bowl. GT captain — how do you plan the chase?",
+  options: [
+    { label: "A", text: "Go hard in powerplay — take the game on early", icon: "💥" },
+    { label: "B", text: "Steady powerplay, accelerate overs 11-15, finish strong", icon: "🧠" },
+    { label: "C", text: "Conservative start — save wickets, explode in death", icon: "🛡️" }
+  ],
+  correctOption: "B",
+  scores: { A: 62, B: 85, C: 45 },
+  explanation: {
+    A: ["⚠️ Powerplay aggression risks early wickets on this pitch (+8)", "📊 Teams going all-out in PP chasing 175+ lose 58% of matches (-12)", "✅ Can work if openers connect (+10)", "⚠️ High variance approach on a used pitch (-10)"],
+    B: ["✅ 179 target — 9 RPO needed — very achievable with wickets in hand (+22)", "✅ Steady PP (50-55), accelerate middle (70-75), finish (50-55) = 175+ (+20)", "📊 Teams scoring 45-55 in PP chasing 175-185 win 67% of matches (+18)", "✅ Textbook chase strategy for this target (+15)"],
+    C: ["❌ 179 off 20 overs needs 8.95 RPO — cannot be conservative (-20)", "📊 Teams scoring below 40 in PP chasing 175+ win only 22% (-18)", "❌ Saving wickets for death is wrong when required rate is 9+ (-15)", "❌ You run out of balls before you accelerate enough (-12)"]
+  },
+  iqPoints: { A: 10, B: 20, C: 2 }
+},
+{
+  id: 20,
+  match: "PBKS vs RCB",
+  team1: "PBKS", team1color: "#ED1B24",
+  team2: "RCB", team2color: "#EC1C24",
+  situation: "PBKS 145/5 — Over 17.0 | Target: 168 | Need: 23 from 18 balls",
+  batter: "Sam Curran — 22(14)",
+  bowler: "Siraj — 3 overs, 32 runs, 1 wkt",
+  question: "PBKS need 23 off 18. Sam Curran batting. RCB — bowl Siraj or hold him back?",
+  options: [
+    { label: "A", text: "Bowl Siraj now — take wicket, end the chase", icon: "⚡" },
+    { label: "B", text: "Hold Siraj for over 20 — bowl Hazlewood in over 18", icon: "🧠" },
+    { label: "C", text: "Bring Maxwell to bowl — surprise option", icon: "🎲" }
+  ],
+  correctOption: "B",
+  scores: { A: 58, B: 80, C: 35 },
+  explanation: {
+    A: ["⚠️ Siraj has been expensive — 32 runs in 3 overs, no confidence (-12)", "📊 Bowling an expensive bowler in crunch = risky (-10)", "✅ But wicket-taking ability still relevant (+8)", "⚠️ Save Siraj for over 20 — better option (-10)"],
+    B: ["✅ Hazlewood's economy in overs 17-19: 6.8 — very good (+20)", "✅ Save Siraj's last over for over 20 when pressure is maximum (+18)", "📊 Teams saving best bowler for over 20 in 20-25 run defenses win 72% (+15)", "✅ Textbook death bowling management (+12)"],
+    C: ["❌ Maxwell bowling in crunch with 23 needed — too risky (-25)", "📊 Maxwell's economy in death: 10.2 — terrible (-20)", "❌ This would likely concede the game (-18)", "❌ Never bowl part-timer in last 3 overs of a tight chase (-15)"]
+  },
+  iqPoints: { A: 10, B: 17, C: 1 }
+},
+{
+  id: 21,
+  match: "KKR vs MI",
+  team1: "KKR", team1color: "#3A225D",
+  team2: "MI", team2color: "#004BA0",
+  situation: "MI 165/3 — Over 18.0 | Batting first | 2 overs left",
+  batter: "Hardik — 38(20)",
+  bowler: "Starc — 3 overs, 38 runs, 0 wkts",
+  question: "Hardik is in beast mode. KKR — bowl Starc's last over now or save for over 20?",
+  options: [
+    { label: "A", text: "Bowl Starc in over 19 — stop Hardik before he peaks", icon: "⚡" },
+    { label: "B", text: "Save Starc for over 20 — bowl Narine in over 19", icon: "🧠" },
+    { label: "C", text: "Bowl Cummins — he has 2 overs left", icon: "💨" }
+  ],
+  correctOption: "C",
+  scores: { A: 58, B: 65, C: 80 },
+  explanation: {
+    A: ["⚠️ Starc 0 wickets, 38 runs in 3 overs — not in form today (-15)", "❌ Using expensive bowler in penultimate over is risky (-12)", "📊 Starc when wicketless after 3 overs goes for 10+ in 4th over 60% of times (-10)", "⚠️ Not ideal (-8)"],
+    B: ["✅ Narine's SR allowed in death: 6.8 economy (+10)", "⚠️ But Hardik averages 178 SR vs spin in death — risky (-10)", "📊 Narine in death overs: 58% chance of conceding 15+ (-8)", "⚠️ Partially right strategy (-5)"],
+    C: ["✅ Cummins has 2 overs left AND is fresh — best option (+22)", "✅ Cummins vs Hardik: dismissed him twice this IPL season (+20)", "📊 Cummins economy in death overs: 7.1 — much better than Starc today (+18)", "✅ Use fresh, in-form, proven match-up bowler (+15)"]
+  },
+  iqPoints: { A: 8, B: 12, C: 18 }
+},
+{
+  id: 22,
+  match: "RR vs CSK",
+  team1: "RR", team1color: "#EA1A85",
+  team2: "CSK", team2color: "#FFD700",
+  situation: "RR 14/3 — Over 3.0 | Powerplay | Target: 192",
+  batter: "Samson — 8(6)",
+  bowler: "Chahar — 2 overs, 12 runs, 2 wkts",
+  question: "RR collapsed to 14/3 in 3 overs chasing 192. You are RR captain — what do you tell Samson?",
+  options: [
+    { label: "A", text: "Survive the powerplay — rebuild at any cost", icon: "🛡️" },
+    { label: "B", text: "Attack now — nothing to lose, go for it", icon: "💥" },
+    { label: "C", text: "Rotate strike — keep scoreboard ticking, reduce pressure", icon: "🔄" }
+  ],
+  correctOption: "A",
+  scores: { A: 78, B: 48, C: 65 },
+  explanation: {
+    A: ["✅ 14/3 — one more wicket and match is over. Survival first (+22)", "📊 Teams surviving PP at 14/3 and rebuilding win 28% — teams losing 4th wicket in PP win only 8% (+20)", "✅ Get to 35-40 at end of PP with 7 wickets, chase becomes possible (+18)", "✅ Samson needs to bat 25+ balls minimum (+12)"],
+    B: ["❌ 14/3 is not 'nothing to lose' — 7 wickets still in hand (-18)", "📊 Aggressive batting at 14/3 leads to all out before over 12: 65% chance (-15)", "❌ One more wicket = match over in 10 overs (-15)", "❌ Wrong reading of situation (-12)"],
+    C: ["✅ Rotation is safer than aggression (+12)", "⚠️ But 192 target needs 9.6 RPO — pure rotation won't work long term (-8)", "📊 Rotation buys time but doesn't solve the run rate problem (-5)", "⚠️ Better than B but worse than full consolidation (-5)"]
+  },
+  iqPoints: { A: 17, B: 5, C: 12 }
+},
+{
+  id: 23,
+  match: "GT vs DC",
+  team1: "GT", team1color: "#1C4587",
+  team2: "DC", team2color: "#0078BC",
+  situation: "GT 155/2 — Over 16.0 | Target: 178 | Need: 23 from 24 balls",
+  batter: "Gill — 72(48)",
+  bowler: "Anrich Nortje — 3 overs, 24 runs, 0 wkts",
+  question: "Gill is cruising. DC — how do you stop him with Nortje having 1 over left?",
+  options: [
+    { label: "A", text: "Bowl Nortje now — short ball plan vs Gill", icon: "💥" },
+    { label: "B", text: "Save Nortje for over 20 — bowl Axar to Gill", icon: "🧠" },
+    { label: "C", text: "Set attacking field for Gill — invite top edge", icon: "🎯" }
+  ],
+  correctOption: "B",
+  scores: { A: 55, B: 82, C: 65 },
+  explanation: {
+    A: ["⚠️ Gill's SR vs pace in overs 15-18: 158 — he's comfortable (+5)", "📊 Nortje short ball vs Gill: dismissed once in 8 attempts (-5)", "⚠️ Wasting last Nortje over at 16 leaves over 20 exposed (-15)", "❌ GT need only 23 off 24 — no panic needed from DC (-10)"],
+    B: ["✅ Axar at Kotla/away: Gill's SR vs left-arm spin: 112 (+20)", "✅ Save Nortje for over 20 when GT may need 12-15 off last over (+22)", "📊 Teams saving pace for over 20 in 20-25 run defenses win 68% (+18)", "✅ Perfect bowling management in a close finish (+12)"],
+    C: ["✅ Attacking field creates catching opportunities (+12)", "⚠️ Gill at 72 is too set to gift a top edge easily (-8)", "📊 Gill's caught-in-outfield % when set: 12% — very low (-10)", "⚠️ Romantic option but low probability of success (-5)"]
+  },
+  iqPoints: { A: 8, B: 18, C: 12 }
+},
+{
+  id: 24,
+  match: "LSG vs RCB",
+  team1: "LSG", team1color: "#A0522D",
+  team2: "RCB", team2color: "#EC1C24",
+  situation: "LSG 102/4 — Over 13.0 | Target: 185 | Need: 83 from 42 balls",
+  batter: "Pooran — 28(15)",
+  bowler: "Hazlewood — 2 overs, 18 runs, 1 wkt",
+  question: "LSG need 83 off 42 — very steep. Pooran just arrived. RCB captain — aggressive or defensive?",
+  options: [
+    { label: "A", text: "Aggressive field — get Pooran early before he settles", icon: "⚡" },
+    { label: "B", text: "Defensive field — dry up runs, make it impossible mathematically", icon: "🛡️" },
+    { label: "C", text: "Bowl Hazlewood — he got a wicket, continue his spell", icon: "💨" }
+  ],
+  correctOption: "A",
+  scores: { A: 85, B: 42, C: 68 },
+  explanation: {
+    A: ["✅ Pooran MUST attack — he knows it. Attacking field = caught in deep (+22)", "✅ Pooran's caught in outfield % when chasing steeply: 34% (+20)", "📊 83 off 42 forces 11.9 RPO — Pooran HAS to hit every ball (+18)", "✅ Attack when opposition is forced to be aggressive — it's a trap (+15)"],
+    B: ["❌ Defensive field to Pooran chasing 83 off 42 = boundary after boundary (-22)", "📊 Pooran's SR vs defensive fields in steep chases: 215 (-20)", "❌ He will clear the boundary easily with no sweeper restrictions (-18)", "❌ Worst possible strategy here (-15)"],
+    C: ["✅ Hazlewood on a wicket is always good (+12)", "⚠️ But field setting is the KEY decision here, not bowler choice (-5)", "📊 Even the best bowler goes for runs with defensive field vs Pooran in this situation (-8)", "⚠️ Right bowler, potentially wrong field (-5)"]
+  },
+  iqPoints: { A: 20, B: 2, C: 12 }
+},
+{
+  id: 25,
+  match: "MI vs CSK",
+  team1: "MI", team1color: "#004BA0",
+  team2: "CSK", team2color: "#FFD700",
+  situation: "CSK 178/4 — Over 19.5 | Last ball | Need: 6 to win | 1 wicket in hand",
+  batter: "Dhoni — 4(2)",
+  bowler: "Bumrah — bowling last ball",
+  question: "Last ball. CSK need 6. Dhoni on strike. Bumrah bowling. What do you bowl?",
+  options: [
+    { label: "A", text: "Full straight yorker — don't give room", icon: "🎯" },
+    { label: "B", text: "Wide yorker outside off — harder to hit for six", icon: "💨" },
+    { label: "C", text: "Short ball — Dhoni can't pull at this age", icon: "💥" }
+  ],
+  correctOption: "A",
+  scores: { A: 88, B: 65, C: 25 },
+  explanation: {
+    A: ["✅ Yorker is hardest ball to hit for 6 — even for Dhoni (+25)", "✅ Bumrah's yorker accuracy: 94% on target (+22)", "📊 Full straight yorker: only 8% chance of six being hit (+20)", "✅ This is the textbook last-ball-six-defense delivery (+18)"],
+    B: ["✅ Wide yorker gives less angle for Dhoni to hit straight (+15)", "⚠️ But risk of wide ball — free hit = automatic six (-10)", "📊 Wide yorker probability of no-ball/wide: 18% — too risky (-12)", "⚠️ Good thought but risky execution (-8)"],
+    C: ["❌ Dhoni's short ball SR this season: 145 — he can still pull (-15)", "❌ Short ball can be pulled for six far more easily than yorker (-20)", "📊 Short ball vs Dhoni on last ball: 31% chance of six — unacceptable (-18)", "❌ Never bowl short on last ball with six needed (-15)"]
+  },
+  iqPoints: { A: 22, B: 12, C: 1 }
+}
+];
+
+let challengeQueue = [];
+let currentIndex = 0;
+let totalChallengesPlayed = 0;
+let currentChallenge = null;
+let selectedOption = null;
+
+function buildShuffledQueue() {
+  challengeQueue = [...Array(challenges.length).keys()];
+  for (let i = challengeQueue.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [challengeQueue[i], challengeQueue[j]] = [challengeQueue[j], challengeQueue[i]];
+  }
+  currentIndex = 0;
+}
+
+function getNextChallenge() {
+  if (currentIndex >= challengeQueue.length) {
+    const lastQuestion = challengeQueue[challengeQueue.length - 1];
+    buildShuffledQueue();
+    if (challengeQueue[0] === lastQuestion) {
+      [challengeQueue[0], challengeQueue[1]] = [challengeQueue[1], challengeQueue[0]];
+    }
+  }
+  return challenges[challengeQueue[currentIndex++]];
+}
+
+buildShuffledQueue();
+let userIq = parseInt(localStorage.getItem('cricketIqScore')) || 0;
+
+// Init DOM elements
+const elHeaderIq = document.getElementById('headerIqScore');
+const elTracker = document.getElementById('challengeTracker');
+const elTeam1 = document.getElementById('team1Name');
+const elTeam2 = document.getElementById('team2Name');
+const elBanner = document.getElementById('matchBanner');
+const elCard = document.getElementById('situationCard');
+
+const elScore = document.getElementById('situationScore');
+const elTarget = document.getElementById('situationTarget');
+const elNeed = document.getElementById('situationNeed');
+const elBatter = document.getElementById('situationBatter');
+const elBowler = document.getElementById('situationBowler');
+const elQuestion = document.getElementById('situationQuestion');
+const elOptionsGrid = document.getElementById('optionsGrid');
+
+const elResult = document.getElementById('resultSection');
+const elDecisionText = document.getElementById('resultDecisionText');
+const elGaugeFill = document.getElementById('gaugeFill');
+const elGaugeScore = document.getElementById('gaugeScore');
+const elExpertMove = document.getElementById('expertMoveText');
+const elExplanationList = document.getElementById('explanationList');
+const elIqToast = document.getElementById('iqToast');
+const elBtnNext = document.getElementById('btnNext');
+
+const elLevelText = document.getElementById('iqLevelText');
+const elProgressFill = document.getElementById('iqProgressFill');
+
+const elGameArea = document.getElementById('gameArea');
+const elSeasonComplete = document.getElementById('seasonComplete');
+const elFinalIq = document.getElementById('finalIqScore');
+const elFinalLevel = document.getElementById('finalLevel');
+const btnPlayAgain = document.getElementById('btnPlayAgain');
+
+function getLevelInfo(score) {
+  if (score <= 100) return { label: "Fan", max: 100 };
+  if (score <= 250) return { label: "Enthusiast", max: 250 };
+  if (score <= 500) return { label: "Analyst", max: 500 };
+  if (score <= 800) return { label: "Strategist", max: 800 };
+  return { label: "Cricket Genius", max: 1000 };
+}
+
+function updateIqDisplay() {
+  elHeaderIq.innerText = userIq;
+  const levelInfo = getLevelInfo(userIq);
+  elLevelText.innerText = `Level: ${levelInfo.label} (${userIq} IQ)`;
+  let progress = Math.min((userIq / levelInfo.max) * 100, 100);
+  if (userIq > 800) progress = 100;
+  elProgressFill.style.width = `${progress}%`;
+  localStorage.setItem('cricketIqScore', userIq);
+}
+
+function loadChallenge() {
+  const data = getNextChallenge();
+  currentChallenge = data;
+  totalChallengesPlayed++;
+  elTracker.innerText = `Challenge ${totalChallengesPlayed} of ∞`;
+  
+  elTeam1.innerText = data.team1;
+  elTeam2.innerText = data.team2;
+  elBanner.style.background = `linear-gradient(90deg, ${data.team1color} 0%, #1a1a2e 50%, ${data.team2color} 100%)`;
+  elCard.style.borderColor = data.team1color;
+  elCard.style.boxShadow = `0 10px 30px ${data.team1color}33`;
+
+  const parts = data.situation.split(" | ");
+  elScore.innerText = parts[0];
+  elTarget.innerText = parts[1] || "";
+  elNeed.innerText = parts[2] || "";
+  
+  elBatter.innerText = data.batter;
+  elBowler.innerText = data.bowler;
+  elQuestion.innerText = data.question;
+
+  elOptionsGrid.innerHTML = '';
+  data.options.forEach(opt => {
+    const card = document.createElement('div');
+    card.className = 'option-card';
+    card.innerHTML = `
+      <div class="option-label">${opt.label}</div>
+      <div class="option-text">${opt.text}</div>
+      <div class="option-icon">${opt.icon}</div>
+    `;
+    card.onclick = () => selectOption(opt.label, data);
+    elOptionsGrid.appendChild(card);
+  });
+
+  elResult.classList.remove('show');
+  elBtnNext.style.display = 'none';
+  elIqToast.classList.remove('show');
+  
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectOption(selectedLabel, data) {
+  // Disable options
+  Array.from(elOptionsGrid.children).forEach(card => {
+    card.classList.add('disabled');
+    const label = card.querySelector('.option-label').innerText;
+    if (label === selectedLabel) {
+      card.classList.add('selected');
+    }
+  });
+
+  const score = data.scores[selectedLabel];
+  const iqEarned = data.iqPoints[selectedLabel];
+  
+  // Show result
+  elResult.classList.add('show');
+  elDecisionText.innerText = `YOUR DECISION: ${selectedLabel} — ${score}/100`;
+  
+  // Animate Gauge
+  setTimeout(() => {
+    const degrees = (score / 100) * 180 - 45; // -45 is 0%, 135 is 100%
+    elGaugeFill.style.transform = `rotate(${degrees}deg)`;
+    let color = 'var(--error)';
+    if (score >= 70) color = 'var(--success)';
+    else if (score >= 50) color = 'var(--gold)';
+    elGaugeFill.style.borderBottomColor = color;
+    elGaugeFill.style.borderLeftColor = color;
+    
+    // Animate numbers
+    let currentScore = 0;
+    const interval = setInterval(() => {
+      currentScore += 2;
+      if (currentScore >= score) {
+        currentScore = score;
+        clearInterval(interval);
+      }
+      elGaugeScore.innerText = currentScore;
+    }, 20);
+  }, 100);
+
+  if (selectedLabel === data.correctOption) {
+    elExpertMove.innerText = `EXPERT MOVE: ${data.correctOption} (MATCH!)`;
+    elExpertMove.style.color = 'var(--success)';
+  } else {
+    elExpertMove.innerText = `EXPERT MOVE WAS: ${data.correctOption}`;
+    elExpertMove.style.color = 'var(--gold)';
+  }
+
+  elExplanationList.innerHTML = data.explanation[selectedLabel].map(text => `<li>${text}</li>`).join('');
+
+  selectedOption = selectedLabel;
+
+  setTimeout(() => {
+    elIqToast.innerText = `+${iqEarned} Cricket IQ added`;
+    elIqToast.classList.add('show');
+    userIq += iqEarned;
+    updateIqDisplay();
+    showArgueSection(selectedOption, data.correctOption, data.id);
+  }, 1000);
+
+  elBtnNext.style.display = 'block';
+}
+
+function showArgueSection(userOption, correctOption, challengeId) {
+  const argueSection = document.getElementById('argue-section');
+  if (!argueSection) return;
+  
+  // Show argue section regardless of right/wrong — but with different messaging
+  argueSection.style.display = 'block';
+  argueSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  
+  if (userOption !== correctOption) {
+    document.querySelector('.argue-header').innerHTML = 
+      `🗣️ YOU CHOSE ${userOption} — AI SAYS ${correctOption} WAS BETTER. DISAGREE?
+      <span class="argue-sub">Make your case — the community will judge</span>`;
+  } else {
+    document.querySelector('.argue-header').innerHTML = 
+      `✅ YOU AGREED WITH AI — But have a different reason? Share it!
+      <span class="argue-sub">Make your case — the community will judge</span>`;
+  }
+  
+  // Load existing community arguments for this challenge
+  renderCommunityArgs(challengeId);
+}
+
+elBtnNext.addEventListener('click', () => {
+  document.getElementById('argue-section').style.display = 'none';
+  loadChallenge();
+});
+
+function showSeasonComplete() {
+  elGameArea.style.display = 'none';
+  elSeasonComplete.style.display = 'block';
+  elFinalIq.innerText = userIq;
+  elFinalLevel.innerText = `Level: ${getLevelInfo(userIq).label}`;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+btnPlayAgain.addEventListener('click', () => {
+  totalChallengesPlayed = 0;
+  elGameArea.style.display = 'flex';
+  elSeasonComplete.style.display = 'none';
+  loadChallenge();
+});
+
+document.getElementById('submit-argument').addEventListener('click', () => {
+  const text = document.getElementById('user-argument').value.trim();
+  if (text.length < 10) return; 
+  
+  const challengeId = currentChallenge.id;
+  const key = `args_challenge_${challengeId}`;
+  
+  let args = [];
+  try { args = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}
+  
+  args.unshift({
+    text: text,
+    option: selectedOption,
+    timestamp: Date.now(),
+    votes: 0,
+    userVoted: false
+  });
+  
+  if (args.length > 20) args = args.slice(0, 20);
+  
+  localStorage.setItem(key, JSON.stringify(args));
+  
+  document.getElementById('user-argument').value = '';
+  document.getElementById('char-left').textContent = '280';
+  renderCommunityArgs(challengeId);
+  
+  // Reuse the toast mechanism for success feedback
+  elIqToast.innerText = "🔥 Your take submitted! Community will judge...";
+  elIqToast.classList.add('show');
+  setTimeout(() => elIqToast.classList.remove('show'), 3000);
+
+  // Insert temporary loading state for AI
+  const aiLoadingId = Date.now() + 1;
+  args.unshift({
+    id: aiLoadingId,
+    text: "🤖 *AI is analyzing your take...*",
+    option: currentChallenge.correctOption,
+    timestamp: Date.now(),
+    votes: 0,
+    userVoted: false
+  });
+  if (args.length > 20) args = args.slice(0, 20);
+  localStorage.setItem(key, JSON.stringify(args));
+  renderCommunityArgs(challengeId);
+
+  // Call real AI
+  fetchGeminiResponse(currentChallenge, selectedOption, text).then(aiResponseText => {
+    // Replace loading argument with real response
+    let currentArgs = [];
+    try { currentArgs = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}
+    
+    const loadingIdx = currentArgs.findIndex(a => a.id === aiLoadingId);
+    if (loadingIdx > -1) {
+      currentArgs[loadingIdx].text = "🤖 AI says: " + aiResponseText;
+      currentArgs[loadingIdx].votes = 10; // AI flexes with some base votes
+      delete currentArgs[loadingIdx].id; // cleanup temp id
+    } else {
+      // Fallback if loading arg was lost
+      currentArgs.unshift({
+        text: "🤖 AI says: " + aiResponseText,
+        option: currentChallenge.correctOption,
+        timestamp: Date.now(),
+        votes: 10,
+        userVoted: false
+      });
+    }
+    
+    localStorage.setItem(key, JSON.stringify(currentArgs));
+    if (currentChallenge.id === challengeId) {
+      renderCommunityArgs(challengeId);
+    }
+  });
+});
+
+async function fetchGeminiResponse(challenge, userOption, userText) {
+  const prompt = `You are "Captain AI", an expert IPL cricket analyst. 
+Match: ${challenge.match}
+Situation: ${challenge.situation}
+Question: ${challenge.question}
+My Expert Move (The correct answer): Option ${challenge.correctOption}
+
+The user disagreed with me. The user chose Option ${userOption}.
+User's Argument: "${userText}"
+
+Your task: Defend Option ${challenge.correctOption} and counter the user's argument using cricket logic and statistics. 
+Be concise, analytical, and slightly competitive but respectful. Keep it to exactly 2 sentences. Do not use hashtags.
+Respond ONLY with the text of your argument.`;
+
+  try {
+    const response = await fetch(`http://localhost:5000/api/argue`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt })
+    });
+    
+    if (!response.ok) throw new Error("Backend API Request Failed");
+    
+    const data = await response.json();
+    return data.reply || "I couldn't process the data to respond. Let's just say we agree to disagree!";
+  } catch (err) {
+    console.error("Backend Proxy Error:", err);
+    return "My data streams are blocked right now! We'll have to agree to disagree.";
+  }
+}
+
+function renderCommunityArgs(challengeId) {
+  const key = `args_challenge_${challengeId}`;
+  let args = [];
+  try { args = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}
+  
+  const container = document.getElementById('community-args-list');
+  document.getElementById('arg-count').textContent = args.length;
+  
+  if (args.length === 0) {
+    container.innerHTML = '<div class="no-args">No takes yet — be the first to argue!</div>';
+    return;
+  }
+  
+  args.sort((a, b) => b.votes - a.votes);
+  
+  container.innerHTML = args.map((arg, idx) => `
+    <div class="arg-card ${idx === 0 && arg.votes > 0 ? 'top-arg' : ''}">
+      ${idx === 0 && arg.votes > 0 ? '<div class="top-badge">🏆 Top Take</div>' : ''}
+      <div class="arg-option-badge">Chose ${arg.option}</div>
+      <div class="arg-text">${arg.text}</div>
+      <div class="arg-footer">
+        <button class="vote-btn ${arg.userVoted ? 'voted' : ''}" 
+          onclick="voteArgument(${challengeId}, ${idx})"
+          ${arg.userVoted ? 'disabled' : ''}>
+          👍 ${arg.votes}
+        </button>
+        <span class="arg-time">${getTimeAgo(arg.timestamp)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.voteArgument = function(challengeId, argIndex) {
+  const key = `args_challenge_${challengeId}`;
+  let args = JSON.parse(localStorage.getItem(key)) || [];
+  
+  if (!args[argIndex].userVoted) {
+    args[argIndex].votes++;
+    args[argIndex].userVoted = true;
+    localStorage.setItem(key, JSON.stringify(args));
+    renderCommunityArgs(challengeId);
+  }
+}
+
+function getTimeAgo(timestamp) {
+  const diff = Date.now() - timestamp;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  return `${Math.floor(mins/60)}h ago`;
+}
+
+document.getElementById('user-argument').addEventListener('input', function() {
+  document.getElementById('char-left').textContent = 280 - this.value.length;
+});
+
+// Initialize
+updateIqDisplay();
+loadChallenge();
+
+</script>
+</body>
+</html>

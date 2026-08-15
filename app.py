@@ -4,6 +4,16 @@ import joblib
 import pandas as pd
 import numpy as np
 import os
+import json
+import urllib.request
+import urllib.error
+
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(env_path):
+    with open(env_path) as f:
+        for line in f:
+            if line.startswith('GEMINI_API_KEY='):
+                os.environ['GEMINI_API_KEY'] = line.strip().split('=', 1)[1]
 
 from src.features import TEAM_MAPPING
 from src.iplt20_api import IPLT20API
@@ -445,6 +455,48 @@ def api_news():
         }
     ]
     return jsonify({"news": news_items}), 200
+
+
+# ============================================================
+# POST /api/argue  — Gemini AI Integration
+# ============================================================
+@app.route("/api/argue", methods=["POST"])
+def api_argue():
+    data = request.get_json(silent=True)
+    if not data or 'prompt' not in data:
+        return jsonify({"error": "Invalid request"}), 400
+
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key or api_key == "YOUR_GEMINI_API_KEY_HERE":
+        return jsonify({"reply": "I would debate you, but my API key is missing from the backend .env file!"}), 200
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
+    payload = {
+        "contents": [{"parts": [{"text": data['prompt']}]}]
+    }
+
+    try:
+        req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'}, method='POST')
+        with urllib.request.urlopen(req) as response:
+            res_data = json.loads(response.read().decode('utf-8'))
+            print("GEMINI RAW RESPONSE:", json.dumps(res_data, indent=2))
+            
+            try:
+                reply = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
+            except (KeyError, IndexError):
+                reply = ""
+                
+            if not reply:
+                reply = "Hmm, your argument left me speechless! But I still stand by my choice."
+                
+            return jsonify({"reply": reply}), 200
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8')
+        print(f"Gemini API HTTP Error {e.code}: {error_body}")
+        return jsonify({"reply": f"API Error {e.code}: {error_body}"}), 200
+    except Exception as e:
+        print(f"Gemini API General Error: {e}")
+        return jsonify({"reply": f"Connection Error: {str(e)}"}), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

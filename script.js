@@ -1,3 +1,81 @@
+const WEATHER_API_KEY = "dccc683dce071a7396560a42a8c1ff33"; // free at openweathermap.org
+const VENUE_CITIES = {
+  'Wankhede': 'Mumbai',
+  'Eden Gardens': 'Kolkata', 
+  'Chinnaswamy': 'Bangalore',
+  'Chepauk': 'Chennai',
+  'Kotla': 'Delhi',
+  'Narendra Modi': 'Ahmedabad',
+  'Rajiv Gandhi': 'Hyderabad',
+  'Sawai Mansingh': 'Jaipur',
+  'Punjab Cricket': 'Chandigarh',
+  'BRSABV': 'Lucknow',
+  'Brabourne': 'Mumbai',
+  'DY Patil': 'Mumbai'
+};
+
+const VENUE_PITCH_PROFILE = {
+  'Wankhede': { 
+    avgScore: 182, avgWickets: 7.2, 
+    pitchType: 'Batting Friendly',
+    description: 'High-scoring venue. Last 10 matches avg: 182 runs, flat track.',
+    chasingWin: 58
+  },
+  'Chepauk': { 
+    avgScore: 155, avgWickets: 8.8,
+    pitchType: 'Bowling Friendly',
+    description: 'Low-scoring. Spinners dominant. Last 10 matches avg: 155 runs.',
+    chasingWin: 38
+  },
+  'Eden Gardens': { 
+    avgScore: 168, avgWickets: 7.8,
+    pitchType: 'Balanced',
+    description: 'Even contest. Dew factor significant in evening matches.',
+    chasingWin: 52
+  },
+  'Chinnaswamy': { 
+    avgScore: 190, avgWickets: 6.9,
+    pitchType: 'Batting Friendly',
+    description: 'Smallest boundary. Highest scoring IPL venue. Bowlers suffer.',
+    chasingWin: 55
+  },
+  'Kotla': { 
+    avgScore: 158, avgWickets: 8.1,
+    pitchType: 'Bowling Friendly',
+    description: 'Slow surface. Spinners effective. Batsmen struggle in 2nd half.',
+    chasingWin: 45
+  },
+  'Narendra Modi': { 
+    avgScore: 171, avgWickets: 7.5,
+    pitchType: 'Balanced',
+    description: 'Good batting surface. Large ground helps bowlers slightly.',
+    chasingWin: 50
+  },
+  'Rajiv Gandhi': { 
+    avgScore: 175, avgWickets: 7.3,
+    pitchType: 'Batting Friendly',
+    description: 'Pacers get bounce. Good batting track with true carry.',
+    chasingWin: 53
+  },
+  'Sawai Mansingh': { 
+    avgScore: 162, avgWickets: 8.0,
+    pitchType: 'Balanced',
+    description: 'Spin-friendly in later overs. Moderate scoring.',
+    chasingWin: 47
+  },
+  'BRSABV Ekana': { 
+    avgScore: 160, avgWickets: 8.3,
+    pitchType: 'Bowling Friendly',
+    description: 'Pacers dominate powerplay. Slowish outfield.',
+    chasingWin: 44
+  },
+  'Punjab Cricket': { 
+    avgScore: 174, avgWickets: 7.4,
+    pitchType: 'Batting Friendly',
+    description: 'Flat track. High powerplay typical.',
+    chasingWin: 51
+  }
+};
 
 let predictionChart = null;
 
@@ -57,7 +135,31 @@ document.addEventListener('DOMContentLoaded', () => {
   ['teamA', 'teamB', 'venue'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', checkReady);
   });
-  // Wire timing hint update
+  
+  const venueEl = document.getElementById('venue');
+  if (venueEl) {
+    venueEl.addEventListener('change', async function() {
+      const venue = this.value;
+      if (!venue) return;
+      
+      const autoWeather = document.getElementById('auto-weather-card');
+      const autoPitch = document.getElementById('pitch-auto-card');
+      
+      if (autoWeather) autoWeather.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--text-2);">⏳ Fetching live conditions...</div>';
+      if (autoPitch) autoPitch.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--text-2);">⏳ Loading pitch data...</div>';
+      
+      const [weather] = await Promise.all([
+        fetchWeatherForVenue(venue),
+        autoPitchFromVenue(venue)
+      ]);
+      
+      lastWeatherData = weather;
+      populateWeatherCard(weather, venue);
+      showConditionsSummary(venue, weather);
+      
+      if(typeof checkReady === 'function') checkReady();
+    });
+  }
   // Wire timing hint update
   document.querySelectorAll('input[name="timing"]').forEach(r => {
     r.addEventListener('change', updateTimingHint);
@@ -194,6 +296,21 @@ function updateVenue() {
   document.querySelectorAll('#pitchRow .radio-pill, #pitchGroup .radio-card').forEach(pill => {
     pill.classList.toggle('active', pill.dataset.val === dp);
   });
+
+  // Dew checkbox logic
+  const dewProneVenues = ['Wankhede', 'Eden Gardens', 'Chepauk', 'Chinnaswamy', 'Kotla'];
+  const dewExpectedCb = document.getElementById('dewExpected');
+  const dewWarning = document.getElementById('dewWarning');
+  if (dewExpectedCb && dewWarning) {
+    const isDewProne = dewProneVenues.some(dp => v.name.includes(dp) || key.toLowerCase().includes(dp.toLowerCase()));
+    if (isDewProne) {
+      dewExpectedCb.checked = true;
+      dewWarning.style.display = 'block';
+    } else {
+      dewExpectedCb.checked = false;
+      dewWarning.style.display = 'none';
+    }
+  }
 }
 
 // ---- Check if prediction can run ----
@@ -270,9 +387,9 @@ async function runPrediction() {
   const tossWinner  = document.getElementById('tossWinner').value || aKey;
   const tossDecision = document.querySelector('input[name="toss"]:checked')?.value
                      || document.querySelector('input[name="tossDecision"]:checked')?.value || 'bat';
-  const pitch   = document.querySelector('input[name="pitch"]:checked')?.value || 'flat';
-  const weather = document.querySelector('input[name="weather"]:checked')?.value || 'sunny';
-  const wind    = document.querySelector('input[name="wind"]:checked')?.value || 'calm';
+  const pitch   = getAutoPitchType(venueKey);
+  const weather = lastWeatherData ? lastWeatherData.weatherMain.toLowerCase() : 'sunny';
+  const wind    = lastWeatherData ? lastWeatherData.windCondition.toLowerCase() : 'calm';
 
   const timing     = document.querySelector('input[name="timing"]:checked')?.value || 'night';
 
@@ -336,6 +453,8 @@ async function runPrediction() {
     const probA = (data.probabilities[tA.name] || data.probabilities[tA.shortName] || 0) * 100;
     const probB = (data.probabilities[tB.name] || data.probabilities[tB.shortName] || 0) * 100;
     
+    const isDewExpected = getAutoDew(lastWeatherData);
+    
     const result = {
       totalA: probA,
       totalB: probB,
@@ -347,7 +466,8 @@ async function runPrediction() {
       features: data.feature_values_used,
       h2h: data.informational_h2h || null,
       mode: data.prediction_mode,
-      tossSwing: data.possible_toss_swing || null
+      tossSwing: data.possible_toss_swing || null,
+      dewExpected: isDewExpected
     };
     
     hideLoader();
@@ -366,6 +486,114 @@ async function runPrediction() {
 // ================================================================
 
 function displayResults(r) {
+  // --- DEW FACTOR ADJUSTMENT ---
+  let probA = r.totalA;
+  let probB = r.totalB;
+  let dewImpactValA = 0, dewImpactValB = 0;
+  let dewImpactNote = `No significant dew expected.`;
+
+  if (r.dewExpected) {
+    if (r.mode === 'post_toss') {
+      const tossWinnerKey = r.tossWinner; 
+      if (r.tossDecision === 'bowl') {
+        dewImpactNote = `Dew is active. ${TEAMS[tossWinnerKey].shortName} chose to field (+7% advantage).`;
+        if (tossWinnerKey === r.aKey) { probA += 7; probB -= 7; dewImpactValA = 7; dewImpactValB = -7; }
+        else { probB += 7; probA -= 7; dewImpactValA = -7; dewImpactValB = 7; }
+      } else if (r.tossDecision === 'bat') {
+        dewImpactNote = `Dew is active. ${TEAMS[tossWinnerKey].shortName} chose to bat (-5% penalty).`;
+        if (tossWinnerKey === r.aKey) { probA -= 5; probB += 5; dewImpactValA = -5; dewImpactValB = 5; }
+        else { probB -= 5; probA += 5; dewImpactValA = 5; dewImpactValB = -5; }
+      }
+    } else {
+      dewImpactNote = `Dew expected. Potential: Fielding toss winner +7% | Batting toss winner -5%.`;
+    }
+  }
+
+  // --- NEW FACTORS ADJUSTMENTS ---
+  // 1. Squad Strength
+  const squadSelectA = document.getElementById('teamASquad')?.value || '1.0';
+  const squadSelectB = document.getElementById('teamBSquad')?.value || '1.0';
+
+  let squadImpactValA = 0;
+  if (squadSelectA !== '1.0' || squadSelectB !== '1.0') {
+    const impactA = (typeof squadImpacts !== 'undefined' && (squadImpacts.A.bat > 0 || squadImpacts.A.bowl > 0)) ? ((squadImpacts.A.bat + squadImpacts.A.bowl) / 2) : (1.0 - parseFloat(squadSelectA)) * 50;
+    const impactB = (typeof squadImpacts !== 'undefined' && (squadImpacts.B.bat > 0 || squadImpacts.B.bowl > 0)) ? ((squadImpacts.B.bat + squadImpacts.B.bowl) / 2) : (1.0 - parseFloat(squadSelectB)) * 50;
+    squadImpactValA = -(impactA - impactB);
+  }
+  
+  probA += squadImpactValA;
+  probB -= squadImpactValA;
+
+  // 2. Pitch Type
+  const batRatingA = TEAMS[r.aKey].powerHitting + TEAMS[r.aKey].battingDepth;
+  const batRatingB = TEAMS[r.bKey].powerHitting + TEAMS[r.bKey].battingDepth;
+  const bowlRatingA = TEAMS[r.aKey].pacerQuality + TEAMS[r.aKey].spinnerQuality;
+  const bowlRatingB = TEAMS[r.bKey].pacerQuality + TEAMS[r.bKey].spinnerQuality;
+
+  let pitchImpactA = 0;
+  if (r.pitch === 'flat') {
+    if (batRatingA > batRatingB + 5) pitchImpactA = 8;
+    else if (batRatingB > batRatingA + 5) pitchImpactA = -8;
+  } else if (r.pitch === 'green') {
+    if (bowlRatingA > bowlRatingB + 5) pitchImpactA = 8;
+    else if (bowlRatingB > bowlRatingA + 5) pitchImpactA = -8;
+  } else if (r.pitch === 'dry') {
+    if (TEAMS[r.aKey].spinnerQuality > TEAMS[r.bKey].spinnerQuality + 5) pitchImpactA = 10;
+    else if (TEAMS[r.bKey].spinnerQuality > TEAMS[r.aKey].spinnerQuality + 5) pitchImpactA = -10;
+  }
+  probA += pitchImpactA;
+  probB -= pitchImpactA;
+
+  // 3. Venue Chase Bias & Toss Decision Quality
+  const venueBias = {
+    'Wankhede': { chasing: 0.58, defending: 0.42 },
+    'Eden Gardens': { chasing: 0.52, defending: 0.48 },
+    'Chepauk': { chasing: 0.38, defending: 0.62 },
+    'Chinnaswamy': { chasing: 0.55, defending: 0.45 },
+    'Kotla': { chasing: 0.45, defending: 0.55 },
+    'Narendra Modi': { chasing: 0.50, defending: 0.50 },
+    'Rajiv Gandhi': { chasing: 0.53, defending: 0.47 },
+    'default': { chasing: 0.50, defending: 0.50 }
+  };
+  let venueName = 'default';
+  Object.keys(venueBias).forEach(k => {
+    if (r.venue.name.includes(k) || r.venue.city.includes(k)) venueName = k;
+  });
+
+  let venueChaseBiasA = 0;
+  let tossDecisionQualityA = 0;
+  let tossDecisionStr = "Neutral";
+
+  if (r.mode === 'post_toss') {
+    const isTeamAChasing = (r.tossWinner === r.aKey && r.tossDecision === 'bowl') || (r.tossWinner === r.bKey && r.tossDecision === 'bat');
+    const chaseProb = venueBias[venueName].chasing; 
+    const biasShift = (chaseProb - 0.50) * 100;
+    venueChaseBiasA = isTeamAChasing ? biasShift : -biasShift;
+
+    const dewProneVenues = ['Wankhede', 'Eden Gardens', 'Chepauk', 'Chinnaswamy', 'Kotla'];
+    const isDewProne = dewProneVenues.includes(venueName);
+    
+    if (isDewProne && r.tossDecision === 'bat') {
+      tossDecisionStr = "Questionable ⚠️";
+      if (r.tossWinner === r.aKey) tossDecisionQualityA = -4;
+      else tossDecisionQualityA = 4;
+    } else if (chaseProb > 0.50 && r.tossDecision === 'bowl') {
+      tossDecisionStr = "Smart ✅";
+      if (r.tossWinner === r.aKey) tossDecisionQualityA = 4;
+      else tossDecisionQualityA = -4;
+    }
+    
+    probA += venueChaseBiasA;
+    probA += tossDecisionQualityA;
+    probB -= venueChaseBiasA;
+    probB -= tossDecisionQualityA;
+  }
+
+  // Clamp probabilities
+  r.totalA = Math.max(1, Math.min(99, probA));
+  r.totalB = 100 - r.totalA;
+  r.winner = r.totalA >= r.totalB ? r.aKey : r.bKey;
+
   const tA = TEAMS[r.aKey], tB = TEAMS[r.bKey];
   const winner = TEAMS[r.winner];
   const loser  = r.winner === r.aKey ? tB : tA;
@@ -432,6 +660,23 @@ function displayResults(r) {
     }
     const gt = document.getElementById('gaugeText');
     if(gt) gt.textContent = pA > pB ? tA.shortName + ' Favored' : (pB > pA ? tB.shortName + ' Favored' : 'Even Match');
+    
+    // Prediction Confidence Badge
+    const winProbValue = Math.max(r.totalA, r.totalB);
+    const confScore = Math.round(Math.abs(winProbValue - 50) * 2);
+    const confBadge = document.getElementById('confBadge');
+    if(confBadge) {
+      if (winProbValue > 70 || winProbValue < 30) {
+        confBadge.innerHTML = `🟢 HIGH CONFIDENCE — ${confScore}/100`;
+      } else if (winProbValue >= 55) {
+        confBadge.innerHTML = `🟡 MEDIUM CONFIDENCE — ${confScore}/100`;
+      } else {
+        confBadge.innerHTML = `🔴 CLOSE CALL — ${confScore}/100`;
+      }
+      confBadge.style.backgroundColor = winner.primaryColor;
+      confBadge.style.color = '#fff';
+      confBadge.style.opacity = '1';
+    }
   }, 80);
 
   // Factor Cards - 6 XGBoost Features
@@ -439,14 +684,14 @@ function displayResults(r) {
 
   // Normalize each diff value to a 0-100 scale for display
   function normDiff(val, scale) {
-    return Math.max(0, Math.min(100, 50 + (val / scale) * 50));
+    return Math.max(5, Math.min(95, 50 + (val / scale) * 50));
   }
 
-  const eloA   = normDiff(f.elo_diff, 200),   eloB   = 100 - eloA;
-  const formA  = normDiff(f.form_diff, 1),     formB  = 100 - formA;
-  const venueA = normDiff(f.venue_diff, 1),    venueB = 100 - venueA;
-  const batA   = normDiff(f.batting_strength_diff,  20), batB   = 100 - batA;
-  const bowlA  = normDiff(f.bowling_strength_diff,  30), bowlB  = 100 - bowlA;
+  const eloA   = normDiff(f.elo_diff, 400),   eloB   = 100 - eloA;
+  const formA  = normDiff(f.form_diff, 4),     formB  = 100 - formA;
+  const venueA = normDiff(f.venue_diff, 0.8),    venueB = 100 - venueA;
+  const batA   = normDiff(f.batting_strength_diff,  15), batB   = 100 - batA;
+  const bowlA  = normDiff(f.bowling_strength_diff,  60), bowlB  = 100 - bowlA;
   const tossA  = normDiff(f.toss_impact, 0.3), tossB  = 100 - tossA;
 
   const tossWonA = normDiff(f.toss_won, 1), tossWonB = 100 - tossWonA;
@@ -458,7 +703,22 @@ function displayResults(r) {
     { name: 'Batting Strength',       weight: 'RF', f: {a: batA,   b: batB},   note: `Diff: ${f.batting_strength_diff.toFixed(1)}. Composite of powerplay, middle & death overs run rate (last 10 games).` },
     { name: 'Bowling Strength',       weight: 'RF', f: {a: bowlA,  b: bowlB},  note: `Diff: ${f.bowling_strength_diff.toFixed(1)}. Composite of powerplay wkts, death economy & wicket-taking (last 10 games).` },
     { name: 'Toss Advantage',         weight: 'RF', f: {a: tossA,  b: tossB},  note: `Toss impact: ${f.toss_impact.toFixed(3)}. Based on this venue's historical chase vs defend bias.` },
-    { name: 'Toss Winner',            weight: 'RF', f: {a: tossWonA, b: tossWonB}, note: `Direct flag indicating which team won the toss.` }
+    { name: 'Toss Winner',            weight: 'RF', f: {a: tossWonA, b: tossWonB}, note: `Direct flag indicating which team won the toss.` },
+    { name: 'Pitch Type <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">⚡ Auto</span>', weight: 'FIX', f: {
+        a: pitchImpactA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (pitchImpactA / 15) * 50)),
+        b: pitchImpactA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (-pitchImpactA / 15) * 50))
+      }, note: `Pitch condition calculated from historical averages.` 
+    },
+    { name: 'Dew Factor <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">⚡ Auto</span>', weight: 'FIX', f: {
+        a: dewImpactValA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (dewImpactValA / 14) * 50)),
+        b: dewImpactValB === 0 ? 50 : Math.max(5, Math.min(95, 50 + (dewImpactValB / 14) * 50))
+      }, note: dewImpactNote 
+    },
+    { name: 'Squad Strength',         weight: 'FIX', f: {
+        a: squadImpactValA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (squadImpactValA / 15) * 50)),
+        b: squadImpactValA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (-squadImpactValA / 15) * 50))
+      }, note: `Multiplier impact based on reported absences.` 
+    }
   ];
 
   const grid = document.getElementById('factorGrid');
@@ -483,6 +743,59 @@ function displayResults(r) {
         <div class="fc-note">${fac.note}</div>
       </div>`;
     }).join('');
+  }
+
+  // WHY Explainer Panel
+  const whyTeamA = document.getElementById('whyTeamA');
+  if(whyTeamA) {
+    whyTeamA.textContent = tA.shortName;
+    document.getElementById('whyTeamB').textContent = tB.shortName;
+    
+    function formatImpact(val) {
+      if (val > 0) return `<span class="impact-val impact-pos">+${val.toFixed(1)}%</span><span class="impact-val impact-neg">−${val.toFixed(1)}%</span>`;
+      if (val < 0) return `<span class="impact-val impact-neg">−${Math.abs(val).toFixed(1)}%</span><span class="impact-val impact-pos">+${Math.abs(val).toFixed(1)}%</span>`;
+      return `<span class="impact-val impact-neu">Even</span><span class="impact-val impact-neu">Even</span>`;
+    }
+    
+    // Scale features down to look like percentage impacts roughly
+    const whyFactors = [
+      { name: 'Elo Rating', diff: (f.elo_diff || 0) / 15 },
+      { name: 'Recent Form', diff: (f.form_diff || 0) * 15 },
+      { name: 'Venue Record', diff: (f.venue_diff || 0) * 10 },
+      { name: 'Pitch Type <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">⚡ Auto</span>', diff: pitchImpactA },
+      { name: 'Squad Strength', diff: squadImpactValA },
+      { name: 'Dew Factor <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">⚡ Auto</span>', diff: dewImpactValA }
+    ];
+    
+    if (r.mode === 'post_toss') {
+      whyFactors.push({ name: 'Venue Chase Bias', diff: venueChaseBiasA });
+      whyFactors.push({ name: `Toss Decision Quality (${tossDecisionStr})`, diff: tossDecisionQualityA });
+    }
+    
+    let strongest = whyFactors[0];
+    let whyHtml = '';
+    
+    whyFactors.forEach((fac, idx) => {
+      if (Math.abs(fac.diff) > Math.abs(strongest.diff)) strongest = fac;
+      
+      // Fix 1: Hide "Even" or negligible rows (diff < 0.5%), but always show Elo Rating as baseline
+      if (fac.name !== 'Elo Rating' && Math.abs(fac.diff) < 0.5) return;
+      
+      whyHtml += `<div class="why-row" id="whyRow${idx}">
+        <div>${fac.name}</div>
+        ${formatImpact(fac.diff)}
+      </div>`;
+    });
+    
+    document.getElementById('whyRows').innerHTML = whyHtml;
+    document.getElementById('whyStrongest').textContent = `${strongest.name} difference is the strongest predictor in this matchup.`;
+    
+    document.getElementById('chipRain').innerHTML = `🌧️ Rain → ${tB.shortName} +3%`;
+    document.getElementById('chipToss').innerHTML = `🏏 Toss (bat) → ${tA.shortName} +5%`;
+    document.getElementById('chipVenue').innerHTML = `📍 Venue change → Even`;
+    
+    // Hide panel by default on new prediction
+    document.getElementById('whyPanel').style.display = 'none';
   }
 
   // Informational H2H Section
@@ -742,25 +1055,26 @@ document.addEventListener('DOMContentLoaded', () => {
     card.classList.add('tilt-card');
     
     card.addEventListener('mousemove', (e) => {
+      if (card.querySelector('select, input, button')) return;
+      
       const rect = card.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
       
-      const rotateX = ((y - centerY) / centerY) * -10; // Max tilt 10deg
-      const rotateY = ((x - centerX) / centerX) * 10;
+      const rotateX = ((y - centerY) / centerY) * -3;
+      const rotateY = ((x - centerX) / centerX) * 3;
       
-      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      card.style.transform = `perspective(1500px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
     });
     
     card.addEventListener('mouseleave', () => {
-      card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
-      card.style.transition = 'transform 0.5s ease-out';
+      card.style.transform = `perspective(1500px) rotateX(0deg) rotateY(0deg)`;
     });
     
     card.addEventListener('mouseenter', () => {
-      card.style.transition = 'none'; // Remove transition for instant mouse tracking
+      // Removing 'none' so that the CSS transition kicks in
     });
   });
   
@@ -793,3 +1107,266 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// Toggle WHY panel with staggered animation
+window.toggleWhyPanel = function() {
+  const panel = document.getElementById('whyPanel');
+  if(panel.style.display === 'none') {
+    panel.style.display = 'block';
+    const rows = document.querySelectorAll('.why-row');
+    rows.forEach((row, i) => {
+      row.classList.remove('show');
+      setTimeout(() => {
+        row.classList.add('show');
+      }, i * 150);
+    });
+  } else {
+    panel.style.display = 'none';
+  }
+};
+
+// ================================================================
+// DYNAMIC SQUAD STRENGTH
+// ================================================================
+let squadImpacts = { A: { bat: 0, bowl: 0 }, B: { bat: 0, bowl: 0 } };
+
+window.updateSquadInputs = function(team) {
+  const select = document.getElementById('team' + team + 'Squad');
+  const container = document.getElementById('squadInputs' + team);
+  if (!container) return;
+  const val = select.value;
+  container.innerHTML = '';
+  squadImpacts[team] = { bat: 0, bowl: 0 };
+  const impactDiv = document.getElementById('squadImpact' + team);
+  if (impactDiv) impactDiv.innerHTML = '';
+
+  if (val === '0.85') {
+    container.innerHTML = `
+      <input type="text" class="select squad-input" placeholder="Player name (e.g. Bumrah)" 
+             onblur="calculateSquadImpact('${team}')" oninput="calculateSquadImpact('${team}')" 
+             style="margin-bottom:8px; font-size:0.8rem; padding:6px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); width:100%;">
+    `;
+  } else if (val === '0.70') {
+    container.innerHTML = `
+      <div id="dynamicInputs${team}">
+        <input type="text" class="select squad-input" placeholder="Player 1" onblur="calculateSquadImpact('${team}')" oninput="calculateSquadImpact('${team}')" style="margin-bottom:8px; font-size:0.8rem; padding:6px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); width:100%;">
+        <input type="text" class="select squad-input" placeholder="Player 2" onblur="calculateSquadImpact('${team}')" oninput="calculateSquadImpact('${team}')" style="margin-bottom:8px; font-size:0.8rem; padding:6px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); width:100%;">
+      </div>
+      <button onclick="addSquadInput('${team}')" style="background:rgba(255,255,255,0.05); border:1px dashed rgba(255,255,255,0.2); color:var(--text-2); padding:4px 8px; font-size:0.7rem; border-radius:4px; cursor:pointer; width:100%; margin-bottom:8px;">+ Add Another</button>
+    `;
+  }
+};
+
+window.addSquadInput = function(team) {
+  const div = document.getElementById('dynamicInputs' + team);
+  if (div && div.children.length < 6) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'select squad-input';
+    input.placeholder = `Player ${div.children.length + 1}`;
+    input.onblur = () => calculateSquadImpact(team);
+    input.oninput = () => calculateSquadImpact(team);
+    input.style.cssText = "margin-bottom:8px; font-size:0.8rem; padding:6px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); width:100%;";
+    div.appendChild(input);
+  }
+};
+
+window.calculateSquadImpact = function(team) {
+  const container = document.getElementById('squadInputs' + team);
+  if (!container) return;
+  const inputs = container.querySelectorAll('.squad-input');
+  
+  let batPenalty = 0;
+  let bowlPenalty = 0;
+  let summaryNotes = [];
+  let errorNotes = [];
+  
+  const teamKey = document.getElementById('team' + team).value;
+  let playersList = [];
+  if (teamKey && TEAMS[teamKey] && TEAMS[teamKey].players) {
+    playersList = TEAMS[teamKey].players;
+  } else {
+    Object.values(TEAMS).forEach(t => {
+      if (t.players) playersList = playersList.concat(t.players);
+    });
+  }
+
+  inputs.forEach(inp => {
+    const query = inp.value.trim();
+    if (query.length === 0) return; // Case 3: Empty input
+    
+    const matched = playersList.find(p => p.name.toLowerCase().includes(query.toLowerCase()));
+    if (matched) {
+      // Case 1: Player found
+      const role = matched.role;
+      const lowerRole = role.toLowerCase();
+      if (lowerRole.includes('bowler') || lowerRole.includes('pacer') || lowerRole.includes('spinner')) {
+        bowlPenalty += 12;
+        summaryNotes.push(`⚡ ${matched.name} found — ${role} — Bowling strength reduced by 12%`);
+      } else if (lowerRole.includes('batsman')) {
+        batPenalty += 10;
+        summaryNotes.push(`⚡ ${matched.name} found — ${role} — Batting strength reduced by 10%`);
+      } else {
+        batPenalty += 8;
+        bowlPenalty += 8;
+        summaryNotes.push(`⚡ ${matched.name} found — ${role} — Batting & Bowling both reduced by 8%`);
+      }
+    } else {
+      // Case 2: Player NOT found
+      errorNotes.push(`⚠️ ${query} not found in 2026 IPL squads. Please verify the name.`);
+    }
+  });
+
+  // Simple rule: Agar player milta nahi toh prediction pe koi effect nahi
+  if (errorNotes.length > 0) {
+    batPenalty = 0;
+    bowlPenalty = 0;
+  }
+
+  // Cap maximum penalty at -35%
+  batPenalty = Math.min(batPenalty, 35);
+  bowlPenalty = Math.min(bowlPenalty, 35);
+  
+  squadImpacts[team] = { bat: batPenalty, bowl: bowlPenalty };
+  
+  const impactDiv = document.getElementById('squadImpact' + team);
+  if (impactDiv) {
+    if (summaryNotes.length === 0 && errorNotes.length === 0) {
+      impactDiv.innerHTML = '';
+    } else {
+      let html = '';
+      if (errorNotes.length > 0) {
+        html += errorNotes.map(n => `<div style="margin-bottom:4px; color:#f59e0b;">${n}</div>`).join('');
+        html += `<div style="margin-bottom:8px; font-style:italic; color:var(--text-2);">Tip: Check spelling or try last name only</div>`;
+      }
+      
+      // Show found players too, but NO total impact line if there's an error
+      if (summaryNotes.length > 0) {
+        html += summaryNotes.map(n => `<div style="margin-bottom:2px; color:var(--text-1);">${n}</div>`).join('');
+      }
+      
+      if (errorNotes.length === 0 && summaryNotes.length > 0) {
+        html += `<div style="margin-top:6px; font-weight:600; color:var(--text-1);">Total impact: Batting −${batPenalty}%, Bowling −${bowlPenalty}%</div>`;
+      }
+      
+      impactDiv.innerHTML = html;
+    }
+  }
+};
+
+// ================================================================
+// AUTO-FETCH WEATHER & PITCH CONDITIONS
+// ================================================================
+let lastWeatherData = null;
+
+async function fetchWeatherForVenue(venue) {
+  const city = VENUE_CITIES[venue] || 'Mumbai';
+  try {
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API_KEY}&units=metric`;
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    const temp = data.main.temp;
+    const humidity = data.main.humidity;
+    const windSpeed = data.wind.speed;
+    const weatherMain = data.weather[0].main;
+    
+    let dewProbability = 'Low';
+    if (humidity > 85 && temp > 18 && temp < 32 && windSpeed < 2) {
+      dewProbability = 'High';
+    } else if (humidity > 70 && temp > 15 && windSpeed < 4) {
+      dewProbability = 'Medium';
+    }
+    
+    const rainChance = weatherMain === 'Rain' ? 'High' 
+      : weatherMain === 'Drizzle' ? 'Medium'
+      : weatherMain === 'Clouds' && humidity > 80 ? 'Low-Medium'
+      : 'Low';
+    
+    const windCondition = windSpeed > 6 ? 'Strong' : windSpeed > 3 ? 'Moderate' : 'Calm';
+    
+    return { temp, humidity, windSpeed, dewProbability, rainChance, windCondition, weatherMain };
+  } catch(e) {
+    console.log("Weather API error", e);
+    // fallback
+    return { temp: 30, humidity: 65, windSpeed: 2, dewProbability: 'Low', rainChance: 'Low', windCondition: 'Calm', weatherMain: 'Clear' };
+  }
+}
+
+function autoPitchFromVenue(venue) {
+  const profile = VENUE_PITCH_PROFILE[venue];
+  if (!profile) return;
+  
+  const pitchCard = document.getElementById('pitch-auto-card');
+  if (pitchCard) {
+    pitchCard.innerHTML = `
+      <div style="font-weight: 700; font-family: 'Orbitron'; margin-bottom: 12px;">🏏 PITCH INTELLIGENCE — ${venue}</div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <div>📊 Avg Score: <strong>${profile.avgScore}</strong></div>
+        <div>🎯 Avg Wickets: <strong>${profile.avgWickets}</strong></div>
+      </div>
+      <div style="margin-bottom: 12px;">🏃 Chasing Win %: <strong>${profile.chasingWin}%</strong></div>
+      <div style="display: inline-block; padding: 4px 12px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 100px; color: #22c55e; font-size: 0.8rem; font-weight: bold; margin-bottom: 12px;">
+        ${profile.pitchType}
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-2); margin-bottom: 12px;">${profile.description}</div>
+      <div style="font-size: 0.75rem; color: #f97316;">⚡ Auto-detected from IPL historical data</div>
+    `;
+  }
+  
+  if (typeof updateVenueChaseBias === 'function') {
+    updateVenueChaseBias(profile.chasingWin);
+  } else {
+     // If not defined, just create it on window so it doesn't crash, we'll apply it in displayResults
+     window.VENUE_CHASE_BIAS = profile.chasingWin;
+  }
+}
+
+function populateWeatherCard(weather, venue) {
+  const card = document.getElementById('auto-weather-card');
+  if (!card) return;
+  const city = VENUE_CITIES[venue] || 'Mumbai';
+  
+  card.innerHTML = `
+    <div style="font-weight: 700; font-family: 'Orbitron'; margin-bottom: 12px;">🌤️ LIVE CONDITIONS — ${city} (${venue})</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; font-size: 0.9rem;">
+      <div>🌡️ Temp: <strong>${Math.round(weather.temp)}°C</strong></div>
+      <div>💧 Humidity: <strong>${weather.humidity}%</strong></div>
+      <div>💨 Wind: <strong>${weather.windCondition} (${weather.windSpeed} m/s)</strong></div>
+      <div>🌧️ Rain: <strong>${weather.rainChance}</strong></div>
+    </div>
+    
+    <div style="padding: 12px; background: rgba(0, 200, 230, 0.05); border: 1px solid rgba(0, 200, 230, 0.1); border-radius: 8px; margin-bottom: 12px;">
+      🌫️ Dew Expected: <strong style="color: ${weather.dewProbability==='High'?'#ef4444':weather.dewProbability==='Medium'?'#f59e0b':'#22c55e'};">${weather.dewProbability.toUpperCase()}</strong>
+      <div style="font-size: 0.75rem; color: var(--text-2); margin-top: 4px;">(Humidity ${weather.humidity}%, Temp ${Math.round(weather.temp)}°C, ${weather.windCondition} wind)</div>
+    </div>
+    
+    <div style="font-size: 0.75rem; color: #f97316;">⚡ Auto-detected from real-time weather data</div>
+  `;
+}
+
+function showConditionsSummary(venue, weather) {
+  const summary = document.getElementById('conditions-summary');
+  if (!summary) return;
+  const pitchType = getAutoPitchType(venue);
+  summary.innerHTML = `
+    <div style="padding: 12px 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 6px;">
+      <div>✅ <strong>${venue}</strong> conditions loaded — 
+      ${weather.weatherMain} • ${Math.round(weather.temp)}°C • 
+      Dew: <strong>${weather.dewProbability}</strong> • 
+      Pitch: <strong>${pitchType}</strong></div>
+      <div style="color: var(--text-2); font-size: 0.75rem;">🏏 Pitch & dew auto-configured for prediction</div>
+    </div>
+  `;
+}
+
+function getAutoPitchType(venue) {
+  const profile = VENUE_PITCH_PROFILE[venue];
+  if (!profile) return 'Balanced'; 
+  return profile.pitchType; 
+}
+
+function getAutoDew(weatherData) {
+  if (!weatherData) return false;
+  return weatherData.dewProbability === 'High' ? true : false;
+}

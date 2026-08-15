@@ -101,6 +101,27 @@
     .zone-box{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
     .zone-name{font-size:0.8rem;color:var(--text-2)}
     .zone-stat{font-size:0.8rem;font-weight:700;color:var(--text-1)}
+    
+    /* Why Panel Rows */
+    .why-row {
+      display: grid; 
+      grid-template-columns: 2fr 1fr 1fr; 
+      gap: 10px; 
+      padding: 8px 0; 
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.95rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.4s ease;
+    }
+    .why-row.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .impact-val { text-align: center; font-weight: 600; }
+    .impact-pos { color: #10b981; }
+    .impact-neg { color: #ef4444; }
+    .impact-neu { color: var(--text-2); }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -123,6 +144,14 @@
         <select class="select" id="teamA" onchange="updateTeam('A')">
           <option value="">-- Select Team A --</option>
         </select>
+        <label class="label" style="margin-top: 12px; font-size: 0.8rem; color: var(--text-2);">Squad Strength</label>
+        <select class="select" id="teamASquad" style="margin-bottom: 8px; font-size: 0.85rem; padding: 8px;" onchange="updateSquadInputs('A')">
+          <option value="1.0">Full Strength 💪</option>
+          <option value="0.85">1 Key Player Missing ⚠️</option>
+          <option value="0.70">2+ Players Missing 🚨</option>
+        </select>
+        <div id="squadInputsA"></div>
+        <div id="squadImpactA" style="font-size:0.75rem; color:var(--text-2); margin-bottom:12px; min-height: 16px;"></div>
         <div class="ts-badge" id="badgeA" style="border-color:rgba(255,255,255,0.07);background:rgba(255,255,255,0.02)">
           <div class="ts-short" id="badgeAShort" style="color:var(--text-2)">?</div>
           <div>
@@ -140,6 +169,14 @@
         <select class="select" id="teamB" onchange="updateTeam('B')">
           <option value="">-- Select Team B --</option>
         </select>
+        <label class="label" style="margin-top: 12px; font-size: 0.8rem; color: var(--text-2);">Squad Strength</label>
+        <select class="select" id="teamBSquad" style="margin-bottom: 8px; font-size: 0.85rem; padding: 8px;" onchange="updateSquadInputs('B')">
+          <option value="1.0">Full Strength 💪</option>
+          <option value="0.85">1 Key Player Missing ⚠️</option>
+          <option value="0.70">2+ Players Missing 🚨</option>
+        </select>
+        <div id="squadInputsB"></div>
+        <div id="squadImpactB" style="font-size:0.75rem; color:var(--text-2); margin-bottom:12px; min-height: 16px;"></div>
         <div class="ts-badge" id="badgeB" style="border-color:rgba(255,255,255,0.07);background:rgba(255,255,255,0.02)">
           <div class="ts-short" id="badgeBShort" style="color:var(--text-2)">?</div>
           <div>
@@ -171,37 +208,22 @@
             <option value="">-- Select Venue --</option>
           </select>
           <div class="venue-meta" id="venueMeta"></div>
-        </div>
-
-        <!-- Pitch -->
-        <div class="form-group">
-          <label class="label">🟫 Pitch Condition</label>
-          <div class="radio-row" id="pitchRow">
-            <label class="radio-pill active" data-val="flat"><input type="radio" name="pitch" value="flat" checked/><span class="rp-icon">🟧</span><span class="rp-title">Flat</span><span class="rp-sub">Batting paradise</span></label>
-            <label class="radio-pill" data-val="green"><input type="radio" name="pitch" value="green"/><span class="rp-icon">🟩</span><span class="rp-title">Green</span><span class="rp-sub">Pace friendly</span></label>
-            <label class="radio-pill" data-val="dry"><input type="radio" name="pitch" value="dry"/><span class="rp-icon">🟫</span><span class="rp-title">Dry/Dusty</span><span class="rp-sub">Spin friendly</span></label>
+          
+          <!-- NEW AUTO CARDS -->
+          <div id="conditions-summary" style="margin-top: 12px;"></div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+             <!-- Auto Weather Card -->
+             <div id="auto-weather-card" class="card" style="border: 1px solid rgba(59, 130, 246, 0.3);">
+                <div style="text-align:center; color:var(--text-2);">Select venue to load weather...</div>
+             </div>
+             
+             <!-- Auto Pitch Card -->
+             <div id="pitch-auto-card" class="card" style="border: 1px solid rgba(34, 197, 94, 0.3);">
+                <div style="text-align:center; color:var(--text-2);">Select venue to load pitch...</div>
+             </div>
           </div>
-        </div>
-
-        <!-- Weather -->
-        <div class="form-group">
-          <label class="label">🌤️ Weather</label>
-          <div class="radio-row" id="weatherRow">
-            <label class="radio-pill active" data-val="sunny"><input type="radio" name="weather" value="sunny" checked/><span class="rp-icon">☀️</span><span class="rp-title">Sunny</span><span class="rp-sub">No assist</span></label>
-            <label class="radio-pill" data-val="overcast"><input type="radio" name="weather" value="overcast"/><span class="rp-icon">☁️</span><span class="rp-title">Overcast</span><span class="rp-sub">Swing & seam</span></label>
-            <label class="radio-pill" data-val="rain"><input type="radio" name="weather" value="rain"/><span class="rp-icon">🌧️</span><span class="rp-title">Rain</span><span class="rp-sub">Wet Outfield</span></label>
-          </div>
-        </div>
-
-        <!-- Wind -->
-        <div class="form-group">
-          <label class="label">💨 Wind</label>
-          <div class="radio-row" id="windRow">
-            <label class="radio-pill active" data-val="calm"><input type="radio" name="wind" value="calm" checked/><span class="rp-icon">🌬️</span><span class="rp-title">Calm</span><span class="rp-sub">No effect</span></label>
-            <label class="radio-pill" data-val="breezy"><input type="radio" name="wind" value="breezy"/><span class="rp-icon">🍃</span><span class="rp-title">Breezy</span><span class="rp-sub">Slight swing</span></label>
-            <label class="radio-pill" data-val="high"><input type="radio" name="wind" value="high"/><span class="rp-icon">🌪️</span><span class="rp-title">High Wind</span><span class="rp-sub">Max swing</span></label>
-          </div>
-        </div>
+          
 
         <!-- Toss (Hidden in Pre-Toss Mode) -->
         <div class="form-group toss-group" style="display: none;">
@@ -216,27 +238,7 @@
           </div>
         </div>
 
-        <!-- Day / Night — full width -->
-        <div class="form-group cond-full">
-          <label class="label">🌅 Match Timing</label>
-          <div class="radio-row" id="timingRow">
-            <label class="radio-pill" data-val="day">
-              <input type="radio" name="timing" value="day"/>
-              <span class="rp-icon">☀️</span>
-              <span class="rp-title">Day Match</span>
-              <span class="rp-sub">Spin-friendly · No dew · Slower outfield</span>
-            </label>
-            <label class="radio-pill active" data-val="night">
-              <input type="radio" name="timing" value="night" checked/>
-              <span class="rp-icon">🌙</span>
-              <span class="rp-title">Day-Night / Night</span>
-              <span class="rp-sub">Dew active · Pacers help · Better batting</span>
-            </label>
-          </div>
-          <div id="timingHint" style="margin-top:8px;font-size:0.75rem;color:var(--text-2);padding:8px 12px;border-radius:var(--radius-sm);background:rgba(0,200,230,0.05);border:1px solid rgba(0,200,230,0.1)">
-            🌙 <strong>Night/Day-Night:</strong> Dew makes the ball slippery for spinners in 2nd innings. Pacers get extra advantage. Chase becomes easier.
-          </div>
-        </div>
+
       </div>
     </div>
 
@@ -263,8 +265,10 @@
           <div style="width: 250px; height: 150px; position: relative;">
             <canvas id="gaugeChart"></canvas>
             <div id="gaugeText" style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 700; color: #fff5c0;"></div>
+            <!-- Confidence Badge -->
+            <div id="confBadge" style="position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; white-space: nowrap; opacity: 0; transition: opacity 0.5s; color: #000;"></div>
           </div>
-          <div style="display: flex; justify-content: space-between; width: 100%; margin-top: -10px;">
+          <div style="display: flex; justify-content: space-between; width: 100%; margin-top: 15px;">
             <div class="prob-team" style="text-align: left;">
               <span class="prob-pct" id="probPctA" style="font-size: 1.5rem;">?</span>
               <span class="prob-short" id="probShortA">A</span>
@@ -272,6 +276,34 @@
             <div class="prob-team" style="text-align: right;">
               <span class="prob-pct" id="probPctB" style="font-size: 1.5rem;">?</span>
               <span class="prob-short" id="probShortB">B</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHY Explainer Panel -->
+      <div class="card" style="margin-bottom:24px; text-align: center;">
+        <button class="btn btn-outline" id="btnWhy" onclick="toggleWhyPanel()" style="width: 100%; font-family: 'Orbitron', sans-serif;">📊 WHY THIS PREDICTION?</button>
+        
+        <div id="whyPanel" style="display: none; text-align: left; margin-top: 20px; overflow: hidden;">
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px; font-weight: 700; color: var(--text-2); font-size: 0.85rem;">
+            <div>Factor</div>
+            <div id="whyTeamA" style="text-align: center;">Team A</div>
+            <div id="whyTeamB" style="text-align: center;">Team B</div>
+          </div>
+          <div id="whyRows">
+            <!-- Rows injected via JS -->
+          </div>
+          <div id="whyStrongest" style="margin-top: 16px; padding: 12px; background: rgba(0,200,230,0.05); border-left: 3px solid var(--accent); font-size: 0.9rem; color: var(--text-1);">
+            <!-- Strongest predictor text -->
+          </div>
+          
+          <div style="margin-top: 24px;">
+            <p style="font-size: 0.85rem; font-weight: 700; color: var(--text-2); margin-bottom: 12px; text-transform: uppercase;">What changes this prediction?</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <span class="tag" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border);" id="chipRain">🌧️ Rain → </span>
+              <span class="tag" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border);" id="chipToss">🏏 Toss (bat) → </span>
+              <span class="tag" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border);" id="chipVenue">📍 Venue change → Even</span>
             </div>
           </div>
         </div>

@@ -159,7 +159,8 @@ async function loadNews() {
       throw new Error('Live news API returned no news items.');
     }
 
-    allNews = payload.news.filter((item, index, self) => self.findIndex(n => n.link === item.link) === index);
+    const fetchedNews = payload.news || [];
+    allNews = [...fetchedNews, ...STATIC_NEWS].filter((item, index, self) => self.findIndex(n => n.title === item.title) === index);
     renderNews();
     showStatus('📡 Live IPL news loaded from the official IPL site.', 'success');
   } catch (error) {
@@ -205,7 +206,7 @@ function filterNews(filter, btn) {
 }
 
 function renderNews() {
-  const uniqueNews = allNews.filter((item, index, self) => self.findIndex(n => n.link === item.link) === index);
+  const uniqueNews = allNews.filter((item, index, self) => self.findIndex(n => n.title === item.title) === index);
   const filtered = currentFilter === 'all'
     ? uniqueNews
     : uniqueNews.filter(n => n.category === currentFilter);

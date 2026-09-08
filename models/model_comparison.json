@@ -1,0 +1,63 @@
+{
+  "pre_toss": [
+    {
+      "model": "Random Forest",
+      "accuracy": 49.77,
+      "f1": 0.495,
+      "log_loss": 0.696,
+      "type": "ML Baseline",
+      "roc_auc": 0.498
+    },
+    {
+      "model": "XGBoost",
+      "accuracy": 51.88,
+      "f1": 0.527,
+      "log_loss": 0.707,
+      "type": "ML Baseline",
+      "roc_auc": 0.506
+    },
+    {
+      "model": "FFNN",
+      "accuracy": 46.95,
+      "f1": 0.479,
+      "log_loss": 0.709,
+      "type": "Deep Learning",
+      "roc_auc": 0.463
+    }
+  ],
+  "post_toss": [
+    {
+      "model": "Random Forest",
+      "accuracy": 50.23,
+      "f1": 0.49,
+      "log_loss": 0.699,
+      "type": "ML Baseline",
+      "roc_auc": 0.479
+    },
+    {
+      "model": "XGBoost",
+      "accuracy": 50.0,
+      "f1": 0.501,
+      "log_loss": 0.719,
+      "type": "ML Baseline",
+      "roc_auc": 0.469
+    },
+    {
+      "model": "FFNN",
+      "accuracy": 49.3,
+      "f1": 0.239,
+      "log_loss": 0.696,
+      "type": "Deep Learning",
+      "roc_auc": 0.495
+    }
+  ],
+  "live_match": [
+    {
+      "model": "LSTM",
+      "accuracy": 95.31,
+      "f1": 0.958,
+      "log_loss": 0.109,
+      "type": "Deep Learning"
+    }
+  ]
+}

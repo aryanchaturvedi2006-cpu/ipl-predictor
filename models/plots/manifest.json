@@ -1,0 +1,14 @@
+{
+  "training_curves": {
+    "ffnn_pre": "models/plots/ffnn_pre_curves.png",
+    "ffnn_post": "models/plots/ffnn_post_curves.png",
+    "lstm": "models/plots/lstm_curves.png"
+  },
+  "confusion_matrices": {
+    "rf_pre": "models/plots/cm_rf_pre.png",
+    "rf_post": "models/plots/cm_rf_post.png",
+    "ffnn_pre": "models/plots/cm_ffnn_pre.png",
+    "ffnn_post": "models/plots/cm_ffnn_post.png",
+    "lstm": "models/plots/cm_lstm.png"
+  }
+}

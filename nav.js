@@ -10,6 +10,7 @@
     { href: 'player_h2h.html',   label: 'Player H2H' },
     { href: 'history.html',   label: 'IPL History' },
     { href: 'stats.html',     label: 'Stats Center' },
+    { href: 'model_comparison.html', label: 'Models' },
     { href: 'news.html',      label: 'News' },
     { href: 'captains_challenge.html', label: '🧠 Captain' },
   ];

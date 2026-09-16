@@ -1,0 +1,28 @@
+{
+  "model_type": "LSTM_Rolling_Prefix",
+  "sequence_length": 20,
+  "feature_names": [
+    "score",
+    "wickets",
+    "current_rr",
+    "required_rr",
+    "balls_left",
+    "last3_runs",
+    "last3_wickets"
+  ],
+  "training_seasons": "<= 2023",
+  "test_seasons": ">= 2024",
+  "methodology": "Rolling prefix \u2014 no future-over leakage",
+  "random_seed": 42,
+  "overall_metrics": {
+    "accuracy": 0.7976761808537509,
+    "f1": 0.7944572748267898,
+    "log_loss": 0.39513835310935974
+  },
+  "checkpoint_accuracy": {
+    "5": 0.7136150234741784,
+    "10": 0.7914691943127962,
+    "15": 0.86,
+    "20": 0.9150943396226415
+  }
+}

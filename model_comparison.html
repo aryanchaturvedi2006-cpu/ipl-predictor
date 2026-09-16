@@ -319,7 +319,7 @@
     <!-- Live match tab -->
     <div id="tab-live" class="tab-content">
       <div class="warning-box">
-        ⚠️ <strong>Important:</strong> LSTM live-match accuracy (95.31%) cannot be directly compared
+        ⚠️ <strong>Important:</strong> LSTM live-match accuracy cannot be directly compared
         with pre-match RF/XGB/FFNN accuracy (~50%). These are fundamentally different tasks —
         pre-match prediction uses only historical team stats, while LSTM uses real-time
         over-by-over in-match sequences where patterns are far more predictable.
@@ -422,8 +422,12 @@
 
       // Insight text differs per tab
       const isLive = containerId === 'cards-live';
+      // Get LSTM stats dynamically if available
+      const lstmStats = isLive ? models.find(m => m.model.includes('LSTM')) : null;
+      const lstmAcc = lstmStats ? lstmStats.accuracy + '%' : 'high accuracy';
+      
       const insight = isLive
-        ? `LSTM achieved <strong>95.31% accuracy</strong> on the held-out live-match test set by learning
+        ? `LSTM achieved <strong>${lstmAcc}</strong> on the held-out live-match test set by learning
            over-by-over sequences. This is a fundamentally different (and easier) task than pre-match
            prediction — real-time match data contains far richer signals than historical team statistics alone.`
         : `Pre-match cricket prediction is inherently difficult. All models sit near <strong>~50% accuracy</strong>
@@ -452,7 +456,7 @@
           </div>
           <div class="plot-group">
             <h3 class="plot-title">LSTM Live Match — Training Curves</h3>
-            <p class="plot-desc">LSTM trained on 20-step over sequences. 95.31% accuracy on held-out test set.</p>
+            <p class="plot-desc">LSTM trained on 20-step over sequences.</p>
             <img src="models/plots/lstm_curves.png" class="plot-img" alt="LSTM Curves" onerror="this.parentElement.innerHTML+='<p class=plot-error>Image not found — run train_dl.py first</p>'">
           </div>
         </div>
@@ -498,7 +502,7 @@
           </div>
           <div class="matrix-card matrix-lstm">
             <div class="matrix-label dl-type">Deep Learning — LSTM</div>
-            <h4>LSTM — Live Match (95.31% accuracy)</h4>
+            <h4>LSTM — Live Match</h4>
             <img src="models/plots/cm_lstm.png" class="matrix-img" alt="LSTM Confusion Matrix">
             <p class="matrix-note">Note: LSTM solves a different task — live in-match sequence prediction, not pre-match outcome.</p>
           </div>

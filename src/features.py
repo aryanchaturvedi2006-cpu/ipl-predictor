@@ -44,7 +44,7 @@ def build_features(df):
     
     # 1. Elo & Form
     elo = {team: 1500.0 for team in unique_teams}
-    recent_form = {team: deque(maxlen=5) for team in unique_teams}
+    recent_form = {team: deque(maxlen=10) for team in unique_teams}
     
     # 2. H2H (Informational)
     h2h_stats = defaultdict(lambda: {'wins': defaultdict(int), 'last_5': deque(maxlen=5), 'max_margin': defaultdict(int)})
@@ -65,11 +65,21 @@ def build_features(df):
         dels['batting_team'] = dels['batting_team'].apply(lambda x: TEAM_MAPPING.get(str(x).strip(), str(x).strip()))
         dels['bowling_team'] = dels['bowling_team'].apply(lambda x: TEAM_MAPPING.get(str(x).strip(), str(x).strip()))
         
+        # Calculate legal balls per over (capped at 6)
+        legal_balls_per_over = dels.groupby(['match_id', 'batting_team', 'bowling_team', 'over_phase', 'over'], observed=True).size().reset_index(name='balls')
+        legal_balls_per_over['legal_balls'] = legal_balls_per_over['balls'].clip(upper=6)
+        
+        # Aggregate by phase
+        phase_balls = legal_balls_per_over.groupby(['match_id', 'batting_team', 'bowling_team', 'over_phase'], observed=True)['legal_balls'].sum().reset_index()
+        
+        # Original aggregation for runs and wickets
         agg = dels.groupby(['match_id', 'batting_team', 'bowling_team', 'over_phase'], observed=True).agg(
             runs=('total_runs', 'sum'),
-            wkts=('is_wicket', 'sum'),
-            balls=('ball', 'count')
+            wkts=('is_wicket', 'sum')
         ).reset_index()
+        
+        # Merge legal balls into agg
+        agg = pd.merge(agg, phase_balls, on=['match_id', 'batting_team', 'bowling_team', 'over_phase'])
         
         for _, r in agg.iterrows():
             m_id = r['match_id']
@@ -79,15 +89,20 @@ def build_features(df):
             
             match_stats[m_id]['batting'][b_team][f'{ph}_runs'] = r['runs']
             match_stats[m_id]['batting'][b_team][f'{ph}_wkts'] = r['wkts']
+            match_stats[m_id]['batting'][b_team][f'{ph}_overs'] = r['legal_balls'] / 6.0
             match_stats[m_id]['bowling'][bw_team][f'{ph}_runs'] = r['runs']
             match_stats[m_id]['bowling'][bw_team][f'{ph}_wkts'] = r['wkts']
-            match_stats[m_id]['bowling'][bw_team][f'{ph}_overs'] = r['balls'] / 6.0
+            match_stats[m_id]['bowling'][bw_team][f'{ph}_overs'] = r['legal_balls'] / 6.0
 
     # 5. Track Recent Performance (Last 10 matches)
     team_perf = {team: deque(maxlen=10) for team in unique_teams}
+    season_form = defaultdict(lambda: deque(maxlen=20))
     
-    elo_diffs, form_diffs, venue_diffs = [], [], []
+    elo_diffs, recent_win_rate_diffs, venue_diffs = [], [], []
     batting_diffs, bowling_diffs, toss_impacts, toss_wons = [], [], [], []
+    recent_bat_rr_diffs, recent_bowl_wkts_diffs = [], []
+    recent_runs_scored_avg_diffs, recent_runs_conceded_avg_diffs = [], []
+    season_win_rate_diffs = []
     
     for idx, row in df.iterrows():
         t1 = row["team1"]
@@ -96,16 +111,22 @@ def build_features(df):
         winner = row["winner"]
         m_id = row.get("match_id", None)
         
+        season = row.get("season", "unknown")
+        
         # --- COMPUTE PRE-MATCH FEATURES ---
         elo_diffs.append(elo.get(t1, 1500) - elo.get(t2, 1500))
         
         f1 = np.mean(recent_form[t1]) if recent_form[t1] else 0.5
         f2 = np.mean(recent_form[t2]) if recent_form[t2] else 0.5
-        form_diffs.append(f1 - f2)
+        recent_win_rate_diffs.append(f1 - f2)
         
         v1_wins, v1_matches = team_venue[(t1, venue)]
         v2_wins, v2_matches = team_venue[(t2, venue)]
         venue_diffs.append((v1_wins / v1_matches if v1_matches > 0 else 0.5) - (v2_wins / v2_matches if v2_matches > 0 else 0.5))
+        
+        sf1 = np.mean(season_form[(t1, season)]) if season_form[(t1, season)] else 0.5
+        sf2 = np.mean(season_form[(t2, season)]) if season_form[(t2, season)] else 0.5
+        season_win_rate_diffs.append(sf1 - sf2)
         
         # Toss Impact & Toss Won Flag
         toss_winner = row.get("toss_winner", "")
@@ -128,7 +149,11 @@ def build_features(df):
         def get_strength(team):
             perf = team_perf[team]
             if not perf:
-                return {'bat_score': 50.0, 'bowl_score': 50.0}
+                return {
+                    'bat_score': 50.0, 'bowl_score': 50.0,
+                    'recent_bat_rr': 0.0, 'recent_bowl_wkts': 0.0,
+                    'recent_runs_scored_avg': 0.0, 'recent_runs_conceded_avg': 0.0
+                }
             
             # Batting metrics
             pp_rr = np.mean([p['bat']['powerplay_runs'] / 6 for p in perf])
@@ -150,11 +175,28 @@ def build_features(df):
             bat_score = (pp_rr * 2) + (mid_rr * 1) + (death_rr * 3) + (chase_pct * 20) + (avg_score * 0.1)
             bowl_score = (pp_wkts * 10) - (death_econ * 2) + (avg_wkts * 2) + (defend_pct * 20)
             
-            return {'bat_score': bat_score, 'bowl_score': bowl_score}
+            bat_runs_sum = sum(sum(p['bat'][k] for k in ['powerplay_runs', 'middle_runs', 'death_runs']) for p in perf)
+            bat_overs_sum = sum(sum(p['bat'].get(k, 0) for k in ['powerplay_overs', 'middle_overs', 'death_overs']) for p in perf)
+            recent_bat_rr = bat_runs_sum / max(1.0, bat_overs_sum)
+            
+            recent_bowl_wkts = np.mean([sum(p['bowl'][k] for k in ['powerplay_wkts', 'middle_wkts', 'death_wkts']) for p in perf])
+            recent_runs_scored_avg = np.mean([sum(p['bat'][k] for k in ['powerplay_runs', 'middle_runs', 'death_runs']) for p in perf])
+            recent_runs_conceded_avg = np.mean([sum(p['bowl'][k] for k in ['powerplay_runs', 'middle_runs', 'death_runs']) for p in perf])
+            
+            return {
+                'bat_score': bat_score, 'bowl_score': bowl_score,
+                'recent_bat_rr': recent_bat_rr, 'recent_bowl_wkts': recent_bowl_wkts,
+                'recent_runs_scored_avg': recent_runs_scored_avg,
+                'recent_runs_conceded_avg': recent_runs_conceded_avg
+            }
 
         st1, st2 = get_strength(t1), get_strength(t2)
         batting_diffs.append(st1['bat_score'] - st2['bat_score'])
         bowling_diffs.append(st1['bowl_score'] - st2['bowl_score'])
+        recent_bat_rr_diffs.append(st1['recent_bat_rr'] - st2['recent_bat_rr'])
+        recent_bowl_wkts_diffs.append(st1['recent_bowl_wkts'] - st2['recent_bowl_wkts'])
+        recent_runs_scored_avg_diffs.append(st1['recent_runs_scored_avg'] - st2['recent_runs_scored_avg'])
+        recent_runs_conceded_avg_diffs.append(st1['recent_runs_conceded_avg'] - st2['recent_runs_conceded_avg'])
         
         # --- UPDATE RUNNING STATS ---
         if pd.isna(winner): continue
@@ -168,6 +210,8 @@ def build_features(df):
         
         recent_form[t1].append(t1_won)
         recent_form[t2].append(t2_won)
+        season_form[(t1, season)].append(t1_won)
+        season_form[(t2, season)].append(t2_won)
         
         team_venue[(t1, venue)][1] += 1
         team_venue[(t2, venue)][1] += 1
@@ -208,10 +252,15 @@ def build_features(df):
             })
 
     df["elo_diff"] = elo_diffs
-    df["form_diff"] = form_diffs
-    df["venue_diff"] = venue_diffs
+    df["recent_win_rate_diff"] = recent_win_rate_diffs
+    df["venue_win_rate_diff"] = venue_diffs
     df["batting_strength_diff"] = batting_diffs
     df["bowling_strength_diff"] = bowling_diffs
+    df["recent_bat_run_rate_diff"] = recent_bat_rr_diffs
+    df["recent_bowl_wkts_diff"] = recent_bowl_wkts_diffs
+    df["recent_runs_scored_avg_diff"] = recent_runs_scored_avg_diffs
+    df["recent_runs_conceded_avg_diff"] = recent_runs_conceded_avg_diffs
+    df["season_win_rate_diff"] = season_win_rate_diffs
     df["toss_impact"] = toss_impacts
     df["toss_won"] = toss_wons
     
@@ -236,13 +285,18 @@ def build_features(df):
                 'defended_won': p['defended_won']
             })
     
+    serializable_season_form = {}
+    for (team, season_str), dq in season_form.items():
+        serializable_season_form[f"{team}_{season_str}"] = list(dq)
+        
     final_states = {
         "elo": elo,
         "recent_form": serializable_form,
         "venue_stats": dict(team_venue),
         "venue_overall": dict(venue_overall),
         "h2h_stats": serializable_h2h,
-        "team_perf": serializable_perf
+        "team_perf": serializable_perf,
+        "season_form": serializable_season_form
     }
     
     return df, final_states

@@ -7,6 +7,7 @@ import os
 import json
 import urllib.request
 import urllib.error
+from tensorflow.keras.models import load_model
 
 env_path = os.path.join(os.path.dirname(__file__), '.env')
 if os.path.exists(env_path):
@@ -37,6 +38,14 @@ venue_overall = {}
 h2h_stats = {}
 team_perf = {}
 valid_teams = []
+season_form_dict = {}
+
+ffnn_pre = None
+ffnn_post = None
+scaler_pre = None
+scaler_post = None
+use_ffnn = False
+lstm_live = None
 
 ipl_api = IPLT20API()
 
@@ -44,6 +53,8 @@ ipl_api = IPLT20API()
 def load_assets():
     global model_pre, model_post, metadata, live_models, elo_dict, recent_form_dict
     global venue_stats_dict, venue_overall, h2h_stats, team_perf, valid_teams
+    global ffnn_pre, ffnn_post, scaler_pre, scaler_post, use_ffnn, lstm_live
+    global season_form_dict
 
     if not os.path.exists(MODEL_PRE_PATH) or not os.path.exists(ENCODERS_PATH):
         raise FileNotFoundError("Model files not found. Run train.py first.")
@@ -59,9 +70,29 @@ def load_assets():
     h2h_stats = metadata.get("h2h_stats", {})
     team_perf = metadata.get("team_perf", {})
     valid_teams = metadata.get("all_teams", [])
+    season_form_dict = metadata.get("season_form", {})
 
     if os.path.exists(LIVE_MODEL_PATH):
         live_models = joblib.load(LIVE_MODEL_PATH)
+        
+    try:
+        base_dir = os.path.dirname(__file__)
+        ffnn_pre = load_model(os.path.join(base_dir, "models/ffnn_pre.keras"))
+        ffnn_post = load_model(os.path.join(base_dir, "models/ffnn_post.keras"))
+        scaler_pre = joblib.load(os.path.join(base_dir, "models/scaler_pre.pkl"))
+        scaler_post = joblib.load(os.path.join(base_dir, "models/scaler_post.pkl"))
+        use_ffnn = True
+    except Exception as e:
+        print(f"Failed to load FFNN models, falling back to Random Forest. Error: {e}")
+        use_ffnn = False
+
+    try:
+        base_dir = os.path.dirname(__file__)
+        lstm_live = load_model(os.path.join(base_dir, "models/lstm_live.keras"))
+        print("Loaded LSTM live model.")
+    except Exception as e:
+        print(f"Failed to load LSTM live model: {e}")
+        lstm_live = None
 
 
 load_assets()
@@ -155,13 +186,13 @@ def predict():
 
     # Features
     elo_diff = elo_dict.get(t1, 1500.0) - elo_dict.get(t2, 1500.0)
-    f1 = recent_form_dict.get(t1, [])[-5:]
-    f2 = recent_form_dict.get(t2, [])[-5:]
-    form_diff = (np.mean(f1) if f1 else 0.5) - (np.mean(f2) if f2 else 0.5)
+    f1 = recent_form_dict.get(t1, [])[-10:]
+    f2 = recent_form_dict.get(t2, [])[-10:]
+    recent_win_rate_diff = (np.mean(f1) if f1 else 0.5) - (np.mean(f2) if f2 else 0.5)
 
     v1_wins, v1_matches = venue_stats_dict.get(f"{t1}_{venue}", venue_stats_dict.get((t1, venue), [0, 0]))
     v2_wins, v2_matches = venue_stats_dict.get(f"{t2}_{venue}", venue_stats_dict.get((t2, venue), [0, 0]))
-    venue_diff = (v1_wins / v1_matches if v1_matches > 0 else 0.5) - (v2_wins / v2_matches if v2_matches > 0 else 0.5)
+    venue_win_rate_diff = (v1_wins / v1_matches if v1_matches > 0 else 0.5) - (v2_wins / v2_matches if v2_matches > 0 else 0.5)
 
     vo = venue_overall.get(venue, {'matches': 0, 'bat_first_wins': 0})
     chase_adv = 0
@@ -179,10 +210,66 @@ def predict():
     else:
         toss_swing_info = f'If {raw_t1} wins toss and chases, probability may shift by {(chase_adv * 100):.1f}%'
 
-    st1 = get_strength(t1)
-    st2 = get_strength(t2)
-    bat_diff = st1['bat_score'] - st2['bat_score']
-    bowl_diff = st1['bowl_score'] - st2['bowl_score']
+    def get_strength_app(team):
+        perf = team_perf.get(team, [])
+        if not perf:
+            return {
+                'bat_score': 50.0, 'bowl_score': 50.0,
+                'recent_bat_rr': 0.0, 'recent_bowl_wkts': 0.0,
+                'recent_runs_scored_avg': 0.0, 'recent_runs_conceded_avg': 0.0
+            }
+        
+        pp_rr = np.mean([p['bat'].get('powerplay_runs', 0) / 6 for p in perf])
+        mid_rr = np.mean([p['bat'].get('middle_runs', 0) / 9 for p in perf])
+        death_rr = np.mean([p['bat'].get('death_runs', 0) / 5 for p in perf])
+        avg_score = np.mean([sum(p['bat'].get(k, 0) for k in ['powerplay_runs', 'middle_runs', 'death_runs']) for p in perf])
+        chases = [p['chased_won'] for p in perf if p['chased_won'] is not None]
+        chase_pct = np.mean(chases) if chases else 0.5
+        
+        pp_wkts = np.mean([p['bowl'].get('powerplay_wkts', 0) for p in perf])
+        death_econ_list = [p['bowl'].get('death_runs', 0) / max(1, p['bowl'].get('death_overs', 0)) for p in perf if p['bowl'].get('death_overs', 0) > 0]
+        death_econ = np.mean(death_econ_list) if death_econ_list else 10.0
+        avg_wkts = np.mean([sum(p['bowl'].get(k, 0) for k in ['powerplay_wkts', 'middle_wkts', 'death_wkts']) for p in perf])
+        defends = [p['defended_won'] for p in perf if p['defended_won'] is not None]
+        defend_pct = np.mean(defends) if defends else 0.5
+        
+        bat_score = (pp_rr * 2) + (mid_rr * 1) + (death_rr * 3) + (chase_pct * 20) + (avg_score * 0.1)
+        bowl_score = (pp_wkts * 10) - (death_econ * 2) + (avg_wkts * 2) + (defend_pct * 20)
+        
+        bat_runs_sum = sum(sum(p['bat'].get(k, 0) for k in ['powerplay_runs', 'middle_runs', 'death_runs']) for p in perf)
+        bat_overs_sum = sum(sum(p['bat'].get(k, 0) for k in ['powerplay_overs', 'middle_overs', 'death_overs']) for p in perf)
+        recent_bat_rr = bat_runs_sum / max(1.0, bat_overs_sum)
+        
+        recent_bowl_wkts = np.mean([sum(p['bowl'].get(k, 0) for k in ['powerplay_wkts', 'middle_wkts', 'death_wkts']) for p in perf])
+        recent_runs_scored_avg = np.mean([sum(p['bat'].get(k, 0) for k in ['powerplay_runs', 'middle_runs', 'death_runs']) for p in perf])
+        recent_runs_conceded_avg = np.mean([sum(p['bowl'].get(k, 0) for k in ['powerplay_runs', 'middle_runs', 'death_runs']) for p in perf])
+        
+        return {
+            'bat_score': bat_score, 'bowl_score': bowl_score,
+            'recent_bat_rr': recent_bat_rr, 'recent_bowl_wkts': recent_bowl_wkts,
+            'recent_runs_scored_avg': recent_runs_scored_avg,
+            'recent_runs_conceded_avg': recent_runs_conceded_avg
+        }
+        
+    st1 = get_strength_app(t1)
+    st2 = get_strength_app(t2)
+    batting_strength_diff = st1['bat_score'] - st2['bat_score']
+    bowling_strength_diff = st1['bowl_score'] - st2['bowl_score']
+    recent_bat_run_rate_diff = st1['recent_bat_rr'] - st2['recent_bat_rr']
+    recent_bowl_wkts_diff = st1['recent_bowl_wkts'] - st2['recent_bowl_wkts']
+    recent_runs_scored_avg_diff = st1['recent_runs_scored_avg'] - st2['recent_runs_scored_avg']
+    recent_runs_conceded_avg_diff = st1['recent_runs_conceded_avg'] - st2['recent_runs_conceded_avg']
+
+    def get_latest_season_form(team):
+        team_keys = [k for k in season_form_dict.keys() if k.startswith(f"{team}_")]
+        if not team_keys: return 0.5
+        latest_key = sorted(team_keys, key=lambda x: str(x.split('_')[1]))[-1]
+        history = season_form_dict[latest_key]
+        return np.mean(history) if history else 0.5
+        
+    sf1 = get_latest_season_form(t1)
+    sf2 = get_latest_season_form(t2)
+    season_win_rate_diff = sf1 - sf2
 
     toss_won = 0
     if prediction_mode == 'post_toss':
@@ -190,33 +277,56 @@ def predict():
 
     input_data_pre = pd.DataFrame([{
         "elo_diff": elo_diff,
-        "form_diff": form_diff,
-        "venue_diff": venue_diff,
-        "batting_strength_diff": bat_diff,
-        "bowling_strength_diff": bowl_diff
+        "recent_win_rate_diff": recent_win_rate_diff,
+        "venue_win_rate_diff": venue_win_rate_diff,
+        "batting_strength_diff": batting_strength_diff,
+        "bowling_strength_diff": bowling_strength_diff,
+        "recent_bat_run_rate_diff": recent_bat_run_rate_diff,
+        "recent_bowl_wkts_diff": recent_bowl_wkts_diff,
+        "recent_runs_scored_avg_diff": recent_runs_scored_avg_diff,
+        "recent_runs_conceded_avg_diff": recent_runs_conceded_avg_diff,
+        "season_win_rate_diff": season_win_rate_diff
     }])
     
     input_data_post = pd.DataFrame([{
         "elo_diff": elo_diff,
-        "form_diff": form_diff,
-        "venue_diff": venue_diff,
-        "batting_strength_diff": bat_diff,
-        "bowling_strength_diff": bowl_diff,
+        "recent_win_rate_diff": recent_win_rate_diff,
+        "venue_win_rate_diff": venue_win_rate_diff,
+        "batting_strength_diff": batting_strength_diff,
+        "bowling_strength_diff": bowling_strength_diff,
+        "recent_bat_run_rate_diff": recent_bat_run_rate_diff,
+        "recent_bowl_wkts_diff": recent_bowl_wkts_diff,
+        "recent_runs_scored_avg_diff": recent_runs_scored_avg_diff,
+        "recent_runs_conceded_avg_diff": recent_runs_conceded_avg_diff,
+        "season_win_rate_diff": season_win_rate_diff,
         "toss_impact": t1_toss_adv,
         "toss_won": toss_won
     }])
 
-    if prediction_mode == 'pre_toss':
-        proba = model_pre.predict_proba(input_data_pre)[0]
+    if use_ffnn:
+        prediction_model_used = "FFNN (Deep Learning)"
+        if prediction_mode == 'pre_toss':
+            X = scaler_pre.transform(input_data_pre)
+            prob_t1 = float(ffnn_pre.predict(X, verbose=0)[0][0])
+        else:
+            X = scaler_post.transform(input_data_post)
+            prob_t1 = float(ffnn_post.predict(X, verbose=0)[0][0])
+        prob_t2 = 1.0 - prob_t1
     else:
-        proba = model_post.predict_proba(input_data_post)[0]
-        
-    prob_t2 = float(proba[0])
-    prob_t1 = float(proba[1])
+        prediction_model_used = "Random Forest (ML Baseline)"
+        if prediction_mode == 'pre_toss':
+            proba = model_pre.predict_proba(input_data_pre)[0]
+        else:
+            proba = model_post.predict_proba(input_data_post)[0]
+        prob_t2 = float(proba[0])
+        prob_t1 = float(proba[1])
     
     # --- EXPERT OVERLAY: ENVIRONMENTAL SHIFT ---
     shift_t1 = 0.0
     shift_t2 = 0.0
+
+    bat_diff = batting_strength_diff
+    bowl_diff = bowling_strength_diff
 
     if pitch in ['turning', 'green']:
         if bowl_diff > 0: shift_t1 += 0.015
@@ -241,6 +351,7 @@ def predict():
     prob_t2 /= total
 
     predicted_winner = raw_t1 if prob_t1 >= prob_t2 else raw_t2
+    win_prob = max(prob_t1, prob_t2) * 100
 
     pair = tuple(sorted([t1, t2]))
     h2h_key = f"{pair[0]}_vs_{pair[1]}"
@@ -249,13 +360,21 @@ def predict():
     response = {
         "prediction_mode": prediction_mode,
         "predicted_winner": predicted_winner,
+        "winner": predicted_winner,
+        "probability": round(win_prob, 2),
+        "prediction_model": prediction_model_used,
         "probabilities": {raw_t1: round(prob_t1, 4), raw_t2: round(prob_t2, 4)},
         "feature_values_used": {
             "elo_diff": round(elo_diff, 2),
-            "form_diff": round(form_diff, 4),
-            "venue_diff": round(venue_diff, 4),
-            "batting_strength_diff": round(bat_diff, 2),
-            "bowling_strength_diff": round(bowl_diff, 2),
+            "recent_win_rate_diff": round(recent_win_rate_diff, 4),
+            "venue_win_rate_diff": round(venue_win_rate_diff, 4),
+            "batting_strength_diff": round(batting_strength_diff, 2),
+            "bowling_strength_diff": round(bowling_strength_diff, 2),
+            "recent_bat_run_rate_diff": round(recent_bat_run_rate_diff, 4),
+            "recent_bowl_wkts_diff": round(recent_bowl_wkts_diff, 4),
+            "recent_runs_scored_avg_diff": round(recent_runs_scored_avg_diff, 2),
+            "recent_runs_conceded_avg_diff": round(recent_runs_conceded_avg_diff, 2),
+            "season_win_rate_diff": round(season_win_rate_diff, 4),
             "toss_impact": round(t1_toss_adv, 4),
             "toss_won": toss_won,
             "env_shift_t1": round(shift_t1, 4),
@@ -312,6 +431,8 @@ def predict_live():
     runs_needed = -1
     req_rr = 0.0
 
+    model_used_name = "XGBoost (ML Baseline)"
+    
     if inning == 1:
         features = live_models['features_inn1']
         X = pd.DataFrame([{
@@ -319,20 +440,37 @@ def predict_live():
             'wickets_lost': wickets_lost, 'crr': crr
         }])[features]
         live_model = live_models['inn1_model']
+        proba = live_model.predict_proba(X)[0]
+        batting_win_prob = round(float(proba[1]) * 100, 1)
     else:
-        features = live_models['features_inn2']
         runs_needed = max(0, target - current_score) if target > 0 else 0
         req_rr = (runs_needed / balls_remaining * 6) if balls_remaining > 0 and runs_needed > 0 else (0.0 if runs_needed <= 0 else 99.0)
-        X = pd.DataFrame([{
-            'over': over, 'current_score': current_score,
-            'wickets_lost': wickets_lost, 'crr': crr,
-            'target': target, 'runs_needed': runs_needed,
-            'balls_remaining': balls_remaining, 'req_rr': req_rr
-        }])[features]
-        live_model = live_models['inn2_model']
+        
+        used_lstm = False
+        seq_hist = data.get("sequence_history")
+        if lstm_live is not None and seq_hist is not None:
+            try:
+                if len(seq_hist) == 20 and all(len(step) == 7 for step in seq_hist):
+                    seq_arr = np.array([seq_hist], dtype=np.float32)
+                    lstm_prob = lstm_live.predict(seq_arr, verbose=0).flatten()[0]
+                    batting_win_prob = round(float(lstm_prob) * 100, 1)
+                    model_used_name = "LSTM (Deep Learning)"
+                    used_lstm = True
+            except Exception as e:
+                print(f"LSTM prediction failed: {e}")
+                
+        if not used_lstm:
+            features = live_models['features_inn2']
+            X = pd.DataFrame([{
+                'over': over, 'current_score': current_score,
+                'wickets_lost': wickets_lost, 'crr': crr,
+                'target': target, 'runs_needed': runs_needed,
+                'balls_remaining': balls_remaining, 'req_rr': req_rr
+            }])[features]
+            live_model = live_models['inn2_model']
+            proba = live_model.predict_proba(X)[0]
+            batting_win_prob = round(float(proba[1]) * 100, 1)
 
-    proba = live_model.predict_proba(X)[0]
-    batting_win_prob = round(float(proba[1]) * 100, 1)
     bowling_win_prob = round(100 - batting_win_prob, 1)
 
     pressure_index = 0
@@ -358,6 +496,7 @@ def predict_live():
 
     return jsonify({
         "prediction_mode": "live",
+        "model_used": model_used_name,
         "inning": inning,
         "phase": phase,
         "batting_team": batting_team,
@@ -499,4 +638,4 @@ def api_argue():
         return jsonify({"reply": f"Connection Error: {str(e)}"}), 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)

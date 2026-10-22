@@ -835,39 +835,39 @@ const IPL_STATS = {
 
 const ALL_TIME_RECORDS = {
   batting: [
-    { label: "All-Time Orange Cap", player: "Virat Kohli", value: "8758", unit: "RUNS", icon: "🏏" },
-    { label: "Most Fours", player: "Virat Kohli", value: "778", unit: "FOURS", icon: "🔥" },
-    { label: "Most Sixes", player: "Chris Gayle", value: "357", unit: "SIXES", icon: "🚀" },
-    { label: "Highest Score", player: "Chris Gayle", value: "175", unit: "SCORE", icon: "💎" },
-    { label: "Best Strike Rate", player: "Priyansh Arya", value: "183.45", unit: "SR", icon: "⚡" },
-    { label: "Fastest Fifties", player: "Yashasvi Jaiswal", value: "13", unit: "BALLS", icon: "⏳" },
-    { label: "Fastest Centuries", player: "Chris Gayle", value: "30", unit: "BALLS", icon: "🌪️" }
+    { label: "All-Time Orange Cap", player: "Virat Kohli", value: "8758", unit: "RUNS", icon: "" },
+    { label: "Most Fours", player: "Virat Kohli", value: "778", unit: "FOURS", icon: "" },
+    { label: "Most Sixes", player: "Chris Gayle", value: "357", unit: "SIXES", icon: "" },
+    { label: "Highest Score", player: "Chris Gayle", value: "175", unit: "SCORE", icon: "" },
+    { label: "Best Strike Rate", player: "Priyansh Arya", value: "183.45", unit: "SR", icon: "" },
+    { label: "Fastest Fifties", player: "Yashasvi Jaiswal", value: "13", unit: "BALLS", icon: "" },
+    { label: "Fastest Centuries", player: "Chris Gayle", value: "30", unit: "BALLS", icon: "" }
   ],
   bowling: [
-    { label: "All-Time Purple Cap", player: "Yuzvendra Chahal", value: "224", unit: "WICKETS", icon: "⚽" },
-    { label: "Best Bowling Figures", player: "Alzarri Joseph", value: "6/12", unit: "BBI", icon: "🎯" },
-    { label: "Best Bowling Average", player: "Lungisani Ngidi", value: "17.88", unit: "AVG", icon: "⚖️" },
-    { label: "Best Economy", player: "Anil Kumble", value: "6.58", unit: "ECON", icon: "📉" },
-    { label: "Most Dots", player: "Bhuvneshwar Kumar", value: "1813", unit: "DOTS", icon: "🛑" }
+    { label: "All-Time Purple Cap", player: "Yuzvendra Chahal", value: "224", unit: "WICKETS", icon: "" },
+    { label: "Best Bowling Figures", player: "Alzarri Joseph", value: "6/12", unit: "BBI", icon: "" },
+    { label: "Best Bowling Average", player: "Lungisani Ngidi", value: "17.88", unit: "AVG", icon: "" },
+    { label: "Best Economy", player: "Anil Kumble", value: "6.58", unit: "ECON", icon: "" },
+    { label: "Most Dots", player: "Bhuvneshwar Kumar", value: "1813", unit: "DOTS", icon: "" }
   ],
   team: [
-    { label: "Highest Team Score", player: "SRH vs RCB", value: "287/3", unit: "RUNS", icon: "🚀", year: "2024" },
-    { label: "Lowest Team Score", player: "RCB vs KKR", value: "49", unit: "ALL OUT", icon: "📉", year: "2017" },
-    { label: "Most IPL Titles", player: "MI & CSK", value: "5", unit: "TITLES", icon: "🏆", year: "2008-2024" },
-    { label: "Most Match Wins", player: "Mumbai Indians", value: "140+", unit: "WINS", icon: "🥇", year: "All-Time" },
-    { label: "Best Win Percentage", player: "Gujarat Titans", value: "62.22%", unit: "WIN %", icon: "📊", year: "2022-2024" },
-    { label: "Highest Run Chase", player: "PBKS vs KKR", value: "262", unit: "RUNS", icon: "🏹", year: "2024" },
-    { label: "Biggest Win (Runs)", player: "MI vs DD", value: "146", unit: "RUNS", icon: "📏", year: "2017" },
-    { label: "Most Match Sixes", player: "RCB vs SRH", value: "38", unit: "SIXES", icon: "🎆", year: "2024" },
-    { label: "Longest Win Streak", player: "KKR", value: "10", unit: "WINS", icon: "📈", year: "2014-15" }
+    { label: "Highest Team Score", player: "SRH vs RCB", value: "287/3", unit: "RUNS", icon: "", year: "2024" },
+    { label: "Lowest Team Score", player: "RCB vs KKR", value: "49", unit: "ALL OUT", icon: "", year: "2017" },
+    { label: "Most IPL Titles", player: "MI & CSK", value: "5", unit: "TITLES", icon: "", year: "2008-2024" },
+    { label: "Most Match Wins", player: "Mumbai Indians", value: "140+", unit: "WINS", icon: "", year: "All-Time" },
+    { label: "Best Win Percentage", player: "Gujarat Titans", value: "62.22%", unit: "WIN %", icon: "", year: "2022-2024" },
+    { label: "Highest Run Chase", player: "PBKS vs KKR", value: "262", unit: "RUNS", icon: "", year: "2024" },
+    { label: "Biggest Win (Runs)", player: "MI vs DD", value: "146", unit: "RUNS", icon: "", year: "2017" },
+    { label: "Most Match Sixes", player: "RCB vs SRH", value: "38", unit: "SIXES", icon: "", year: "2024" },
+    { label: "Longest Win Streak", player: "KKR", value: "10", unit: "WINS", icon: "", year: "2014-15" }
   ],
   leadership: [
-    { label: "Most Matches & Wins", player: "MS Dhoni", value: "136", unit: "WINS", icon: "👑", detail: "235 matches captained" },
-    { label: "Elite Titles (Record)", player: "MS Dhoni", value: "5", unit: "TITLES", icon: "🏆", detail: "10 Finals reached" },
-    { label: "Elite Titles (Record)", player: "Rohit Sharma", value: "5", unit: "TITLES", icon: "💎", detail: "5 Finals reached" },
-    { label: "Highest Efficiency", player: "Shreyas Iyer", value: "59.30%", unit: "WIN %", icon: "🎯", detail: "Best in IPL history" },
-    { label: "Tactical Versatility", player: "Shreyas Iyer", value: "3", unit: "FINALS", icon: "🧠", detail: "Led DC, KKR, and PBKS to finals" },
-    { label: "Elite Win %", player: "Hardik Pandya", value: "58.33%", unit: "WIN %", icon: "⚡", detail: "GT & MI Leadership" },
-    { label: "Double Title Success", player: "Gautam Gambhir", value: "2", unit: "TITLES", icon: "⚔️", detail: "55.03% Win Rate" }
+    { label: "Most Matches & Wins", player: "MS Dhoni", value: "136", unit: "WINS", icon: "", detail: "235 matches captained" },
+    { label: "Elite Titles (Record)", player: "MS Dhoni", value: "5", unit: "TITLES", icon: "", detail: "10 Finals reached" },
+    { label: "Elite Titles (Record)", player: "Rohit Sharma", value: "5", unit: "TITLES", icon: "", detail: "5 Finals reached" },
+    { label: "Highest Efficiency", player: "Shreyas Iyer", value: "59.30%", unit: "WIN %", icon: "", detail: "Best in IPL history" },
+    { label: "Tactical Versatility", player: "Shreyas Iyer", value: "3", unit: "FINALS", icon: "", detail: "Led DC, KKR, and PBKS to finals" },
+    { label: "Elite Win %", player: "Hardik Pandya", value: "58.33%", unit: "WIN %", icon: "", detail: "GT & MI Leadership" },
+    { label: "Double Title Success", player: "Gautam Gambhir", value: "2", unit: "TITLES", icon: "", detail: "55.03% Win Rate" }
   ]
 };

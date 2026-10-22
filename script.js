@@ -603,11 +603,11 @@ function displayResults(r) {
   document.getElementById('winnerName').style.color = winner.primaryColor;
   const winnerPanel = document.getElementById('winnerPanel');
   if (winnerPanel) {
-    winnerPanel.style.setProperty('--winner-gradient', `linear-gradient(135deg, ${winner.primaryColor}, ${winner.secondaryColor})`);
+    winnerPanel.style.setProperty('--winner-gradient', winner.primaryColor);
     winnerPanel.style.borderColor = winner.primaryColor + '44';
   }
   const diff = Math.abs(r.totalA - r.totalB);
-  const conf = diff > 12 ? '🔥 High Confidence' : diff > 5 ? '✅ Moderate Confidence' : '⚖️ Very Close Contest';
+  const conf = diff > 12 ? 'High Confidence' : diff > 5 ? 'Moderate Confidence' : 'Very Close Contest';
   const confEl = document.getElementById('winnerConf');
   if (confEl) {
     confEl.textContent = conf;
@@ -626,12 +626,12 @@ function displayResults(r) {
       winnerPanel.appendChild(modelBadge);
     }
   }
-  modelBadge.innerHTML = `🧠 Powered by ${r.prediction_model || 'Unknown Model'}`;
+  modelBadge.innerHTML = `Powered by ${r.prediction_model || 'Unknown Model'}`;
 
   // Probability
   document.getElementById('probPctA').textContent  = r.totalA.toFixed(1) + '%';
   const btn = document.getElementById('predictBtn');
-  if (btn) { btn.classList.remove('loading'); btn.innerHTML = '⚡ Predict Now'; }
+  if (btn) { btn.classList.remove('loading'); btn.innerHTML = 'Predict Now'; }
 
   const pA = Math.round(r.totalA);
   const pB = Math.round(r.totalB);
@@ -679,11 +679,11 @@ function displayResults(r) {
     const confBadge = document.getElementById('confBadge');
     if(confBadge) {
       if (winProbValue > 70 || winProbValue < 30) {
-        confBadge.innerHTML = `🟢 HIGH CONFIDENCE — ${confScore}/100`;
+        confBadge.innerHTML = `HIGH CONFIDENCE — ${confScore}/100`;
       } else if (winProbValue >= 55) {
-        confBadge.innerHTML = `🟡 MEDIUM CONFIDENCE — ${confScore}/100`;
+        confBadge.innerHTML = `MEDIUM CONFIDENCE — ${confScore}/100`;
       } else {
-        confBadge.innerHTML = `🔴 CLOSE CALL — ${confScore}/100`;
+        confBadge.innerHTML = `CLOSE CALL — ${confScore}/100`;
       }
       confBadge.style.backgroundColor = winner.primaryColor;
       confBadge.style.color = '#fff';
@@ -720,12 +720,12 @@ function displayResults(r) {
     { name: 'Batting Strength', weight: 'STAT', f: {a: batA, b: batB}, note: `Diff: ${(f.batting_strength_diff||0).toFixed(1)}. Composite of phase-wise batting stats.` },
     { name: 'Bowling Strength', weight: 'STAT', f: {a: bowlA, b: bowlB}, note: `Diff: ${(f.bowling_strength_diff||0).toFixed(1)}. Composite of phase-wise bowling stats.` },
     { name: 'Recent Run Rate', weight: 'STAT', f: {a: runRateA, b: runRateB}, note: `Diff: ${(f.recent_bat_run_rate_diff||0).toFixed(2)}. Run rate in recent matches.` },
-    { name: 'Pitch Type <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">⚡ Auto</span>', weight: 'COND', f: {
+    { name: 'Pitch Type <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">Auto</span>', weight: 'COND', f: {
         a: pitchImpactA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (pitchImpactA / 15) * 50)),
         b: pitchImpactA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (-pitchImpactA / 15) * 50))
       }, note: `Pitch condition calculated from historical averages.` 
     },
-    { name: 'Dew Factor <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">⚡ Auto</span>', weight: 'COND', f: {
+    { name: 'Dew Factor <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">Auto</span>', weight: 'COND', f: {
         a: dewImpactValA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (dewImpactValA / 14) * 50)),
         b: dewImpactValB === 0 ? 50 : Math.max(5, Math.min(95, 50 + (dewImpactValB / 14) * 50))
       }, note: dewImpactNote 

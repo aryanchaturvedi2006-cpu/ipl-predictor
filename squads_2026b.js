@@ -132,6 +132,8 @@ MI:[
 {id:"mavi_srh",name:"Shivam Mavi",role:"Pacer",nat:"IND",bat:20,bowl:77},
 {id:"payne_srh",name:"David Payne",role:"Pacer",nat:"ENG",bat:10,bowl:76},
 ],};
-Object.keys(S).forEach(k=>{if(TEAMS[k])TEAMS[k].players=S[k];});
+if (typeof TEAMS !== 'undefined') {
+  Object.keys(S).forEach(k=>{if(TEAMS[k])TEAMS[k].players=S[k];});
+}
 console.log('IPL 2026 squads Part B loaded');
 })();

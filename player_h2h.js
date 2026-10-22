@@ -62,35 +62,53 @@ function updateTactical() {
   
   tSec.style.display = 'block';
   
-  // 1. Get Matchup Data
-  let m = (typeof DETAILED_MATCHUPS !== 'undefined' ? DETAILED_MATCHUPS : []).find(x => x.batsman === batId && x.bowler === bowlId);
-  if (!m) m = getDynamicTactics(batId, bowlId);
+  // 1. Get Matchup Data and Dynamic Blueprint
+  const matchupData = (typeof DETAILED_MATCHUPS !== 'undefined' ? DETAILED_MATCHUPS : []).find(x => x.batsman === batId && x.bowler === bowlId);
+  const tactics = getDynamicTactics(batId, bowlId);
+  const m = {
+    ...tactics,
+    ...(matchupData || {})
+  };
+  if (!m.wagonWheel) m.wagonWheel = tactics.wagonWheel;
+  if (!m.weakZones) m.weakZones = tactics.weakZones;
+  if (!m.bowlerPlan) m.bowlerPlan = tactics.bowlerPlan;
+  if (!m.survivalTips) m.survivalTips = tactics.survivalTips;
+  if (matchupData && matchupData.highlight) {
+    m.highlight = matchupData.highlight;
+  }
   
   // 2. Update Wagon Wheel (8 Sectors)
   const sectors = ['straight','cover','point','thirdman','behind','fineleg','squareleg','midwicket'];
   sectors.forEach(s => {
-    const val = m.wagonWheel[s] || 0;
+    const val = (m.wagonWheel && m.wagonWheel[s]) !== undefined ? m.wagonWheel[s] : 0;
     const el = document.getElementById(`ww-${s}`);
     if (el) el.textContent = val + '%';
   });
   
   // 3. Update Weak Zones
-  document.getElementById('weak-short').textContent = m.weakZones.short || '-';
-  document.getElementById('weak-yorker').textContent = m.weakZones.yorker || '-';
-  document.getElementById('weak-good').textContent = m.weakZones.goodLength || '-';
+  const weakShortEl = document.getElementById('weak-short');
+  const weakYorkerEl = document.getElementById('weak-yorker');
+  const weakGoodEl = document.getElementById('weak-good');
+  if (weakShortEl) weakShortEl.textContent = (m.weakZones && m.weakZones.short) || '-';
+  if (weakYorkerEl) weakYorkerEl.textContent = (m.weakZones && m.weakZones.yorker) || '-';
+  if (weakGoodEl) weakGoodEl.textContent = (m.weakZones && m.weakZones.goodLength) || '-';
   
   // 4. Update Strategies
-  document.getElementById('strat-bowler').textContent = m.bowlerPlan || "No specific blueprint.";
-  document.getElementById('strat-batsman').textContent = m.survivalTips || "Play on merit.";
-  document.getElementById('strat-insight').textContent = m.highlight || "Standard elite matchup.";
+  const stratBowlerEl = document.getElementById('strat-bowler');
+  const stratBatsmanEl = document.getElementById('strat-batsman');
+  const stratInsightEl = document.getElementById('strat-insight');
+  if (stratBowlerEl) stratBowlerEl.textContent = m.bowlerPlan || "No specific blueprint.";
+  if (stratBatsmanEl) stratBatsmanEl.textContent = m.survivalTips || "Play on merit.";
+  if (stratInsightEl) stratInsightEl.textContent = m.highlight || "Standard elite matchup.";
 }
 
 // ---- Dynamic Data Generator (Technical Engine) ----
 function getDynamicTactics(batId, bowlId) {
-  const batTeam = Object.values(TEAMS).find(t => t.players.find(p => p.id === batId));
-  const bowlTeam = Object.values(TEAMS).find(t => t.players.find(p => p.id === bowlId));
-  const batsman = batTeam?.players.find(p => p.id === batId) || { name: "Batsman", role: "Batsman" };
-  const bowler = bowlTeam?.players.find(p => p.id === bowlId) || { name: "Bowler", role: "Pacer" };
+  const teamsList = typeof TEAMS !== 'undefined' ? Object.values(TEAMS) : [];
+  const batTeam = teamsList.find(t => t.players && t.players.find(p => p.id === batId));
+  const bowlTeam = teamsList.find(t => t.players && t.players.find(p => p.id === bowlId));
+  const batsman = batTeam?.players?.find(p => p.id === batId) || { name: "Batsman", role: "Batsman" };
+  const bowler = bowlTeam?.players?.find(p => p.id === bowlId) || { name: "Bowler", role: "Pacer" };
 
   const seed = (batId.length * 7) + (bowlId.length * 3);
   const rnd = (s) => Math.abs(Math.sin(seed + s));
@@ -184,7 +202,7 @@ function getDynamicTactics(batId, bowlId) {
     w = { straight:8, cover:30, point:20, thirdman:5, behind:5, fineleg:5, squareleg:10, midwicket:17 };
   } else if (sz.includes("pull") || sz.includes("hook") || sz.includes("square") || sz.includes("leg-side")) {
     w = { straight:5, cover:5, point:10, thirdman:5, behind:10, fineleg:10, squareleg:25, midwicket:30 };
-  } else if (sz.includes("behind") || sz.includes("scoop") || sz.includes("late cut") || sz.includes("scoop")) {
+  } else if (sz.includes("behind") || sz.includes("scoop") || sz.includes("late cut")) {
     w = { straight:10, cover:10, point:10, thirdman:5, behind:25, fineleg:25, squareleg:10, midwicket:15 };
   } else if (sz.includes("straight") || sz.includes("long-on") || sz.includes("lofted straight") || sz.includes("straight drive")) {
     w = { straight:35, cover:20, point:10, thirdman:5, behind:10, fineleg:5, squareleg:5, midwicket:10 };

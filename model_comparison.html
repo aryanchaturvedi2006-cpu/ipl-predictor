@@ -14,7 +14,7 @@
     .hero {
       text-align: center;
       padding: 160px 20px 48px;
-      background: radial-gradient(ellipse at top, rgba(99,102,241,0.12) 0%, transparent 70%);
+      background: rgba(99,102,241,0.06);
     }
     .hero h1 {
       font-family: 'Orbitron', sans-serif;
@@ -302,8 +302,8 @@
       <button class="tab-btn active" onclick="showTab('pre', event)">Pre-Toss</button>
       <button class="tab-btn"        onclick="showTab('post', event)">Post-Toss</button>
       <button class="tab-btn"        onclick="showTab('live', event)">Live Match</button>
-      <button class="tab-btn"        onclick="showTab('curves', event)">📈 Training Curves</button>
-      <button class="tab-btn"        onclick="showTab('matrix', event)">🎯 Confusion Matrix</button>
+      <button class="tab-btn"        onclick="showTab('curves', event)">Training Curves</button>
+      <button class="tab-btn"        onclick="showTab('matrix', event)">Confusion Matrix</button>
     </div>
 
     <!-- Pre-toss tab -->
@@ -319,7 +319,7 @@
     <!-- Live match tab -->
     <div id="tab-live" class="tab-content">
       <div class="warning-box">
-        ⚠️ <strong>Important:</strong> LSTM live-match accuracy cannot be directly compared
+        <strong>Important:</strong> LSTM live-match accuracy cannot be directly compared
         with pre-match RF/XGB/FFNN accuracy (~50%). These are fundamentally different tasks —
         pre-match prediction uses only historical team stats, while LSTM uses real-time
         over-by-over in-match sequences where patterns are far more predictable.
@@ -357,7 +357,7 @@
         ['cards-pre','cards-post','cards-live'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.innerHTML =
-            '<p style="text-align:center;color:#ef4444;padding:40px">⚠️ Could not reach Flask backend — make sure <code>python app.py</code> is running.</p>';
+            '<p style="text-align:center;color:#ef4444;padding:40px">Could not reach Flask backend — make sure <code>python app.py</code> is running.</p>';
         });
       }
     }
@@ -381,7 +381,7 @@
         const hasAUC   = m.roc_auc !== undefined;
         return `
           <div class="model-card ${isBest ? 'best' : ''} ${isDL ? 'dl-card' : ''}">
-            ${isBest ? '<div class="best-badge">🏆 BEST LOG LOSS</div>' : ''}
+            ${isBest ? '<div class="best-badge">BEST LOG LOSS</div>' : ''}
             <div class="model-type-badge ${isDL ? 'dl-type' : 'ml-type'}">${m.type}</div>
             <div class="model-name">${m.model}</div>
 
@@ -436,75 +436,63 @@
            <strong>Log Loss</strong> is a better metric here than accuracy: lower = more calibrated probabilities.`;
 
       el.innerHTML = `<div class="model-cards">${cards}</div>
-        <div class="insight-box">🧠 <strong>Key Insight:</strong> ${insight}</div>`;
+        <div class="insight-box"><strong>Key Insight:</strong> ${insight}</div>`;
     }
 
     // ── Init ───────────────────────────────────────────────
     function renderCurves() {
-      const el = document.getElementById('tab-curves');
-      el.innerHTML = `
+      document.getElementById('tab-curves').innerHTML = `
         <div class="plots-section">
           <div class="plot-group">
-            <h3 class="plot-title">FFNN Pre-Toss — Training Curves</h3>
-            <p class="plot-desc">Shows accuracy and loss per epoch. Early stopping prevents overfitting.</p>
-            <img src="models/plots/ffnn_pre_curves.png" class="plot-img" alt="FFNN Pre-Toss Curves" onerror="this.parentElement.innerHTML+='<p class=plot-error>Image not found — run train_dl.py first</p>'">
+            <div class="plot-title">FFNN PRE-TOSS — Training & Validation Curves</div>
+            <div class="plot-desc">Accuracy and loss per epoch. Orange = Train, Purple = Validation. Early stopping prevents overfitting.</div>
+            <img src="models/plots/ffnn_pre_curves.png" class="plot-img" alt="FFNN Pre curves" onerror="this.insertAdjacentHTML('afterend','<p style=color:#ef4444;font-size:12px>Image not found — run train_dl.py first</p>');this.remove()">
           </div>
           <div class="plot-group">
-            <h3 class="plot-title">FFNN Post-Toss — Training Curves</h3>
-            <p class="plot-desc">Post-toss model includes toss winner and decision as additional features.</p>
-            <img src="models/plots/ffnn_post_curves.png" class="plot-img" alt="FFNN Post-Toss Curves" onerror="this.parentElement.innerHTML+='<p class=plot-error>Image not found — run train_dl.py first</p>'">
+            <div class="plot-title">FFNN POST-TOSS — Training & Validation Curves</div>
+            <div class="plot-desc">Post-toss adds toss winner and decision as features. 10 total features.</div>
+            <img src="models/plots/ffnn_post_curves.png" class="plot-img" alt="FFNN Post curves" onerror="this.insertAdjacentHTML('afterend','<p style=color:#ef4444;font-size:12px>Image not found — run train_dl.py first</p>');this.remove()">
           </div>
           <div class="plot-group">
-            <h3 class="plot-title">LSTM Live Match — Training Curves</h3>
-            <p class="plot-desc">LSTM trained on 20-step over sequences.</p>
-            <img src="models/plots/lstm_curves.png" class="plot-img" alt="LSTM Curves" onerror="this.parentElement.innerHTML+='<p class=plot-error>Image not found — run train_dl.py first</p>'">
+            <div class="plot-title">LSTM LIVE MATCH — Training & Validation Curves</div>
+            <div class="plot-desc">LSTM trained on 18,856 rolling-prefix sequences. 79.77% overall accuracy — reaches 91.51% by over 20.</div>
+            <img src="models/plots/lstm_curves.png" class="plot-img" alt="LSTM curves" onerror="this.insertAdjacentHTML('afterend','<p style=color:#ef4444;font-size:12px>Image not found — run train_dl.py first</p>');this.remove()">
           </div>
-        </div>
-
-        <div class="insight-box" style="margin-top:24px">
-          📊 <strong>Reading these charts:</strong> Orange = Training, Purple = Validation. 
-          When validation loss stops improving, early stopping kicks in — this prevents overfitting. 
-          All three models converge cleanly, confirming the training pipeline is correct.
         </div>
       `;
     }
 
     function renderMatrix() {
-      const el = document.getElementById('tab-matrix');
-      el.innerHTML = `
-        <div class="matrix-intro insight-box" style="margin-bottom:24px">
-          🧠 <strong>What is a Confusion Matrix?</strong> 
-          It shows how many predictions were correct vs incorrect. 
-          Rows = actual result, Columns = predicted result. 
-          Diagonal = correct predictions.
+      document.getElementById('tab-matrix').innerHTML = `
+        <div class="insight-box" style="margin-bottom:24px">
+          <strong>Confusion Matrix:</strong> Rows = actual result, Columns = predicted. Diagonal = correct predictions. For ~50% accuracy models, expect roughly equal distribution across all cells — this is honest, not a flaw.
         </div>
-
         <div class="matrix-grid">
           <div class="matrix-card">
-            <div class="matrix-label ml-type">ML Baseline</div>
+            <div class="model-type-badge ml-type">ML Baseline</div>
             <h4>Random Forest — Pre-Toss</h4>
-            <img src="models/plots/cm_rf_pre.png" class="matrix-img" alt="RF Pre Confusion Matrix">
+            <img src="models/plots/cm_rf_pre.png" class="matrix-img" alt="RF Pre CM">
           </div>
           <div class="matrix-card">
-            <div class="matrix-label ml-type">ML Baseline</div>
+            <div class="model-type-badge ml-type">ML Baseline</div>
             <h4>Random Forest — Post-Toss</h4>
-            <img src="models/plots/cm_rf_post.png" class="matrix-img" alt="RF Post Confusion Matrix">
+            <img src="models/plots/cm_rf_post.png" class="matrix-img" alt="RF Post CM">
           </div>
           <div class="matrix-card">
-            <div class="matrix-label dl-type">Deep Learning</div>
+            <div class="model-type-badge dl-type">Deep Learning</div>
             <h4>FFNN — Pre-Toss</h4>
-            <img src="models/plots/cm_ffnn_pre.png" class="matrix-img" alt="FFNN Pre Confusion Matrix">
+            <img src="models/plots/cm_ffnn_pre.png" class="matrix-img" alt="FFNN Pre CM">
           </div>
           <div class="matrix-card">
-            <div class="matrix-label dl-type">Deep Learning</div>
+            <div class="model-type-badge dl-type">Deep Learning</div>
             <h4>FFNN — Post-Toss</h4>
-            <img src="models/plots/cm_ffnn_post.png" class="matrix-img" alt="FFNN Post Confusion Matrix">
+            <img src="models/plots/cm_ffnn_post.png" class="matrix-img" alt="FFNN Post CM">
           </div>
           <div class="matrix-card matrix-lstm">
-            <div class="matrix-label dl-type">Deep Learning — LSTM</div>
-            <h4>LSTM — Live Match</h4>
-            <img src="models/plots/cm_lstm.png" class="matrix-img" alt="LSTM Confusion Matrix">
-            <p class="matrix-note">Note: LSTM solves a different task — live in-match sequence prediction, not pre-match outcome.</p>
+            <div class="model-type-badge dl-type">Deep Learning — LSTM</div>
+            <h4>LSTM — Live Match (79.77% Overall Accuracy)</h4>
+            <img src="models/plots/cm_lstm.png" class="matrix-img" alt="LSTM CM">
+            <p class="matrix-note">LSTM solves live in-match sequence prediction — a different task from pre-match. High accuracy reflects richness of real-time over-by-over data.</p>
           </div>
         </div>
       `;

@@ -100,7 +100,7 @@
       transform: translateX(-50%);
       width: 200px;
       height: 100px;
-      background: radial-gradient(ellipse, rgba(255,255,255,0.1) 0%, transparent 70%);
+      background: rgba(255, 255, 255, 0.03);
       pointer-events: none;
     }
     .score-row {
@@ -511,7 +511,7 @@
       <h1 class="title">CAPTAIN'S CHALLENGE</h1>
       <p class="subtitle">Make the call. Own the result.</p>
       <div class="iq-badge">
-        <span>🧠 IQ:</span>
+        <span>Cricket IQ:</span>
         <span id="headerIqScore">0</span>
       </div>
       <div class="challenge-tracker" id="challengeTracker">Challenge 1/8</div>
@@ -581,7 +581,7 @@
       <div id="argue-section" style="display:none">
         
         <div class="argue-header">
-          🗣️ DISAGREE WITH AI?
+           DISAGREE WITH AI?
           <span class="argue-sub">Make your case — the community will judge</span>
         </div>
 
@@ -594,12 +594,12 @@
             rows="3"
           ></textarea>
           <div class="char-count"><span id="char-left">280</span> chars left</div>
-          <button id="submit-argument">⚡ Submit My Take</button>
+          <button id="submit-argument"> Submit My Take</button>
         </div>
 
         <!-- Community arguments (loaded from localStorage) -->
         <div class="community-args-header">
-          💬 COMMUNITY TAKES — <span id="arg-count">0</span> arguments
+           COMMUNITY TAKES — <span id="arg-count">0</span> arguments
         </div>
         
         <div id="community-args-list">
@@ -639,7 +639,7 @@
 </main>
 
 <footer class="footer" style="margin-top: 60px;">
-  <p>🏏 IPL Predictor &nbsp;|&nbsp; Built for cricket enthusiasts &nbsp;|&nbsp; For educational purposes only</p>
+  <p> IPL Predictor &nbsp;|&nbsp; Built for cricket enthusiasts &nbsp;|&nbsp; For educational purposes only</p>
 </footer>
 
 <script>
@@ -654,16 +654,16 @@ const challenges = [
     bowler: "Bumrah — 3.2 overs, 28 runs, 1 wkt",
     question: "Bumrah has 1 over left. Jadeja is set. What do you do?",
     options: [
-      { label: "A", text: "Bowl Bumrah now", icon: "⚡" },
-      { label: "B", text: "Save Bumrah for final over, bowl Krunal now", icon: "🧠" },
-      { label: "C", text: "Surprise change — bring Pollard", icon: "🎲" }
+      { label: "A", text: "Bowl Bumrah now", icon: "" },
+      { label: "B", text: "Save Bumrah for final over, bowl Krunal now", icon: "" },
+      { label: "C", text: "Surprise change — bring Pollard", icon: "" }
     ],
     correctOption: "B",
     scores: { A: 55, B: 78, C: 40 },
     explanation: {
-      A: ["⚡ Bumrah now protects these 6 balls but leaves death exposed (+10)", "⚠️ Jadeja scores well vs pace in middle overs (-15)", "📊 Teams using best bowler at 17th over win only 44% of these situations (-8)", "✅ Safe option but not optimal"],
-      B: ["✅ Bumrah's economy in death overs at Wankhede: 7.2 — saving him was smart (+22)", "✅ Krunal has dismissed Jadeja twice in T20s (+18)", "⚠️ Slight risk if Krunal goes for runs in over 17 (-8)", "📊 Teams saving best bowler for last over win 61% of such situations (+15)"],
-      C: ["🎲 Pollard is high variance — could work but risky (-20)", "⚠️ Breaking Bumrah's rhythm at this stage costly (-15)", "❌ No historical precedent favors this in chase defense (-10)", "📊 Surprise changes succeed only 29% of time in death situations"]
+      A: [" Bumrah now protects these 6 balls but leaves death exposed (+10)", "[Warning]  Jadeja scores well vs pace in middle overs (-15)", "[Stats]  Teams using best bowler at 17th over win only 44% of these situations (-8)", "[Advantage]  Safe option but not optimal"],
+      B: ["[Advantage]  Bumrah's economy in death overs at Wankhede: 7.2 — saving him was smart (+22)", "[Advantage]  Krunal has dismissed Jadeja twice in T20s (+18)", "[Warning]  Slight risk if Krunal goes for runs in over 17 (-8)", "[Stats]  Teams saving best bowler for last over win 61% of such situations (+15)"],
+      C: [" Pollard is high variance — could work but risky (-20)", "[Warning]  Breaking Bumrah's rhythm at this stage costly (-15)", "[Risk]  No historical precedent favors this in chase defense (-10)", "[Stats]  Surprise changes succeed only 29% of time in death situations"]
     },
     iqPoints: { A: 8, B: 15, C: 3 }
   },
@@ -677,16 +677,16 @@ const challenges = [
     bowler: "Siraj & Harshal have 1 over each",
     question: "Russell is striking at 230. Who bowls the critical 18th over?",
     options: [
-      { label: "A", text: "Bowl Siraj (Pace on, target yorkers)", icon: "🔥" },
-      { label: "B", text: "Bowl Harshal (Off-cutters into the pitch)", icon: "🎯" },
-      { label: "C", text: "Bowl a Spinner (Take pace completely off)", icon: "🌀" }
+      { label: "A", text: "Bowl Siraj (Pace on, target yorkers)", icon: "" },
+      { label: "B", text: "Bowl Harshal (Off-cutters into the pitch)", icon: "" },
+      { label: "C", text: "Bowl a Spinner (Take pace completely off)", icon: "" }
     ],
     correctOption: "B",
     scores: { A: 45, B: 85, C: 20 },
     explanation: {
-      A: ["⚠️ Siraj's extra pace feeds into Russell's hitting arc (-15)", "✅ Good intent, but margin for error with yorkers is zero (+5)", "📊 Russell strikes at 210+ vs 140kmph+ pace at Chinnaswamy (-10)"],
-      B: ["✅ Harshal's slower dipping yorkers are highly effective vs power hitters (+25)", "✅ Forces Russell to generate his own pace (+15)", "📊 Historic data shows cutters on this pitch concede 20% fewer boundaries (+10)"],
-      C: ["❌ Suicidal move! Spinners get destroyed by Russell in the death (-25)", "⚠️ Ball might sit up perfectly for him (-15)", "📊 Spinners concede an average of 14 runs/over vs Russell here (-10)"]
+      A: ["[Warning]  Siraj's extra pace feeds into Russell's hitting arc (-15)", "[Advantage]  Good intent, but margin for error with yorkers is zero (+5)", "[Stats]  Russell strikes at 210+ vs 140kmph+ pace at Chinnaswamy (-10)"],
+      B: ["[Advantage]  Harshal's slower dipping yorkers are highly effective vs power hitters (+25)", "[Advantage]  Forces Russell to generate his own pace (+15)", "[Stats]  Historic data shows cutters on this pitch concede 20% fewer boundaries (+10)"],
+      C: ["[Risk]  Suicidal move! Spinners get destroyed by Russell in the death (-25)", "[Warning]  Ball might sit up perfectly for him (-15)", "[Stats]  Spinners concede an average of 14 runs/over vs Russell here (-10)"]
     },
     iqPoints: { A: 6, B: 18, C: 0 }
   },
@@ -700,16 +700,16 @@ const challenges = [
     bowler: "Bumrah — 2 overs left",
     question: "Pant is well set. When do you bowl Bumrah's remaining two overs?",
     options: [
-      { label: "A", text: "Overs 17 and 19 (Break momentum early)", icon: "⚔️" },
-      { label: "B", text: "Overs 18 and 20 (Save for absolute death)", icon: "🛡️" },
-      { label: "C", text: "Overs 17 and 20 (Mix it up)", icon: "🔀" }
+      { label: "A", text: "Overs 17 and 19 (Break momentum early)", icon: "" },
+      { label: "B", text: "Overs 18 and 20 (Save for absolute death)", icon: "" },
+      { label: "C", text: "Overs 17 and 20 (Mix it up)", icon: "" }
     ],
     correctOption: "A",
     scores: { A: 82, B: 50, C: 65 },
     explanation: {
-      A: ["✅ Breaking the partnership NOW is crucial to defend 45 (+20)", "✅ The 19th over is often the most important over in a T20 chase (+15)", "📊 Defending teams win 68% when striking in the 17th over (+12)"],
-      B: ["⚠️ If 17th goes for 15+ runs, the game is practically over before 18th (-15)", "✅ Safe on paper, but lacks proactivity (+5)", "📊 Leaving a set batter for 18/20 increases chase success to 72% (-8)"],
-      C: ["✅ Good variation, but leaves the crucial 18th/19th vulnerable (+10)", "⚠️ Pant could target the other bowler in the 18th/19th (-5)", "📊 Slightly better than option B, but A is optimal (+5)"]
+      A: ["[Advantage]  Breaking the partnership NOW is crucial to defend 45 (+20)", "[Advantage]  The 19th over is often the most important over in a T20 chase (+15)", "[Stats]  Defending teams win 68% when striking in the 17th over (+12)"],
+      B: ["[Warning]  If 17th goes for 15+ runs, the game is practically over before 18th (-15)", "[Advantage]  Safe on paper, but lacks proactivity (+5)", "[Stats]  Leaving a set batter for 18/20 increases chase success to 72% (-8)"],
+      C: ["[Advantage]  Good variation, but leaves the crucial 18th/19th vulnerable (+10)", "[Warning]  Pant could target the other bowler in the 18th/19th (-5)", "[Stats]  Slightly better than option B, but A is optimal (+5)"]
     },
     iqPoints: { A: 16, B: 5, C: 10 }
   },
@@ -723,16 +723,16 @@ const challenges = [
     bowler: "Ashwin, Boult, Sandeep available",
     question: "Klaasen is destroying spin. Who bowls the 16th?",
     options: [
-      { label: "A", text: "Boult (Pace, look for yorkers)", icon: "⚡" },
-      { label: "B", text: "Sandeep (Wide yorkers & slower ones)", icon: "🎯" },
-      { label: "C", text: "Ashwin (Turn it away from him)", icon: "🌀" }
+      { label: "A", text: "Boult (Pace, look for yorkers)", icon: "" },
+      { label: "B", text: "Sandeep (Wide yorkers & slower ones)", icon: "" },
+      { label: "C", text: "Ashwin (Turn it away from him)", icon: "" }
     ],
     correctOption: "B",
     scores: { A: 60, B: 80, C: 25 },
     explanation: {
-      A: ["✅ Boult is world-class, but Klaasen handles pace on the stumps well (+10)", "⚠️ Missed yorkers will vanish into the stands (-10)", "📊 Pace on middle stump goes for 11.5 RPO vs Klaasen (-5)"],
-      B: ["✅ Wide slower balls force Klaasen to reach, mitigating his power (+20)", "✅ Sandeep executes wide yorkers at an elite level (+15)", "📊 Klaasen's strike rate drops from 210 to 140 against wide pace off (+10)"],
-      C: ["❌ Klaasen dominates spin, even turning away (-20)", "⚠️ Huge risk bringing spin to a set Klaasen (-15)", "📊 Spinners average 15 RPO against him in the death (-10)"]
+      A: ["[Advantage]  Boult is world-class, but Klaasen handles pace on the stumps well (+10)", "[Warning]  Missed yorkers will vanish into the stands (-10)", "[Stats]  Pace on middle stump goes for 11.5 RPO vs Klaasen (-5)"],
+      B: ["[Advantage]  Wide slower balls force Klaasen to reach, mitigating his power (+20)", "[Advantage]  Sandeep executes wide yorkers at an elite level (+15)", "[Stats]  Klaasen's strike rate drops from 210 to 140 against wide pace off (+10)"],
+      C: ["[Risk]  Klaasen dominates spin, even turning away (-20)", "[Warning]  Huge risk bringing spin to a set Klaasen (-15)", "[Stats]  Spinners average 15 RPO against him in the death (-10)"]
     },
     iqPoints: { A: 10, B: 15, C: 2 }
   },
@@ -746,16 +746,16 @@ const challenges = [
     bowler: "Rashid (1 over), Mohit (2 overs)",
     question: "Pooran is accelerating. How do you deploy Rashid Khan's final over?",
     options: [
-      { label: "A", text: "Bowl Rashid NOW to get Pooran out", icon: "🧠" },
-      { label: "B", text: "Save Rashid for the 19th over", icon: "🛡️" },
-      { label: "C", text: "Bowl Mohit Sharma for 17th and 19th", icon: "🔥" }
+      { label: "A", text: "Bowl Rashid NOW to get Pooran out", icon: "" },
+      { label: "B", text: "Save Rashid for the 19th over", icon: "" },
+      { label: "C", text: "Bowl Mohit Sharma for 17th and 19th", icon: "" }
     ],
     correctOption: "A",
     scores: { A: 85, B: 40, C: 55 },
     explanation: {
-      A: ["✅ Pooran is the only recognized batter left; getting him out ends the game (+25)", "✅ Rashid has dismissed Pooran 3 times in T20s (+15)", "📊 Attack over defense: taking wickets is the best way to defend low totals (+10)"],
-      B: ["⚠️ Waiting till the 19th might be too late if Pooran hits 15+ in the 17th (-15)", "❌ Pooran can safely play out Rashid in the 19th if the required rate drops (-10)"],
-      C: ["✅ Mohit's slower balls are good, but he lacks Rashid's strike ability (+10)", "⚠️ Pooran hits pace well square of the wicket (-5)"]
+      A: ["[Advantage]  Pooran is the only recognized batter left; getting him out ends the game (+25)", "[Advantage]  Rashid has dismissed Pooran 3 times in T20s (+15)", "[Stats]  Attack over defense: taking wickets is the best way to defend low totals (+10)"],
+      B: ["[Warning]  Waiting till the 19th might be too late if Pooran hits 15+ in the 17th (-15)", "[Risk]  Pooran can safely play out Rashid in the 19th if the required rate drops (-10)"],
+      C: ["[Advantage]  Mohit's slower balls are good, but he lacks Rashid's strike ability (+10)", "[Warning]  Pooran hits pace well square of the wicket (-5)"]
     },
     iqPoints: { A: 18, B: 5, C: 8 }
   },
@@ -769,16 +769,16 @@ const challenges = [
     bowler: "Arshdeep & Rabada have 1 over each",
     question: "Dhoni is on strike. Who bowls the crucial 19th over?",
     options: [
-      { label: "A", text: "Arshdeep (Left-arm angle, wide yorkers)", icon: "📐" },
-      { label: "B", text: "Rabada (Raw pace, hit the deck)", icon: "🔥" },
-      { label: "C", text: "Curran (Slower balls, cutters)", icon: "🎯" }
+      { label: "A", text: "Arshdeep (Left-arm angle, wide yorkers)", icon: "" },
+      { label: "B", text: "Rabada (Raw pace, hit the deck)", icon: "" },
+      { label: "C", text: "Curran (Slower balls, cutters)", icon: "" }
     ],
     correctOption: "A",
     scores: { A: 88, B: 45, C: 60 },
     explanation: {
-      A: ["✅ Left-arm angle across Dhoni is historically his biggest weakness (+20)", "✅ Arshdeep executes wide yorkers exceptionally well (+15)", "📊 Dhoni's strike rate vs left-arm pace wide outside off is under 110 (+15)"],
-      B: ["⚠️ Raw pace into the body is exactly what Dhoni uses for his trademark pulls/helicopters (-15)", "❌ Rabada at the death can be predictable with length (-10)"],
-      C: ["✅ Slower balls work, but Curran's angle isn't as challenging as Arshdeep's (+10)", "⚠️ If missed, slower balls sit up nicely for Dhoni (-5)"]
+      A: ["[Advantage]  Left-arm angle across Dhoni is historically his biggest weakness (+20)", "[Advantage]  Arshdeep executes wide yorkers exceptionally well (+15)", "[Stats]  Dhoni's strike rate vs left-arm pace wide outside off is under 110 (+15)"],
+      B: ["[Warning]  Raw pace into the body is exactly what Dhoni uses for his trademark pulls/helicopters (-15)", "[Risk]  Rabada at the death can be predictable with length (-10)"],
+      C: ["[Advantage]  Slower balls work, but Curran's angle isn't as challenging as Arshdeep's (+10)", "[Warning]  If missed, slower balls sit up nicely for Dhoni (-5)"]
     },
     iqPoints: { A: 19, B: 5, C: 10 }
   },
@@ -792,16 +792,16 @@ const challenges = [
     bowler: "Narine (1), Starc (1)",
     question: "Cummins is hitting cleanly. Who bowls the 19th?",
     options: [
-      { label: "A", text: "Starc (Pace, yorkers)", icon: "⚡" },
-      { label: "B", text: "Narine (Spin, mystery)", icon: "🌀" },
-      { label: "C", text: "Russell (Wide yorkers)", icon: "💪" }
+      { label: "A", text: "Starc (Pace, yorkers)", icon: "" },
+      { label: "B", text: "Narine (Spin, mystery)", icon: "" },
+      { label: "C", text: "Russell (Wide yorkers)", icon: "" }
     ],
     correctOption: "B",
     scores: { A: 75, B: 82, C: 40 },
     explanation: {
-      A: ["✅ Starc is a premium death bowler, generally reliable (+15)", "⚠️ Cummins knows Starc's variations perfectly from Australian nets (-10)"],
-      B: ["✅ Mystery spin in the 19th over is a masterstroke; batters expect pace (+20)", "✅ Narine's economy in the 19th over is a staggering 6.8 (+18)", "📊 Spin vs lower-order pace hitters often induces mishits (+10)"],
-      C: ["❌ Russell's pace is too friendly for a set Cummins (-15)", "⚠️ High probability of boundary balls (-10)"]
+      A: ["[Advantage]  Starc is a premium death bowler, generally reliable (+15)", "[Warning]  Cummins knows Starc's variations perfectly from Australian nets (-10)"],
+      B: ["[Advantage]  Mystery spin in the 19th over is a masterstroke; batters expect pace (+20)", "[Advantage]  Narine's economy in the 19th over is a staggering 6.8 (+18)", "[Stats]  Spin vs lower-order pace hitters often induces mishits (+10)"],
+      C: ["[Risk]  Russell's pace is too friendly for a set Cummins (-15)", "[Warning]  High probability of boundary balls (-10)"]
     },
     iqPoints: { A: 12, B: 16, C: 4 }
   },
@@ -815,16 +815,16 @@ const challenges = [
     bowler: "Siraj & Topley available",
     question: "SKY is playing 360 degrees. What's the plan?",
     options: [
-      { label: "A", text: "Siraj wide outside off stump", icon: "📏" },
-      { label: "B", text: "Topley at the stumps", icon: "🎯" },
-      { label: "C", text: "Spinner to take pace off", icon: "🌀" }
+      { label: "A", text: "Siraj wide outside off stump", icon: "" },
+      { label: "B", text: "Topley at the stumps", icon: "" },
+      { label: "C", text: "Spinner to take pace off", icon: "" }
     ],
     correctOption: "A",
     scores: { A: 85, B: 30, C: 45 },
     explanation: {
-      A: ["✅ SKY sweeps and scoops deliveries on the stumps easily. Wide line restricts him (+25)", "✅ Forces SKY to hit over covers where he has less power (+15)", "📊 SKY's strike rate on wide lines is 135 vs 220 on stumps (+10)"],
-      B: ["❌ Bowling at the stumps to SKY is playing into his hands (-20)", "⚠️ He will easily maneuver pace behind square (-15)"],
-      C: ["✅ Can work if the pitch is slow, but SKY is an excellent player of spin (+5)", "⚠️ Too risky with 35 needed, a bad over ends the game (-10)"]
+      A: ["[Advantage]  SKY sweeps and scoops deliveries on the stumps easily. Wide line restricts him (+25)", "[Advantage]  Forces SKY to hit over covers where he has less power (+15)", "[Stats]  SKY's strike rate on wide lines is 135 vs 220 on stumps (+10)"],
+      B: ["[Risk]  Bowling at the stumps to SKY is playing into his hands (-20)", "[Warning]  He will easily maneuver pace behind square (-15)"],
+      C: ["[Advantage]  Can work if the pitch is slow, but SKY is an excellent player of spin (+5)", "[Warning]  Too risky with 35 needed, a bad over ends the game (-10)"]
     },
     iqPoints: { A: 18, B: 2, C: 6 }
   },
@@ -838,16 +838,16 @@ const challenges = [
   bowler: "Bumrah — 3 overs, 22 runs, 1 wkt",
   question: "Warner is set and dangerous. Bumrah has 1 over left. Do you bowl him now or save him?",
   options: [
-    { label: "A", text: "Bowl Bumrah in over 16 — stop Warner now", icon: "⚡" },
-    { label: "B", text: "Save Bumrah for over 20 — bowl Hardik now", icon: "🧠" },
-    { label: "C", text: "Bring a spinner to break rhythm", icon: "🌀" }
+    { label: "A", text: "Bowl Bumrah in over 16 — stop Warner now", icon: "" },
+    { label: "B", text: "Save Bumrah for over 20 — bowl Hardik now", icon: "" },
+    { label: "C", text: "Bring a spinner to break rhythm", icon: "" }
   ],
   correctOption: "A",
   scores: { A: 82, B: 58, C: 45 },
   explanation: {
-    A: ["✅ Warner averages 156 SR in overs 15-17, must be stopped now (+25)", "✅ Bumrah's economy vs left-handers: 6.8 — best option (+20)", "📊 DC needs 33 off 30 — still gettable, need wicket urgently (+15)", "⚠️ Saving Bumrah risks Warner accelerating in overs 16-19 (-5)"],
-    B: ["⚠️ Warner in overs 16-19 averages 178 SR — too dangerous to let go (-20)", "✅ Saving best for death is textbook but Warner changes equations (-10)", "📊 33 off 30 becomes 20 off 12 if Warner bats through (-15)", "❌ Hardik has been hit for 2 sixes by Warner this match (-8)"],
-    C: ["❌ Warner averages 142 SR vs spin — not the weakness to target (-20)", "⚠️ Spinner gives Warner easy singles to stay on strike (-15)", "📊 Pitch is flat — no turn expected, spinner ineffective (-18)", "❌ This loses the match (-10)"]
+    A: ["[Advantage]  Warner averages 156 SR in overs 15-17, must be stopped now (+25)", "[Advantage]  Bumrah's economy vs left-handers: 6.8 — best option (+20)", "[Stats]  DC needs 33 off 30 — still gettable, need wicket urgently (+15)", "[Warning]  Saving Bumrah risks Warner accelerating in overs 16-19 (-5)"],
+    B: ["[Warning]  Warner in overs 16-19 averages 178 SR — too dangerous to let go (-20)", "[Advantage]  Saving best for death is textbook but Warner changes equations (-10)", "[Stats]  33 off 30 becomes 20 off 12 if Warner bats through (-15)", "[Risk]  Hardik has been hit for 2 sixes by Warner this match (-8)"],
+    C: ["[Risk]  Warner averages 142 SR vs spin — not the weakness to target (-20)", "[Warning]  Spinner gives Warner easy singles to stay on strike (-15)", "[Stats]  Pitch is flat — no turn expected, spinner ineffective (-18)", "[Risk]  This loses the match (-10)"]
   },
   iqPoints: { A: 18, B: 8, C: 2 }
 },
@@ -861,16 +861,16 @@ const challenges = [
   bowler: "Shami — 2 overs, 18 runs, 2 wkts",
   question: "3 wickets down in powerplay. Samson is set. What is RR's batting strategy?",
   options: [
-    { label: "A", text: "Consolidate — build partnership, accelerate later", icon: "🛡️" },
-    { label: "B", text: "Attack now — Samson must go big while set", icon: "💥" },
-    { label: "C", text: "Rotate strike — keep scoreboard moving steadily", icon: "🔄" }
+    { label: "A", text: "Consolidate — build partnership, accelerate later", icon: "" },
+    { label: "B", text: "Attack now — Samson must go big while set", icon: "" },
+    { label: "C", text: "Rotate strike — keep scoreboard moving steadily", icon: "" }
   ],
   correctOption: "A",
   scores: { A: 75, B: 55, C: 65 },
   explanation: {
-    A: ["✅ 3 wickets down in PP — losing another wicket = match over (+20)", "✅ 130 needed off 84 balls is very gettable if 2 wickets stay (+18)", "📊 Teams reaching 8+ overs with 3 wickets in hand win 68% of such chases (+15)", "⚠️ Slightly conservative but mathematically correct (-5)"],
-    B: ["⚠️ One more wicket and tail exposed — too risky (-15)", "📊 Teams losing 4th wicket before over 10 in chases win only 31% (-20)", "✅ Samson's SR when set: 165 — he CAN do it (+10)", "❌ But variance too high with tail to come (-12)"],
-    C: ["✅ Rotation keeps pressure off batsmen (+10)", "⚠️ But RR need 7.9 RR — too high for pure rotation (-10)", "📊 Acceptable middle ground but doesn't address run rate pressure (-8)", "⚠️ Slightly too passive given required rate (+5)"]
+    A: ["[Advantage]  3 wickets down in PP — losing another wicket = match over (+20)", "[Advantage]  130 needed off 84 balls is very gettable if 2 wickets stay (+18)", "[Stats]  Teams reaching 8+ overs with 3 wickets in hand win 68% of such chases (+15)", "[Warning]  Slightly conservative but mathematically correct (-5)"],
+    B: ["[Warning]  One more wicket and tail exposed — too risky (-15)", "[Stats]  Teams losing 4th wicket before over 10 in chases win only 31% (-20)", "[Advantage]  Samson's SR when set: 165 — he CAN do it (+10)", "[Risk]  But variance too high with tail to come (-12)"],
+    C: ["[Advantage]  Rotation keeps pressure off batsmen (+10)", "[Warning]  But RR need 7.9 RR — too high for pure rotation (-10)", "[Stats]  Acceptable middle ground but doesn't address run rate pressure (-8)", "[Warning]  Slightly too passive given required rate (+5)"]
   },
   iqPoints: { A: 15, B: 8, C: 12 }
 },
@@ -884,16 +884,16 @@ const challenges = [
   bowler: "Arshdeep — 3 overs, 28 runs, 0 wkts",
   question: "CSK need 36 off 36. Dhoni just came in. PBKS captain — do you bowl Arshdeep now?",
   options: [
-    { label: "A", text: "Bowl Arshdeep now — get Dhoni early", icon: "⚡" },
-    { label: "B", text: "Save Arshdeep for last 2 overs", icon: "🧠" },
-    { label: "C", text: "Bring spinner — Dhoni struggles vs spin", icon: "🌀" }
+    { label: "A", text: "Bowl Arshdeep now — get Dhoni early", icon: "" },
+    { label: "B", text: "Save Arshdeep for last 2 overs", icon: "" },
+    { label: "C", text: "Bring spinner — Dhoni struggles vs spin", icon: "" }
   ],
   correctOption: "B",
   scores: { A: 48, B: 80, C: 62 },
   explanation: {
-    A: ["⚠️ Arshdeep has 0 wickets so far — momentum not with him (-10)", "❌ Dhoni averages 210 SR in overs 15-17 vs pace — dangerous time to bowl him (-15)", "📊 36 off 36 — CSK not under pressure yet, save your best for crunch (-12)", "❌ Wasting Arshdeep now leaves death exposed (-15)"],
-    B: ["✅ 36 off 36 is manageable without special bowling (+15)", "✅ Dhoni is most dangerous in last 3 overs — save Arshdeep for then (+22)", "📊 Teams saving best bowler for overs 18-20 in 35-40 run defenses win 71% (+18)", "✅ Let medium pacers bowl 15-17, Arshdeep for 18-20 (+10)"],
-    C: ["✅ Dhoni does struggle vs quality spin — smart observation (+15)", "⚠️ But Wankhede flat track — spin ineffective here (-10)", "📊 Dhoni's SR vs spin at Wankhede: 142 — not as dominant but still dangerous (+5)", "⚠️ Reasonable option but venue makes it suboptimal (-8)"]
+    A: ["[Warning]  Arshdeep has 0 wickets so far — momentum not with him (-10)", "[Risk]  Dhoni averages 210 SR in overs 15-17 vs pace — dangerous time to bowl him (-15)", "[Stats]  36 off 36 — CSK not under pressure yet, save your best for crunch (-12)", "[Risk]  Wasting Arshdeep now leaves death exposed (-15)"],
+    B: ["[Advantage]  36 off 36 is manageable without special bowling (+15)", "[Advantage]  Dhoni is most dangerous in last 3 overs — save Arshdeep for then (+22)", "[Stats]  Teams saving best bowler for overs 18-20 in 35-40 run defenses win 71% (+18)", "[Advantage]  Let medium pacers bowl 15-17, Arshdeep for 18-20 (+10)"],
+    C: ["[Advantage]  Dhoni does struggle vs quality spin — smart observation (+15)", "[Warning]  But Wankhede flat track — spin ineffective here (-10)", "[Stats]  Dhoni's SR vs spin at Wankhede: 142 — not as dominant but still dangerous (+5)", "[Warning]  Reasonable option but venue makes it suboptimal (-8)"]
   },
   iqPoints: { A: 5, B: 18, C: 12 }
 },
@@ -907,16 +907,16 @@ const challenges = [
   bowler: "Bumrah — 2 overs, 14 runs, 1 wkt",
   question: "Travis Head is destroying MI. You are MI captain — what do you do?",
   options: [
-    { label: "A", text: "Bring Bumrah back immediately — stop Head now", icon: "⚡" },
-    { label: "B", text: "Set attacking field — invite the shot, take the risk", icon: "🎯" },
-    { label: "C", text: "Bowl wide outside off — dry up runs, frustrate Head", icon: "🛡️" }
+    { label: "A", text: "Bring Bumrah back immediately — stop Head now", icon: "" },
+    { label: "B", text: "Set attacking field — invite the shot, take the risk", icon: "" },
+    { label: "C", text: "Bowl wide outside off — dry up runs, frustrate Head", icon: "" }
   ],
   correctOption: "B",
   scores: { A: 65, B: 78, C: 52 },
   explanation: {
-    A: ["⚠️ Bumrah has only 2 overs left — using him at over 11 means no Bumrah in death (-15)", "✅ Head is dangerous — stopping him matters (+10)", "📊 SRH need 87 off 60 — still under control, don't panic use of Bumrah (-12)", "⚠️ Tactically premature (-8)"],
-    B: ["✅ Head's weakness: aerial shots off pace when set — can be caught (+20)", "✅ Attacking field creates wicket opportunity vs aggressive batter (+18)", "📊 Head has been dismissed pulling/hooking 6 times this season (+15)", "✅ Controlled aggression beats defensive bowling vs Head (+10)"],
-    C: ["❌ Head's wide-ball SR: 178 — he loves it outside off stump (-20)", "⚠️ Drying up runs just prolongs the problem (-10)", "📊 Head's boundary % on wide deliveries: 42% — don't give him width (-18)", "❌ This is exactly what Head wants (-15)"]
+    A: ["[Warning]  Bumrah has only 2 overs left — using him at over 11 means no Bumrah in death (-15)", "[Advantage]  Head is dangerous — stopping him matters (+10)", "[Stats]  SRH need 87 off 60 — still under control, don't panic use of Bumrah (-12)", "[Warning]  Tactically premature (-8)"],
+    B: ["[Advantage]  Head's weakness: aerial shots off pace when set — can be caught (+20)", "[Advantage]  Attacking field creates wicket opportunity vs aggressive batter (+18)", "[Stats]  Head has been dismissed pulling/hooking 6 times this season (+15)", "[Advantage]  Controlled aggression beats defensive bowling vs Head (+10)"],
+    C: ["[Risk]  Head's wide-ball SR: 178 — he loves it outside off stump (-20)", "[Warning]  Drying up runs just prolongs the problem (-10)", "[Stats]  Head's boundary % on wide deliveries: 42% — don't give him width (-18)", "[Risk]  This is exactly what Head wants (-15)"]
   },
   iqPoints: { A: 10, B: 16, C: 4 }
 },
@@ -930,16 +930,16 @@ const challenges = [
   bowler: "Avesh — 2 overs, 8 runs, 2 wkts",
   question: "KKR 12/2 in powerplay. Russell is at crease early. LSG captain — keep attacking or defensive field?",
   options: [
-    { label: "A", text: "Keep attacking — 2 wickets in hand, finish them off", icon: "💥" },
-    { label: "B", text: "Defensive field — contain Russell, don't give him width", icon: "🛡️" },
-    { label: "C", text: "Bring spinner in powerplay — unusual move to confuse Russell", icon: "🌀" }
+    { label: "A", text: "Keep attacking — 2 wickets in hand, finish them off", icon: "" },
+    { label: "B", text: "Defensive field — contain Russell, don't give him width", icon: "" },
+    { label: "C", text: "Bring spinner in powerplay — unusual move to confuse Russell", icon: "" }
   ],
   correctOption: "A",
   scores: { A: 80, B: 45, C: 60 },
   explanation: {
-    A: ["✅ Russell in powerplay averages 35 — more risky for him early (+20)", "✅ 2 wickets already — tail not far, keep pressure (+22)", "📊 Teams taking 3+ wickets in powerplay win 78% of such matches (+18)", "✅ Attack while Russell not in rhythm (+15)"],
-    B: ["❌ Defensive to Russell = invitation to hit — he LOVES defensive fields (-20)", "📊 Russell's SR vs defensive fields: 195 — he reads it instantly (-18)", "⚠️ Giving him time to settle is dangerous (-15)", "❌ This strategy has failed vs Russell 70% of times historically (-12)"],
-    C: ["✅ Unusual — Russell uncomfortable vs slow left-arm sometimes (+10)", "⚠️ But powerplay restrictions make field setting tough for spinner (-12)", "📊 Russell vs spin in powerplay: SR 168 — still dangerous (-8)", "⚠️ Interesting idea but not optimal (-5)"]
+    A: ["[Advantage]  Russell in powerplay averages 35 — more risky for him early (+20)", "[Advantage]  2 wickets already — tail not far, keep pressure (+22)", "[Stats]  Teams taking 3+ wickets in powerplay win 78% of such matches (+18)", "[Advantage]  Attack while Russell not in rhythm (+15)"],
+    B: ["[Risk]  Defensive to Russell = invitation to hit — he LOVES defensive fields (-20)", "[Stats]  Russell's SR vs defensive fields: 195 — he reads it instantly (-18)", "[Warning]  Giving him time to settle is dangerous (-15)", "[Risk]  This strategy has failed vs Russell 70% of times historically (-12)"],
+    C: ["[Advantage]  Unusual — Russell uncomfortable vs slow left-arm sometimes (+10)", "[Warning]  But powerplay restrictions make field setting tough for spinner (-12)", "[Stats]  Russell vs spin in powerplay: SR 168 — still dangerous (-8)", "[Warning]  Interesting idea but not optimal (-5)"]
   },
   iqPoints: { A: 18, B: 3, C: 10 }
 },
@@ -953,16 +953,16 @@ const challenges = [
   bowler: "Axar — 3 overs, 24 runs, 1 wkt",
   question: "Maxwell is on fire. Axar has 1 over left. As DC captain, when do you bowl Axar's last over?",
   options: [
-    { label: "A", text: "Bowl Axar in over 19 — contain Maxwell now", icon: "⚡" },
-    { label: "B", text: "Save Axar for over 20 — keep Maxwell guessing", icon: "🧠" },
-    { label: "C", text: "Don't bowl Axar — pace is better vs Maxwell", icon: "💨" }
+    { label: "A", text: "Bowl Axar in over 19 — contain Maxwell now", icon: "" },
+    { label: "B", text: "Save Axar for over 20 — keep Maxwell guessing", icon: "" },
+    { label: "C", text: "Don't bowl Axar — pace is better vs Maxwell", icon: "" }
   ],
   correctOption: "A",
   scores: { A: 76, B: 58, C: 40 },
   explanation: {
-    A: ["✅ Maxwell averages 198 SR in over 20 vs pace — Axar is better option there (+20)", "✅ Axar's economy vs Maxwell: 6.2 in middle overs (+18)", "📊 Maxwell loves pace in death — spin in over 19 is smart (+15)", "✅ Use Axar while Maxwell is mid-innings, not at peak aggression (+12)"],
-    B: ["⚠️ Maxwell in over 20 is most dangerous — Axar might go for 20+ (-10)", "📊 Maxwell's over-20 SR vs pace: 210 — but vs spin: 165 (+8)", "⚠️ Saving Axar is logical but over 20 Maxwell in full flow is risky (-8)", "⚠️ Marginal difference but over 19 slightly safer (-5)"],
-    C: ["❌ Maxwell's SR vs pace in death: 218 — worst option (-25)", "📊 Maxwell has hit 8 sixes vs pace in death this season (-20)", "❌ Removing your best weapon vs this batter makes no sense (-15)", "❌ This would likely concede 25+ in last 2 overs (-10)"]
+    A: ["[Advantage]  Maxwell averages 198 SR in over 20 vs pace — Axar is better option there (+20)", "[Advantage]  Axar's economy vs Maxwell: 6.2 in middle overs (+18)", "[Stats]  Maxwell loves pace in death — spin in over 19 is smart (+15)", "[Advantage]  Use Axar while Maxwell is mid-innings, not at peak aggression (+12)"],
+    B: ["[Warning]  Maxwell in over 20 is most dangerous — Axar might go for 20+ (-10)", "[Stats]  Maxwell's over-20 SR vs pace: 210 — but vs spin: 165 (+8)", "[Warning]  Saving Axar is logical but over 20 Maxwell in full flow is risky (-8)", "[Warning]  Marginal difference but over 19 slightly safer (-5)"],
+    C: ["[Risk]  Maxwell's SR vs pace in death: 218 — worst option (-25)", "[Stats]  Maxwell has hit 8 sixes vs pace in death this season (-20)", "[Risk]  Removing your best weapon vs this batter makes no sense (-15)", "[Risk]  This would likely concede 25+ in last 2 overs (-10)"]
   },
   iqPoints: { A: 15, B: 10, C: 2 }
 },
@@ -976,16 +976,16 @@ const challenges = [
   bowler: "Arshdeep — 2 overs, 18 runs, 2 wkts",
   question: "GT need 27 off 18. Rashid Khan is batting. PBKS — do you bowl Arshdeep to Rashid?",
   options: [
-    { label: "A", text: "Yes — Arshdeep vs tail, get him out fast", icon: "⚡" },
-    { label: "B", text: "No — save Arshdeep for over 20, bowl medium pace now", icon: "🧠" },
-    { label: "C", text: "Bowl spinner — Rashid weak vs quality spin", icon: "🌀" }
+    { label: "A", text: "Yes — Arshdeep vs tail, get him out fast", icon: "" },
+    { label: "B", text: "No — save Arshdeep for over 20, bowl medium pace now", icon: "" },
+    { label: "C", text: "Bowl spinner — Rashid weak vs quality spin", icon: "" }
   ],
   correctOption: "B",
   scores: { A: 55, B: 79, C: 65 },
   explanation: {
-    A: ["⚠️ Arshdeep in over 18 leaves over 20 unprotected (-12)", "✅ Rashid can hit — getting him out matters (+10)", "📊 27 off 18 needs 9 RPO — very hard for lower order without key batter (+12)", "⚠️ But wasting Arshdeep now vs saving for crunch is suboptimal (-15)"],
-    B: ["✅ 27 off 18 — GT need 2 big overs — save Arshdeep for over 20 (+20)", "✅ Medium pacers can bowl Rashid out too — he's not a finisher (+15)", "📊 Teams saving best bowler for over 20 in 25-30 run defenses win 66% (+18)", "✅ Arshdeep in over 20 is match-winning move (+12)"],
-    C: ["✅ Rashid does struggle vs quality wrist spin (+12)", "⚠️ But GT need 27 off 18 — spinner might concede too (+5)", "📊 Rashid vs spin SR: 118 — significantly lower, good observation (+15)", "⚠️ Valid option but Arshdeep strategy slightly better (-5)"]
+    A: ["[Warning]  Arshdeep in over 18 leaves over 20 unprotected (-12)", "[Advantage]  Rashid can hit — getting him out matters (+10)", "[Stats]  27 off 18 needs 9 RPO — very hard for lower order without key batter (+12)", "[Warning]  But wasting Arshdeep now vs saving for crunch is suboptimal (-15)"],
+    B: ["[Advantage]  27 off 18 — GT need 2 big overs — save Arshdeep for over 20 (+20)", "[Advantage]  Medium pacers can bowl Rashid out too — he's not a finisher (+15)", "[Stats]  Teams saving best bowler for over 20 in 25-30 run defenses win 66% (+18)", "[Advantage]  Arshdeep in over 20 is match-winning move (+12)"],
+    C: ["[Advantage]  Rashid does struggle vs quality wrist spin (+12)", "[Warning]  But GT need 27 off 18 — spinner might concede too (+5)", "[Stats]  Rashid vs spin SR: 118 — significantly lower, good observation (+15)", "[Warning]  Valid option but Arshdeep strategy slightly better (-5)"]
   },
   iqPoints: { A: 8, B: 17, C: 12 }
 },
@@ -999,16 +999,16 @@ const challenges = [
   bowler: "Chahal — 1 over, 8 runs, 0 wkts",
   question: "MI 52/0 after powerplay — perfect start. RR captain — what is your plan for overs 7-10?",
   options: [
-    { label: "A", text: "Attack with pace — break the partnership now", icon: "💥" },
-    { label: "B", text: "Flood the field with spinners — dry up runs in middle overs", icon: "🌀" },
-    { label: "C", text: "Defensive field, bowl to Ishan — he's the weak link", icon: "🎯" }
+    { label: "A", text: "Attack with pace — break the partnership now", icon: "" },
+    { label: "B", text: "Flood the field with spinners — dry up runs in middle overs", icon: "" },
+    { label: "C", text: "Defensive field, bowl to Ishan — he's the weak link", icon: "" }
   ],
   correctOption: "B",
   scores: { A: 48, B: 82, C: 65 },
   explanation: {
-    A: ["❌ Rohit averages 148 SR vs pace in overs 7-10 — dangerous (-18)", "⚠️ MI need only 7.5 RPO — attack risks boundaries (-12)", "📊 Bowling pace to set Rohit in middle overs wins only 35% (-15)", "❌ Playing into MI's strength (-10)"],
-    B: ["✅ Rohit's SR vs spin in overs 7-10: 108 — significantly lower (+22)", "✅ Jaiswal wicket or Rohit dot balls = pressure builds (+18)", "📊 Spin-heavy middle overs strategy works 71% vs left-right combo (+15)", "✅ Dry up runs, force error, take wicket (+15)"],
-    C: ["✅ Ishan has lower average vs accurate bowling — valid (+12)", "⚠️ But Rohit on 34 is the bigger threat — wrong priority (-10)", "📊 Bowling to weaker batter in a partnership rarely works if set batter scores freely (-8)", "⚠️ Partially correct thinking but wrong execution (-5)"]
+    A: ["[Risk]  Rohit averages 148 SR vs pace in overs 7-10 — dangerous (-18)", "[Warning]  MI need only 7.5 RPO — attack risks boundaries (-12)", "[Stats]  Bowling pace to set Rohit in middle overs wins only 35% (-15)", "[Risk]  Playing into MI's strength (-10)"],
+    B: ["[Advantage]  Rohit's SR vs spin in overs 7-10: 108 — significantly lower (+22)", "[Advantage]  Jaiswal wicket or Rohit dot balls = pressure builds (+18)", "[Stats]  Spin-heavy middle overs strategy works 71% vs left-right combo (+15)", "[Advantage]  Dry up runs, force error, take wicket (+15)"],
+    C: ["[Advantage]  Ishan has lower average vs accurate bowling — valid (+12)", "[Warning]  But Rohit on 34 is the bigger threat — wrong priority (-10)", "[Stats]  Bowling to weaker batter in a partnership rarely works if set batter scores freely (-8)", "[Warning]  Partially correct thinking but wrong execution (-5)"]
   },
   iqPoints: { A: 5, B: 18, C: 12 }
 },
@@ -1022,16 +1022,16 @@ const challenges = [
   bowler: "Jadeja — 3 overs, 22 runs, 1 wkt",
   question: "Narine promoting himself to bat. Jadeja has 1 over left. CSK captain — use him now vs Narine?",
   options: [
-    { label: "A", text: "Bowl Jadeja vs Narine immediately — he's played him before", icon: "⚡" },
-    { label: "B", text: "Save Jadeja for death — bowl pace to Narine", icon: "💨" },
-    { label: "C", text: "Bring Chahar — swing bowler vs Narine's unconventional style", icon: "🎯" }
+    { label: "A", text: "Bowl Jadeja vs Narine immediately — he's played him before", icon: "" },
+    { label: "B", text: "Save Jadeja for death — bowl pace to Narine", icon: "" },
+    { label: "C", text: "Bring Chahar — swing bowler vs Narine's unconventional style", icon: "" }
   ],
   correctOption: "A",
   scores: { A: 83, B: 52, C: 60 },
   explanation: {
-    A: ["✅ Narine vs Jadeja: dismissed 3 times in last 4 T20 encounters (+25)", "✅ Jadeja knows his angles and can vary pace to confuse Narine (+20)", "📊 Narine's SR vs left-arm spin: 118 vs pace: 178 — massive difference (+18)", "✅ This is the perfect match-up — use it now (+12)"],
-    B: ["❌ Narine LOVES pace bowling — worst decision (-22)", "📊 Narine's SR vs pace in death: 205 — he will destroy it (-20)", "❌ Saving Jadeja while Narine feasts on pace is match-losing (-18)", "❌ Do not bowl pace to Narine (-15)"],
-    C: ["✅ Chahar's swing can trouble Narine sometimes (+10)", "⚠️ But Jadeja's specific record vs Narine is far superior (-10)", "📊 When you have a proven match-up, use it — don't experiment (+5)", "⚠️ Reasonable but inferior to Jadeja option (-8)"]
+    A: ["[Advantage]  Narine vs Jadeja: dismissed 3 times in last 4 T20 encounters (+25)", "[Advantage]  Jadeja knows his angles and can vary pace to confuse Narine (+20)", "[Stats]  Narine's SR vs left-arm spin: 118 vs pace: 178 — massive difference (+18)", "[Advantage]  This is the perfect match-up — use it now (+12)"],
+    B: ["[Risk]  Narine LOVES pace bowling — worst decision (-22)", "[Stats]  Narine's SR vs pace in death: 205 — he will destroy it (-20)", "[Risk]  Saving Jadeja while Narine feasts on pace is match-losing (-18)", "[Risk]  Do not bowl pace to Narine (-15)"],
+    C: ["[Advantage]  Chahar's swing can trouble Narine sometimes (+10)", "[Warning]  But Jadeja's specific record vs Narine is far superior (-10)", "[Stats]  When you have a proven match-up, use it — don't experiment (+5)", "[Warning]  Reasonable but inferior to Jadeja option (-8)"]
   },
   iqPoints: { A: 20, B: 2, C: 10 }
 },
@@ -1045,16 +1045,16 @@ const challenges = [
   bowler: "Bishnoi — 2 overs, 14 runs, 1 wkt",
   question: "Pant is set at Kotla. LSG captain — continue Bishnoi or change?",
   options: [
-    { label: "A", text: "Continue Bishnoi — he's bowling well, got a wicket", icon: "✅" },
-    { label: "B", text: "Bring Krunal — left-arm spin vs Pant's aggressive style", icon: "🌀" },
-    { label: "C", text: "Bring pace — Avesh to challenge Pant with short balls", icon: "💥" }
+    { label: "A", text: "Continue Bishnoi — he's bowling well, got a wicket", icon: "[Advantage] " },
+    { label: "B", text: "Bring Krunal — left-arm spin vs Pant's aggressive style", icon: "" },
+    { label: "C", text: "Bring pace — Avesh to challenge Pant with short balls", icon: "" }
   ],
   correctOption: "A",
   scores: { A: 77, B: 65, C: 48 },
   explanation: {
-    A: ["✅ Bishnoi on a wicket — never change a winning formula (+20)", "✅ Kotla turns — leg spin effective here at over 10 (+18)", "📊 Bowler who just took wicket takes another in next 2 overs: 58% probability (+15)", "✅ Pant has faced Bishnoi, is respecting him — keep pressure (+12)"],
-    B: ["✅ Krunal vs Pant is good match-up on paper (+12)", "⚠️ But Bishnoi is currently HOT — changing now breaks rhythm (-10)", "📊 Krunal's economy at Kotla: 7.8 — worse than Bishnoi's current spell (-8)", "⚠️ Valid option but timing is wrong (-5)"],
-    C: ["❌ Pant's SR vs pace at Kotla: 172 — terrible idea (-20)", "📊 Short balls to Pant: he averages 185 SR against them (-18)", "❌ Playing into Pant's strength completely (-15)", "❌ This would likely result in 20+ over from Avesh (-12)"]
+    A: ["[Advantage]  Bishnoi on a wicket — never change a winning formula (+20)", "[Advantage]  Kotla turns — leg spin effective here at over 10 (+18)", "[Stats]  Bowler who just took wicket takes another in next 2 overs: 58% probability (+15)", "[Advantage]  Pant has faced Bishnoi, is respecting him — keep pressure (+12)"],
+    B: ["[Advantage]  Krunal vs Pant is good match-up on paper (+12)", "[Warning]  But Bishnoi is currently HOT — changing now breaks rhythm (-10)", "[Stats]  Krunal's economy at Kotla: 7.8 — worse than Bishnoi's current spell (-8)", "[Warning]  Valid option but timing is wrong (-5)"],
+    C: ["[Risk]  Pant's SR vs pace at Kotla: 172 — terrible idea (-20)", "[Stats]  Short balls to Pant: he averages 185 SR against them (-18)", "[Risk]  Playing into Pant's strength completely (-15)", "[Risk]  This would likely result in 20+ over from Avesh (-12)"]
   },
   iqPoints: { A: 16, B: 12, C: 3 }
 },
@@ -1068,16 +1068,16 @@ const challenges = [
   bowler: "Innings complete",
   question: "GT need 179. Toss winner chose to bowl. GT captain — how do you plan the chase?",
   options: [
-    { label: "A", text: "Go hard in powerplay — take the game on early", icon: "💥" },
-    { label: "B", text: "Steady powerplay, accelerate overs 11-15, finish strong", icon: "🧠" },
-    { label: "C", text: "Conservative start — save wickets, explode in death", icon: "🛡️" }
+    { label: "A", text: "Go hard in powerplay — take the game on early", icon: "" },
+    { label: "B", text: "Steady powerplay, accelerate overs 11-15, finish strong", icon: "" },
+    { label: "C", text: "Conservative start — save wickets, explode in death", icon: "" }
   ],
   correctOption: "B",
   scores: { A: 62, B: 85, C: 45 },
   explanation: {
-    A: ["⚠️ Powerplay aggression risks early wickets on this pitch (+8)", "📊 Teams going all-out in PP chasing 175+ lose 58% of matches (-12)", "✅ Can work if openers connect (+10)", "⚠️ High variance approach on a used pitch (-10)"],
-    B: ["✅ 179 target — 9 RPO needed — very achievable with wickets in hand (+22)", "✅ Steady PP (50-55), accelerate middle (70-75), finish (50-55) = 175+ (+20)", "📊 Teams scoring 45-55 in PP chasing 175-185 win 67% of matches (+18)", "✅ Textbook chase strategy for this target (+15)"],
-    C: ["❌ 179 off 20 overs needs 8.95 RPO — cannot be conservative (-20)", "📊 Teams scoring below 40 in PP chasing 175+ win only 22% (-18)", "❌ Saving wickets for death is wrong when required rate is 9+ (-15)", "❌ You run out of balls before you accelerate enough (-12)"]
+    A: ["[Warning]  Powerplay aggression risks early wickets on this pitch (+8)", "[Stats]  Teams going all-out in PP chasing 175+ lose 58% of matches (-12)", "[Advantage]  Can work if openers connect (+10)", "[Warning]  High variance approach on a used pitch (-10)"],
+    B: ["[Advantage]  179 target — 9 RPO needed — very achievable with wickets in hand (+22)", "[Advantage]  Steady PP (50-55), accelerate middle (70-75), finish (50-55) = 175+ (+20)", "[Stats]  Teams scoring 45-55 in PP chasing 175-185 win 67% of matches (+18)", "[Advantage]  Textbook chase strategy for this target (+15)"],
+    C: ["[Risk]  179 off 20 overs needs 8.95 RPO — cannot be conservative (-20)", "[Stats]  Teams scoring below 40 in PP chasing 175+ win only 22% (-18)", "[Risk]  Saving wickets for death is wrong when required rate is 9+ (-15)", "[Risk]  You run out of balls before you accelerate enough (-12)"]
   },
   iqPoints: { A: 10, B: 20, C: 2 }
 },
@@ -1091,16 +1091,16 @@ const challenges = [
   bowler: "Siraj — 3 overs, 32 runs, 1 wkt",
   question: "PBKS need 23 off 18. Sam Curran batting. RCB — bowl Siraj or hold him back?",
   options: [
-    { label: "A", text: "Bowl Siraj now — take wicket, end the chase", icon: "⚡" },
-    { label: "B", text: "Hold Siraj for over 20 — bowl Hazlewood in over 18", icon: "🧠" },
-    { label: "C", text: "Bring Maxwell to bowl — surprise option", icon: "🎲" }
+    { label: "A", text: "Bowl Siraj now — take wicket, end the chase", icon: "" },
+    { label: "B", text: "Hold Siraj for over 20 — bowl Hazlewood in over 18", icon: "" },
+    { label: "C", text: "Bring Maxwell to bowl — surprise option", icon: "" }
   ],
   correctOption: "B",
   scores: { A: 58, B: 80, C: 35 },
   explanation: {
-    A: ["⚠️ Siraj has been expensive — 32 runs in 3 overs, no confidence (-12)", "📊 Bowling an expensive bowler in crunch = risky (-10)", "✅ But wicket-taking ability still relevant (+8)", "⚠️ Save Siraj for over 20 — better option (-10)"],
-    B: ["✅ Hazlewood's economy in overs 17-19: 6.8 — very good (+20)", "✅ Save Siraj's last over for over 20 when pressure is maximum (+18)", "📊 Teams saving best bowler for over 20 in 20-25 run defenses win 72% (+15)", "✅ Textbook death bowling management (+12)"],
-    C: ["❌ Maxwell bowling in crunch with 23 needed — too risky (-25)", "📊 Maxwell's economy in death: 10.2 — terrible (-20)", "❌ This would likely concede the game (-18)", "❌ Never bowl part-timer in last 3 overs of a tight chase (-15)"]
+    A: ["[Warning]  Siraj has been expensive — 32 runs in 3 overs, no confidence (-12)", "[Stats]  Bowling an expensive bowler in crunch = risky (-10)", "[Advantage]  But wicket-taking ability still relevant (+8)", "[Warning]  Save Siraj for over 20 — better option (-10)"],
+    B: ["[Advantage]  Hazlewood's economy in overs 17-19: 6.8 — very good (+20)", "[Advantage]  Save Siraj's last over for over 20 when pressure is maximum (+18)", "[Stats]  Teams saving best bowler for over 20 in 20-25 run defenses win 72% (+15)", "[Advantage]  Textbook death bowling management (+12)"],
+    C: ["[Risk]  Maxwell bowling in crunch with 23 needed — too risky (-25)", "[Stats]  Maxwell's economy in death: 10.2 — terrible (-20)", "[Risk]  This would likely concede the game (-18)", "[Risk]  Never bowl part-timer in last 3 overs of a tight chase (-15)"]
   },
   iqPoints: { A: 10, B: 17, C: 1 }
 },
@@ -1114,16 +1114,16 @@ const challenges = [
   bowler: "Starc — 3 overs, 38 runs, 0 wkts",
   question: "Hardik is in beast mode. KKR — bowl Starc's last over now or save for over 20?",
   options: [
-    { label: "A", text: "Bowl Starc in over 19 — stop Hardik before he peaks", icon: "⚡" },
-    { label: "B", text: "Save Starc for over 20 — bowl Narine in over 19", icon: "🧠" },
-    { label: "C", text: "Bowl Cummins — he has 2 overs left", icon: "💨" }
+    { label: "A", text: "Bowl Starc in over 19 — stop Hardik before he peaks", icon: "" },
+    { label: "B", text: "Save Starc for over 20 — bowl Narine in over 19", icon: "" },
+    { label: "C", text: "Bowl Cummins — he has 2 overs left", icon: "" }
   ],
   correctOption: "C",
   scores: { A: 58, B: 65, C: 80 },
   explanation: {
-    A: ["⚠️ Starc 0 wickets, 38 runs in 3 overs — not in form today (-15)", "❌ Using expensive bowler in penultimate over is risky (-12)", "📊 Starc when wicketless after 3 overs goes for 10+ in 4th over 60% of times (-10)", "⚠️ Not ideal (-8)"],
-    B: ["✅ Narine's SR allowed in death: 6.8 economy (+10)", "⚠️ But Hardik averages 178 SR vs spin in death — risky (-10)", "📊 Narine in death overs: 58% chance of conceding 15+ (-8)", "⚠️ Partially right strategy (-5)"],
-    C: ["✅ Cummins has 2 overs left AND is fresh — best option (+22)", "✅ Cummins vs Hardik: dismissed him twice this IPL season (+20)", "📊 Cummins economy in death overs: 7.1 — much better than Starc today (+18)", "✅ Use fresh, in-form, proven match-up bowler (+15)"]
+    A: ["[Warning]  Starc 0 wickets, 38 runs in 3 overs — not in form today (-15)", "[Risk]  Using expensive bowler in penultimate over is risky (-12)", "[Stats]  Starc when wicketless after 3 overs goes for 10+ in 4th over 60% of times (-10)", "[Warning]  Not ideal (-8)"],
+    B: ["[Advantage]  Narine's SR allowed in death: 6.8 economy (+10)", "[Warning]  But Hardik averages 178 SR vs spin in death — risky (-10)", "[Stats]  Narine in death overs: 58% chance of conceding 15+ (-8)", "[Warning]  Partially right strategy (-5)"],
+    C: ["[Advantage]  Cummins has 2 overs left AND is fresh — best option (+22)", "[Advantage]  Cummins vs Hardik: dismissed him twice this IPL season (+20)", "[Stats]  Cummins economy in death overs: 7.1 — much better than Starc today (+18)", "[Advantage]  Use fresh, in-form, proven match-up bowler (+15)"]
   },
   iqPoints: { A: 8, B: 12, C: 18 }
 },
@@ -1137,16 +1137,16 @@ const challenges = [
   bowler: "Chahar — 2 overs, 12 runs, 2 wkts",
   question: "RR collapsed to 14/3 in 3 overs chasing 192. You are RR captain — what do you tell Samson?",
   options: [
-    { label: "A", text: "Survive the powerplay — rebuild at any cost", icon: "🛡️" },
-    { label: "B", text: "Attack now — nothing to lose, go for it", icon: "💥" },
-    { label: "C", text: "Rotate strike — keep scoreboard ticking, reduce pressure", icon: "🔄" }
+    { label: "A", text: "Survive the powerplay — rebuild at any cost", icon: "" },
+    { label: "B", text: "Attack now — nothing to lose, go for it", icon: "" },
+    { label: "C", text: "Rotate strike — keep scoreboard ticking, reduce pressure", icon: "" }
   ],
   correctOption: "A",
   scores: { A: 78, B: 48, C: 65 },
   explanation: {
-    A: ["✅ 14/3 — one more wicket and match is over. Survival first (+22)", "📊 Teams surviving PP at 14/3 and rebuilding win 28% — teams losing 4th wicket in PP win only 8% (+20)", "✅ Get to 35-40 at end of PP with 7 wickets, chase becomes possible (+18)", "✅ Samson needs to bat 25+ balls minimum (+12)"],
-    B: ["❌ 14/3 is not 'nothing to lose' — 7 wickets still in hand (-18)", "📊 Aggressive batting at 14/3 leads to all out before over 12: 65% chance (-15)", "❌ One more wicket = match over in 10 overs (-15)", "❌ Wrong reading of situation (-12)"],
-    C: ["✅ Rotation is safer than aggression (+12)", "⚠️ But 192 target needs 9.6 RPO — pure rotation won't work long term (-8)", "📊 Rotation buys time but doesn't solve the run rate problem (-5)", "⚠️ Better than B but worse than full consolidation (-5)"]
+    A: ["[Advantage]  14/3 — one more wicket and match is over. Survival first (+22)", "[Stats]  Teams surviving PP at 14/3 and rebuilding win 28% — teams losing 4th wicket in PP win only 8% (+20)", "[Advantage]  Get to 35-40 at end of PP with 7 wickets, chase becomes possible (+18)", "[Advantage]  Samson needs to bat 25+ balls minimum (+12)"],
+    B: ["[Risk]  14/3 is not 'nothing to lose' — 7 wickets still in hand (-18)", "[Stats]  Aggressive batting at 14/3 leads to all out before over 12: 65% chance (-15)", "[Risk]  One more wicket = match over in 10 overs (-15)", "[Risk]  Wrong reading of situation (-12)"],
+    C: ["[Advantage]  Rotation is safer than aggression (+12)", "[Warning]  But 192 target needs 9.6 RPO — pure rotation won't work long term (-8)", "[Stats]  Rotation buys time but doesn't solve the run rate problem (-5)", "[Warning]  Better than B but worse than full consolidation (-5)"]
   },
   iqPoints: { A: 17, B: 5, C: 12 }
 },
@@ -1160,16 +1160,16 @@ const challenges = [
   bowler: "Anrich Nortje — 3 overs, 24 runs, 0 wkts",
   question: "Gill is cruising. DC — how do you stop him with Nortje having 1 over left?",
   options: [
-    { label: "A", text: "Bowl Nortje now — short ball plan vs Gill", icon: "💥" },
-    { label: "B", text: "Save Nortje for over 20 — bowl Axar to Gill", icon: "🧠" },
-    { label: "C", text: "Set attacking field for Gill — invite top edge", icon: "🎯" }
+    { label: "A", text: "Bowl Nortje now — short ball plan vs Gill", icon: "" },
+    { label: "B", text: "Save Nortje for over 20 — bowl Axar to Gill", icon: "" },
+    { label: "C", text: "Set attacking field for Gill — invite top edge", icon: "" }
   ],
   correctOption: "B",
   scores: { A: 55, B: 82, C: 65 },
   explanation: {
-    A: ["⚠️ Gill's SR vs pace in overs 15-18: 158 — he's comfortable (+5)", "📊 Nortje short ball vs Gill: dismissed once in 8 attempts (-5)", "⚠️ Wasting last Nortje over at 16 leaves over 20 exposed (-15)", "❌ GT need only 23 off 24 — no panic needed from DC (-10)"],
-    B: ["✅ Axar at Kotla/away: Gill's SR vs left-arm spin: 112 (+20)", "✅ Save Nortje for over 20 when GT may need 12-15 off last over (+22)", "📊 Teams saving pace for over 20 in 20-25 run defenses win 68% (+18)", "✅ Perfect bowling management in a close finish (+12)"],
-    C: ["✅ Attacking field creates catching opportunities (+12)", "⚠️ Gill at 72 is too set to gift a top edge easily (-8)", "📊 Gill's caught-in-outfield % when set: 12% — very low (-10)", "⚠️ Romantic option but low probability of success (-5)"]
+    A: ["[Warning]  Gill's SR vs pace in overs 15-18: 158 — he's comfortable (+5)", "[Stats]  Nortje short ball vs Gill: dismissed once in 8 attempts (-5)", "[Warning]  Wasting last Nortje over at 16 leaves over 20 exposed (-15)", "[Risk]  GT need only 23 off 24 — no panic needed from DC (-10)"],
+    B: ["[Advantage]  Axar at Kotla/away: Gill's SR vs left-arm spin: 112 (+20)", "[Advantage]  Save Nortje for over 20 when GT may need 12-15 off last over (+22)", "[Stats]  Teams saving pace for over 20 in 20-25 run defenses win 68% (+18)", "[Advantage]  Perfect bowling management in a close finish (+12)"],
+    C: ["[Advantage]  Attacking field creates catching opportunities (+12)", "[Warning]  Gill at 72 is too set to gift a top edge easily (-8)", "[Stats]  Gill's caught-in-outfield % when set: 12% — very low (-10)", "[Warning]  Romantic option but low probability of success (-5)"]
   },
   iqPoints: { A: 8, B: 18, C: 12 }
 },
@@ -1183,16 +1183,16 @@ const challenges = [
   bowler: "Hazlewood — 2 overs, 18 runs, 1 wkt",
   question: "LSG need 83 off 42 — very steep. Pooran just arrived. RCB captain — aggressive or defensive?",
   options: [
-    { label: "A", text: "Aggressive field — get Pooran early before he settles", icon: "⚡" },
-    { label: "B", text: "Defensive field — dry up runs, make it impossible mathematically", icon: "🛡️" },
-    { label: "C", text: "Bowl Hazlewood — he got a wicket, continue his spell", icon: "💨" }
+    { label: "A", text: "Aggressive field — get Pooran early before he settles", icon: "" },
+    { label: "B", text: "Defensive field — dry up runs, make it impossible mathematically", icon: "" },
+    { label: "C", text: "Bowl Hazlewood — he got a wicket, continue his spell", icon: "" }
   ],
   correctOption: "A",
   scores: { A: 85, B: 42, C: 68 },
   explanation: {
-    A: ["✅ Pooran MUST attack — he knows it. Attacking field = caught in deep (+22)", "✅ Pooran's caught in outfield % when chasing steeply: 34% (+20)", "📊 83 off 42 forces 11.9 RPO — Pooran HAS to hit every ball (+18)", "✅ Attack when opposition is forced to be aggressive — it's a trap (+15)"],
-    B: ["❌ Defensive field to Pooran chasing 83 off 42 = boundary after boundary (-22)", "📊 Pooran's SR vs defensive fields in steep chases: 215 (-20)", "❌ He will clear the boundary easily with no sweeper restrictions (-18)", "❌ Worst possible strategy here (-15)"],
-    C: ["✅ Hazlewood on a wicket is always good (+12)", "⚠️ But field setting is the KEY decision here, not bowler choice (-5)", "📊 Even the best bowler goes for runs with defensive field vs Pooran in this situation (-8)", "⚠️ Right bowler, potentially wrong field (-5)"]
+    A: ["[Advantage]  Pooran MUST attack — he knows it. Attacking field = caught in deep (+22)", "[Advantage]  Pooran's caught in outfield % when chasing steeply: 34% (+20)", "[Stats]  83 off 42 forces 11.9 RPO — Pooran HAS to hit every ball (+18)", "[Advantage]  Attack when opposition is forced to be aggressive — it's a trap (+15)"],
+    B: ["[Risk]  Defensive field to Pooran chasing 83 off 42 = boundary after boundary (-22)", "[Stats]  Pooran's SR vs defensive fields in steep chases: 215 (-20)", "[Risk]  He will clear the boundary easily with no sweeper restrictions (-18)", "[Risk]  Worst possible strategy here (-15)"],
+    C: ["[Advantage]  Hazlewood on a wicket is always good (+12)", "[Warning]  But field setting is the KEY decision here, not bowler choice (-5)", "[Stats]  Even the best bowler goes for runs with defensive field vs Pooran in this situation (-8)", "[Warning]  Right bowler, potentially wrong field (-5)"]
   },
   iqPoints: { A: 20, B: 2, C: 12 }
 },
@@ -1206,16 +1206,16 @@ const challenges = [
   bowler: "Bumrah — bowling last ball",
   question: "Last ball. CSK need 6. Dhoni on strike. Bumrah bowling. What do you bowl?",
   options: [
-    { label: "A", text: "Full straight yorker — don't give room", icon: "🎯" },
-    { label: "B", text: "Wide yorker outside off — harder to hit for six", icon: "💨" },
-    { label: "C", text: "Short ball — Dhoni can't pull at this age", icon: "💥" }
+    { label: "A", text: "Full straight yorker — don't give room", icon: "" },
+    { label: "B", text: "Wide yorker outside off — harder to hit for six", icon: "" },
+    { label: "C", text: "Short ball — Dhoni can't pull at this age", icon: "" }
   ],
   correctOption: "A",
   scores: { A: 88, B: 65, C: 25 },
   explanation: {
-    A: ["✅ Yorker is hardest ball to hit for 6 — even for Dhoni (+25)", "✅ Bumrah's yorker accuracy: 94% on target (+22)", "📊 Full straight yorker: only 8% chance of six being hit (+20)", "✅ This is the textbook last-ball-six-defense delivery (+18)"],
-    B: ["✅ Wide yorker gives less angle for Dhoni to hit straight (+15)", "⚠️ But risk of wide ball — free hit = automatic six (-10)", "📊 Wide yorker probability of no-ball/wide: 18% — too risky (-12)", "⚠️ Good thought but risky execution (-8)"],
-    C: ["❌ Dhoni's short ball SR this season: 145 — he can still pull (-15)", "❌ Short ball can be pulled for six far more easily than yorker (-20)", "📊 Short ball vs Dhoni on last ball: 31% chance of six — unacceptable (-18)", "❌ Never bowl short on last ball with six needed (-15)"]
+    A: ["[Advantage]  Yorker is hardest ball to hit for 6 — even for Dhoni (+25)", "[Advantage]  Bumrah's yorker accuracy: 94% on target (+22)", "[Stats]  Full straight yorker: only 8% chance of six being hit (+20)", "[Advantage]  This is the textbook last-ball-six-defense delivery (+18)"],
+    B: ["[Advantage]  Wide yorker gives less angle for Dhoni to hit straight (+15)", "[Warning]  But risk of wide ball — free hit = automatic six (-10)", "[Stats]  Wide yorker probability of no-ball/wide: 18% — too risky (-12)", "[Warning]  Good thought but risky execution (-8)"],
+    C: ["[Risk]  Dhoni's short ball SR this season: 145 — he can still pull (-15)", "[Risk]  Short ball can be pulled for six far more easily than yorker (-20)", "[Stats]  Short ball vs Dhoni on last ball: 31% chance of six — unacceptable (-18)", "[Risk]  Never bowl short on last ball with six needed (-15)"]
   },
   iqPoints: { A: 22, B: 12, C: 1 }
 }
@@ -1306,11 +1306,11 @@ function loadChallenge() {
   const data = getNextChallenge();
   currentChallenge = data;
   totalChallengesPlayed++;
-  elTracker.innerText = `Challenge ${totalChallengesPlayed} of ∞`;
+  elTracker.innerText = `Challenge ${totalChallengesPlayed} of 8`;
   
   elTeam1.innerText = data.team1;
   elTeam2.innerText = data.team2;
-  elBanner.style.background = `linear-gradient(90deg, ${data.team1color} 0%, #1a1a2e 50%, ${data.team2color} 100%)`;
+  elBanner.style.background = '#1a1a2e';
   elCard.style.borderColor = data.team1color;
   elCard.style.boxShadow = `0 10px 30px ${data.team1color}33`;
 
@@ -1415,11 +1415,11 @@ function showArgueSection(userOption, correctOption, challengeId) {
   
   if (userOption !== correctOption) {
     document.querySelector('.argue-header').innerHTML = 
-      `🗣️ YOU CHOSE ${userOption} — AI SAYS ${correctOption} WAS BETTER. DISAGREE?
+      ` YOU CHOSE ${userOption} — AI SAYS ${correctOption} WAS BETTER. DISAGREE?
       <span class="argue-sub">Make your case — the community will judge</span>`;
   } else {
     document.querySelector('.argue-header').innerHTML = 
-      `✅ YOU AGREED WITH AI — But have a different reason? Share it!
+      `[Advantage]  YOU AGREED WITH AI — But have a different reason? Share it!
       <span class="argue-sub">Make your case — the community will judge</span>`;
   }
   
@@ -1429,7 +1429,11 @@ function showArgueSection(userOption, correctOption, challengeId) {
 
 elBtnNext.addEventListener('click', () => {
   document.getElementById('argue-section').style.display = 'none';
-  loadChallenge();
+  if (totalChallengesPlayed >= 8) {
+    showSeasonComplete();
+  } else {
+    loadChallenge();
+  }
 });
 
 function showSeasonComplete() {
@@ -1442,6 +1446,8 @@ function showSeasonComplete() {
 
 btnPlayAgain.addEventListener('click', () => {
   totalChallengesPlayed = 0;
+  currentIndex = 0;
+  buildShuffledQueue();
   elGameArea.style.display = 'flex';
   elSeasonComplete.style.display = 'none';
   loadChallenge();
@@ -1474,7 +1480,7 @@ document.getElementById('submit-argument').addEventListener('click', () => {
   renderCommunityArgs(challengeId);
   
   // Reuse the toast mechanism for success feedback
-  elIqToast.innerText = "🔥 Your take submitted! Community will judge...";
+  elIqToast.innerText = " Your take submitted! Community will judge...";
   elIqToast.classList.add('show');
   setTimeout(() => elIqToast.classList.remove('show'), 3000);
 
@@ -1482,7 +1488,7 @@ document.getElementById('submit-argument').addEventListener('click', () => {
   const aiLoadingId = Date.now() + 1;
   args.unshift({
     id: aiLoadingId,
-    text: "🤖 *AI is analyzing your take...*",
+    text: " *AI is analyzing your take...*",
     option: currentChallenge.correctOption,
     timestamp: Date.now(),
     votes: 0,
@@ -1500,13 +1506,13 @@ document.getElementById('submit-argument').addEventListener('click', () => {
     
     const loadingIdx = currentArgs.findIndex(a => a.id === aiLoadingId);
     if (loadingIdx > -1) {
-      currentArgs[loadingIdx].text = "🤖 AI says: " + aiResponseText;
+      currentArgs[loadingIdx].text = " AI says: " + aiResponseText;
       currentArgs[loadingIdx].votes = 10; // AI flexes with some base votes
       delete currentArgs[loadingIdx].id; // cleanup temp id
     } else {
       // Fallback if loading arg was lost
       currentArgs.unshift({
-        text: "🤖 AI says: " + aiResponseText,
+        text: " AI says: " + aiResponseText,
         option: currentChallenge.correctOption,
         timestamp: Date.now(),
         votes: 10,
@@ -1536,7 +1542,10 @@ Be concise, analytical, and slightly competitive but respectful. Keep it to exac
 Respond ONLY with the text of your argument.`;
 
   try {
-    const response = await fetch(`http://localhost:5000/api/argue`, {
+    const apiUrl = (window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1')
+      ? (window.location.port === '5000' ? '/api/argue' : 'http://localhost:5000/api/argue')
+      : '/api/argue';
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: prompt })
@@ -1558,25 +1567,27 @@ function renderCommunityArgs(challengeId) {
   try { args = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}
   
   const container = document.getElementById('community-args-list');
-  document.getElementById('arg-count').textContent = args.length;
+  const countEl = document.getElementById('arg-count');
+  if (countEl) countEl.textContent = args.length;
+  if (!container) return;
   
   if (args.length === 0) {
     container.innerHTML = '<div class="no-args">No takes yet — be the first to argue!</div>';
     return;
   }
   
-  args.sort((a, b) => b.votes - a.votes);
+  args.sort((a, b) => (b.votes || 0) - (a.votes || 0));
   
   container.innerHTML = args.map((arg, idx) => `
-    <div class="arg-card ${idx === 0 && arg.votes > 0 ? 'top-arg' : ''}">
-      ${idx === 0 && arg.votes > 0 ? '<div class="top-badge">🏆 Top Take</div>' : ''}
+    <div class="arg-card ${idx === 0 && (arg.votes || 0) > 0 ? 'top-arg' : ''}">
+      ${idx === 0 && (arg.votes || 0) > 0 ? '<div class="top-badge">Top Take</div>' : ''}
       <div class="arg-option-badge">Chose ${arg.option}</div>
       <div class="arg-text">${arg.text}</div>
       <div class="arg-footer">
         <button class="vote-btn ${arg.userVoted ? 'voted' : ''}" 
-          onclick="voteArgument(${challengeId}, ${idx})"
+          onclick="voteArgument(${challengeId}, ${arg.timestamp})"
           ${arg.userVoted ? 'disabled' : ''}>
-          👍 ${arg.votes}
+          Vote (${arg.votes || 0})
         </button>
         <span class="arg-time">${getTimeAgo(arg.timestamp)}</span>
       </div>
@@ -1584,13 +1595,13 @@ function renderCommunityArgs(challengeId) {
   `).join('');
 }
 
-window.voteArgument = function(challengeId, argIndex) {
+window.voteArgument = function(challengeId, timestamp) {
   const key = `args_challenge_${challengeId}`;
   let args = JSON.parse(localStorage.getItem(key)) || [];
-  
-  if (!args[argIndex].userVoted) {
-    args[argIndex].votes++;
-    args[argIndex].userVoted = true;
+  const target = args.find(a => a.timestamp === timestamp);
+  if (target && !target.userVoted) {
+    target.votes = (target.votes || 0) + 1;
+    target.userVoted = true;
     localStorage.setItem(key, JSON.stringify(args));
     renderCommunityArgs(challengeId);
   }

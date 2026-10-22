@@ -38,14 +38,25 @@ df["season"] = df["season"].astype(str).str[:4].astype(int)
 train_df = df[df["season"] <= 2023]
 test_df = df[df["season"] >= 2024]
 
-features_pre = ["elo_diff", "form_diff", "venue_diff", "batting_strength_diff", "bowling_strength_diff"]
+features_pre = [
+    "elo_diff", "recent_win_rate_diff", "venue_win_rate_diff",
+    "batting_strength_diff", "bowling_strength_diff",
+    "recent_bat_run_rate_diff", "recent_bowl_wkts_diff",
+    "recent_runs_scored_avg_diff", "recent_runs_conceded_avg_diff",
+    "season_win_rate_diff"
+]
 features_post = features_pre + ["toss_impact", "toss_won"]
 target = "target"
 
+# Binarize toss_won: 1 if team1 won toss, 0 otherwise
+df["toss_won"] = (df["toss_won"] == 1).astype(int)
+
 # Double-stacking (Data Mirroring) to ensure symmetry and prevent team1 positional bias
 df_mirrored = df.copy()
-for f in features_post:
+for f in features_pre:
     df_mirrored[f] = -df_mirrored[f]
+df_mirrored["toss_impact"] = -df_mirrored["toss_impact"]
+df_mirrored["toss_won"] = 1 - df_mirrored["toss_won"]
 df_mirrored[target] = 1 - df_mirrored[target]
 df_combined = pd.concat([df, df_mirrored], ignore_index=True)
 
@@ -115,7 +126,8 @@ metadata = {
     "venue_stats": final_states["venue_stats"],
     "venue_overall": final_states.get("venue_overall", {}),
     "h2h_stats": final_states.get("h2h_stats", {}),
-    "team_perf": final_states.get("team_perf", {})
+    "team_perf": final_states.get("team_perf", {}),
+    "season_form": final_states.get("season_form", {})
 }
 joblib.dump(metadata, "models/encoders.pkl")
 

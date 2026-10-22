@@ -9,8 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --orange-gradient: linear-gradient(135deg, #FF8C00, #FFA500);
-      --purple-gradient: linear-gradient(135deg, #8A2BE2, #4B0082);
+      --orange-gradient: #FF8C00;
+      --purple-gradient: #8A2BE2;
       --card-bg: rgba(255, 255, 255, 0.05);
       --card-border: rgba(255, 255, 255, 0.1);
     }
@@ -24,7 +24,7 @@
     .stats-header {
       padding: 120px 20px 60px;
       text-align: center;
-      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 70%);
+      background: #0f172a;
     }
 
     .stats-header h1 {
@@ -32,13 +32,7 @@
       font-size: 3.5rem;
       font-weight: 800;
       margin-bottom: 1rem;
-      background: linear-gradient(to right, #fff, #94a3b8);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-fill-color: transparent;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #ffffff;
     }
 
     .stats-controls {
@@ -377,10 +371,7 @@
       font-family: 'Outfit', sans-serif;
       display: block;
       margin: 5px 0;
-      background: linear-gradient(to bottom, #fff, #94a3b8);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #ffffff;
     }
 
     .record-unit {
@@ -440,7 +431,7 @@
     <!-- Orange Cap Section -->
     <section class="stats-card">
       <div class="card-header">
-        <div class="cap-icon orange-cap-icon">🏏</div>
+        <div class="cap-icon orange-cap-icon" style="font-size:0.85rem;font-weight:700;">BAT</div>
         <h2 class="card-title">Orange Cap</h2>
       </div>
       
@@ -469,7 +460,7 @@
     <!-- Purple Cap Section -->
     <section class="stats-card">
       <div class="card-header">
-        <div class="cap-icon purple-cap-icon">⚽</div>
+        <div class="cap-icon purple-cap-icon" style="font-size:0.85rem;font-weight:700;">BOWL</div>
         <h2 class="card-title">Purple Cap</h2>
       </div>
 
@@ -498,16 +489,16 @@
 
   <!-- Records View (Hidden by default) -->
   <main id="recordsView" class="records-container">
-    <div class="record-section-title">🏏 Batting Milestones</div>
+    <div class="record-section-title">Batting Milestones</div>
     <div id="battingRecordsGrid" class="record-grid"></div>
 
-    <div class="record-section-title">⚽ Bowling Milestones</div>
+    <div class="record-section-title">Bowling Milestones</div>
     <div id="bowlingRecordsGrid" class="record-grid"></div>
 
-    <div class="record-section-title">🚀 Team Milestones</div>
+    <div class="record-section-title">Team Milestones</div>
     <div id="teamRecordsGrid" class="record-grid"></div>
 
-    <div class="record-section-title">👑 Elite Captaincy</div>
+    <div class="record-section-title">Elite Captaincy</div>
     <div id="leadershipRecordsGrid" class="record-grid"></div>
   </main>
 
@@ -571,7 +562,7 @@
         // Render Orange Cap
         const orangeWinner = data.orangeCap[0];
         document.getElementById('orangeCapWinner').innerHTML = `
-          <div class="winner-photo">👤</div>
+          <div class="winner-photo" style="font-size:0.75rem;font-weight:700;">BAT</div>
           <div class="winner-info">
             <span class="name">${orangeWinner.player}</span>
             <span class="metric">${orangeWinner.team} • ${orangeWinner.runs} Runs • ${orangeWinner.avg} Avg</span>
@@ -595,7 +586,7 @@
         // Render Purple Cap
         const purpleWinner = data.purpleCap[0];
         document.getElementById('purpleCapWinner').innerHTML = `
-          <div class="winner-photo" style="background:#4b0082">👤</div>
+          <div class="winner-photo" style="background:#4b0082;font-size:0.75rem;font-weight:700;">BOWL</div>
           <div class="winner-info">
             <span class="name">${purpleWinner.player}</span>
             <span class="metric">${purpleWinner.team} • ${purpleWinner.wkts} Wickets • ${purpleWinner.econ} Econ</span>
@@ -655,7 +646,6 @@
 
         battingGrid.innerHTML = ALL_TIME_RECORDS.batting.map(r => `
           <div class="record-card batting-record">
-            <span class="record-icon">${r.icon}</span>
             <span class="record-value">${r.value}</span>
             <span class="record-unit">${r.unit}</span>
             <span class="record-label">
@@ -667,7 +657,6 @@
 
         bowlingGrid.innerHTML = ALL_TIME_RECORDS.bowling.map(r => `
           <div class="record-card bowling-record">
-            <span class="record-icon">${r.icon}</span>
             <span class="record-value">${r.value}</span>
             <span class="record-unit">${r.unit}</span>
             <span class="record-label">
@@ -679,7 +668,6 @@
 
         teamGrid.innerHTML = ALL_TIME_RECORDS.team.map(r => `
           <div class="record-card" style="border-color: var(--accent)">
-            <span class="record-icon">${r.icon}</span>
             <span class="record-value">${r.value}</span>
             <span class="record-unit">${r.unit}</span>
             <span class="record-label">
@@ -690,8 +678,7 @@
         `).join('');
 
         leadershipGrid.innerHTML = ALL_TIME_RECORDS.leadership.map(r => `
-          <div class="record-card" style="border-color: #FFD700; background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(0,0,0,0.5))">
-            <span class="record-icon">${r.icon}</span>
+          <div class="record-card" style="border-color: #FFD700; background: #1e293b;">
             <span class="record-value">${r.value}</span>
             <span class="record-unit">${r.unit}</span>
             <span class="record-label">

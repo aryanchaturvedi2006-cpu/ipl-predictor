@@ -132,6 +132,8 @@ CSK:[
 {id:"akshat_lsg",name:"Akshat Raghuwanshi",role:"Batsman",nat:"IND",bat:65,bowl:5},
 {id:"inglis_lsg",name:"Josh Inglis",role:"WK-Batsman",nat:"AUS",bat:78,bowl:0},
 ],};
-Object.keys(S).forEach(k=>{if(TEAMS[k])TEAMS[k].players=S[k];});
+if (typeof TEAMS !== 'undefined') {
+  Object.keys(S).forEach(k=>{if(TEAMS[k])TEAMS[k].players=S[k];});
+}
 console.log('IPL 2026 squads Part A loaded');
 })();

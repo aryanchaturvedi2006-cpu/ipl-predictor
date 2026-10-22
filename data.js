@@ -72,7 +72,7 @@ const TEAMS = {
       { id:"kishan_mi",   name:"Ishan Kishan",       role:"WK-Batsman",  nat:"IND", bat:78, bowl:0, vulnerability:"Bouncers at head", strengthZone:"Square Cut", preferredLength:"Short" },
       { id:"tilak_mi",    name:"Tilak Varma",        role:"Batsman",     nat:"IND", bat:80, bowl:8, vulnerability:"Off-spin", strengthZone:"Lofted Drive", preferredLength:"Full" },
       { id:"timdavid_mi", name:"Tim David",          role:"Batsman",     nat:"SGP", bat:84, bowl:5  },
-      { id:"nehal_mi",    name:"Naman Dhir",         name:"Naman Dhir",  role:"All-Rounder", nat:"IND", bat:72, bowl:60 },
+      { id:"nehal_mi",    name:"Naman Dhir",         role:"All-Rounder", nat:"IND", bat:72, bowl:60 },
       { id:"shreyas_mi",  name:"Shreyas Gopal",      role:"Spinner",     nat:"IND", bat:25, bowl:78 },
       { id:"coetzee_mi",  name:"Gerald Coetzee",     role:"Pacer",       nat:"SA",  bat:22, bowl:80 },
       { id:"thushara_mi", name:"Nuwan Thushara",     role:"Pacer",       nat:"SL",  bat:18, bowl:78 },

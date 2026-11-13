@@ -1,0 +1,74 @@
+{
+  "generated_at": "2026-11-13T17:44:28.327063+00:00",
+  "environment": {
+    "python_version": "3.12.4 | packaged by Anaconda, Inc. | (main, Jun 18 2024, 15:03:56) [MSC v.1929 64 bit (AMD64)]",
+    "tensorflow_version": "2.18.0",
+    "tf2onnx_version": "1.17.0",
+    "onnx_version": "1.23.2",
+    "onnxruntime_version": "1.19.2"
+  },
+  "tolerance": 0.0001,
+  "models": {
+    "ffnn_pre": {
+      "name": "FFNN Pre-Toss",
+      "keras_path": "C:\\Users\\DELL\\Desktop\\ipl-predictor\\models\\ffnn_pre.keras",
+      "onnx_path": "C:\\Users\\DELL\\Desktop\\ipl-predictor\\models\\ffnn_pre.onnx",
+      "onnx_size_bytes": 15417,
+      "input_name": "input_layer",
+      "input_shape": [
+        [
+          "unk__6",
+          10
+        ]
+      ],
+      "output_name": "Identity:0",
+      "samples_tested": 100,
+      "max_absolute_difference": 5.960464477539063e-08,
+      "mean_absolute_difference": 2.2649764730431343e-08,
+      "std_absolute_difference": 2.5330221475883263e-08,
+      "pearson_correlation": 0.9999999999996025,
+      "parity_check": "PASSED"
+    },
+    "ffnn_post": {
+      "name": "FFNN Post-Toss",
+      "keras_path": "C:\\Users\\DELL\\Desktop\\ipl-predictor\\models\\ffnn_post.keras",
+      "onnx_path": "C:\\Users\\DELL\\Desktop\\ipl-predictor\\models\\ffnn_post.onnx",
+      "onnx_size_bytes": 16018,
+      "input_name": "input_layer_post",
+      "input_shape": [
+        [
+          "unk__11",
+          12
+        ]
+      ],
+      "output_name": "Identity:0",
+      "samples_tested": 100,
+      "max_absolute_difference": 1.1920928955078125e-07,
+      "mean_absolute_difference": 2.2649764730431343e-08,
+      "std_absolute_difference": 2.9236669973897733e-08,
+      "pearson_correlation": 0.9999999999995548,
+      "parity_check": "PASSED"
+    },
+    "lstm_live": {
+      "name": "LSTM Live Match Sequence",
+      "keras_path": "C:\\Users\\DELL\\Desktop\\ipl-predictor\\models\\lstm_live.keras",
+      "onnx_path": "C:\\Users\\DELL\\Desktop\\ipl-predictor\\models\\lstm_live.onnx",
+      "onnx_size_bytes": 157666,
+      "input_name": "input_layer_lstm",
+      "input_shape": [
+        [
+          "unk__783",
+          20,
+          7
+        ]
+      ],
+      "output_name": "Identity:0",
+      "samples_tested": 100,
+      "max_absolute_difference": 1.7881393432617188e-07,
+      "mean_absolute_difference": 2.585972147528537e-08,
+      "std_absolute_difference": 2.4419152921950626e-08,
+      "pearson_correlation": 0.9999999999999859,
+      "parity_check": "PASSED"
+    }
+  }
+}

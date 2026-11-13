@@ -1,0 +1,26 @@
+{
+  "Stage_A_Classical_ML": {
+    "rss_mb": 538.8984375,
+    "delta_from_start_mb": 520.70703125
+  },
+  "Stage_B_ONNX_Imported_Unloaded": {
+    "rss_mb": 538.8984375,
+    "delta_from_stage_a_mb": 0.0
+  },
+  "Stage_C_ONNX_Sessions_Initialized": {
+    "rss_mb": 544.88671875,
+    "init_overhead_mb": 5.98828125
+  },
+  "Stage_D_500_PreToss_Inferences": {
+    "rss_mb": 546.30078125,
+    "delta_from_init_mb": 1.4140625
+  },
+  "Stage_E_500_PostToss_Inferences": {
+    "rss_mb": 546.53125,
+    "delta_from_pre_mb": 0.23046875
+  },
+  "Stage_F_500_LSTM_Inferences": {
+    "rss_mb": 546.91015625,
+    "delta_from_post_mb": 0.37890625
+  }
+}

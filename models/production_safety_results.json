@@ -1,0 +1,6 @@
+{
+  "missing_onnx_file_fallback": true,
+  "malformed_sequence_defense": true,
+  "authentic_sequence_acceptance": true,
+  "schema_invariance": true
+}

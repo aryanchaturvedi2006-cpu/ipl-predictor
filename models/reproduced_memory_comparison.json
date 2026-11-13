@@ -1,0 +1,36 @@
+{
+  "environment": {
+    "os": "Windows 11 AMD64",
+    "python": "3.12.4 (Anaconda base)",
+    "onnxruntime": "1.19.2",
+    "scikit_learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "pandas": "3.1.1",
+    "workload": "500 pre-toss + 500 post-toss + 500 live inferences"
+  },
+  "config_a": {
+    "config": "Configuration A (Classical ML Only)",
+    "rss_initial_mb": 18.03125,
+    "rss_after_assets_mb": 296.2734375,
+    "rss_after_onnx_import_mb": null,
+    "rss_after_onnx_init_mb": null,
+    "rss_after_inference_mb": 297.89453125,
+    "peak_rss_mb": 297.89453125
+  },
+  "config_b": {
+    "config": "Configuration B (ONNX Runtime Enabled)",
+    "rss_initial_mb": 18.1171875,
+    "rss_after_assets_mb": 298.3984375,
+    "rss_after_onnx_import_mb": 298.3984375,
+    "rss_after_onnx_init_mb": 301.234375,
+    "rss_after_inference_mb": 302.95703125,
+    "peak_rss_mb": 302.95703125
+  },
+  "comparisons": {
+    "initial_rss_delta_mb": 0.0859375,
+    "assets_loaded_rss_delta_mb": 2.125,
+    "onnx_init_incremental_overhead_mb": 2.8359375,
+    "post_inference_rss_delta_mb": 5.0625,
+    "peak_rss_delta_mb": 5.0625
+  }
+}

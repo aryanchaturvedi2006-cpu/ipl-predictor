@@ -148,6 +148,28 @@ def run_tests():
     
     sections = ["pre_toss", "post_toss", "live_match"]
     schema_ok = all(s in comp_json for s in sections)
+    print(f"  Schema check: {'PASSED' if schema_ok else 'FAILED'}")
+    test_results["Comparison JSON Schema"] = schema_ok
+
+    # TEST 9: ONNX Artifacts & Parity Report Verification
+    print("\n[TEST 9] ONNX Artifacts & Parity Report Verification...")
+    onnx_files = ["ffnn_pre.onnx", "ffnn_post.onnx", "lstm_live.onnx"]
+    onnx_ok = all(os.path.exists(os.path.join("models", f)) and os.path.getsize(os.path.join("models", f)) > 1000 for f in onnx_files)
+
+    report_path = os.path.join("models", "onnx_parity_report.json")
+    parity_ok = False
+    if os.path.exists(report_path):
+        with open(report_path) as rf:
+            rep = json.load(rf)
+        models = rep.get("models", {})
+        parity_ok = (
+            len(models) == 3 and
+            all(m.get("parity_check") == "PASSED" for m in models.values()) and
+            all(m.get("max_absolute_difference", 1.0) < 1e-4 for m in models.values())
+        )
+    print(f"  ONNX Artifacts: {'PASSED' if onnx_ok else 'FAILED'}")
+    print(f"  Parity Verification (< 1e-4): {'PASSED' if parity_ok else 'FAILED'}")
+    test_results["ONNX Artifacts & Parity"] = (onnx_ok and parity_ok)
     metrics_present = True
     for s in sections:
         for m in comp_json[s]:

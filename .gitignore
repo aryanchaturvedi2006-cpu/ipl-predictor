@@ -22,4 +22,5 @@ Thumbs.db
 .idea/
 
 .venv-dl/
+.venv-onnx/
 node_modules/

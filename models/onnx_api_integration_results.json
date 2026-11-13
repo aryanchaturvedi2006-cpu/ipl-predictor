@@ -1,0 +1,39 @@
+{
+  "pre_toss": {
+    "status_code": 200,
+    "model_used": "FFNN (Deep Learning / ONNX)",
+    "winner": "Mumbai Indians",
+    "probability": 50.72,
+    "expected_model": "FFNN (Deep Learning / ONNX)",
+    "passed": true
+  },
+  "post_toss": {
+    "status_code": 200,
+    "model_used": "FFNN (Deep Learning / ONNX)",
+    "winner": "Mumbai Indians",
+    "probability": 50.12,
+    "expected_model": "FFNN (Deep Learning / ONNX)",
+    "passed": true
+  },
+  "inning_1": {
+    "status_code": 200,
+    "model_used": "Sequence Inning 1 (ML Baseline)",
+    "batting_prob": 54.1,
+    "expected_model": "Sequence Inning 1 (ML Baseline)",
+    "passed": true
+  },
+  "inning_2_lstm": {
+    "status_code": 200,
+    "model_used": "LSTM (Deep Learning / ONNX)",
+    "batting_prob": 71.4,
+    "expected_model": "LSTM (Deep Learning / ONNX)",
+    "passed": true
+  },
+  "inning_2_fallback": {
+    "status_code": 200,
+    "model_used": "XGBoost (ML Baseline)",
+    "batting_prob": 65.8,
+    "expected_model": "XGBoost (ML Baseline)",
+    "passed": true
+  }
+}

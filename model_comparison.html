@@ -401,6 +401,15 @@
               <div class="metric-bar" style="width:${m.f1 * 100}%;background:${barColor}"></div>
             </div>
 
+            ${m.precision !== undefined ? `
+            <div class="metric-row">
+              <span class="metric-label">Precision / Recall</span>
+              <span class="metric-value">${m.precision} / ${m.recall}</span>
+            </div>
+            <div class="metric-bar-wrap">
+              <div class="metric-bar" style="width:${m.precision * 100}%;background:${barColor}"></div>
+            </div>` : ''}
+
             <div class="metric-row">
               <span class="metric-label">Log Loss</span>
               <span class="metric-value ${m.log_loss < 0.68 ? 'good' : ''}">${m.log_loss}</span>
@@ -427,13 +436,8 @@
       const lstmAcc = lstmStats ? lstmStats.accuracy + '%' : 'high accuracy';
       
       const insight = isLive
-        ? `LSTM achieved <strong>${lstmAcc}</strong> on the held-out live-match test set by learning
-           over-by-over sequences. This is a fundamentally different (and easier) task than pre-match
-           prediction — real-time match data contains far richer signals than historical team statistics alone.`
-        : `Pre-match cricket prediction is inherently difficult. All models sit near <strong>~50% accuracy</strong>
-           because cricket outcomes depend heavily on factors unavailable before the match (pitch behaviour,
-           player form on the day, weather, individual brilliance). This is an honest baseline — not a flaw.
-           <strong>Log Loss</strong> is a better metric here than accuracy: lower = more calibrated probabilities.`;
+        ? `In-match sequential prediction is fundamentally distinct from pre-match prediction. In the <strong>2nd innings run chase</strong> (target known, balls remaining), the LSTM achieves <strong>79.77% accuracy</strong> by modeling cumulative pressure and required run rate. In the <strong>1st innings</strong> (target unknown, open variance), the sequential defense model achieves <strong>63.36% accuracy</strong>. These tasks are evaluated on held-out 2024 matches and must not be conflated with pre-match baseline models.`
+        : `Pre-match cricket prediction evaluates matchups before a single ball is bowled. All pre-match models sit near <strong>~50% accuracy</strong> because T20 outcomes depend heavily on factors unmeasurable before the toss (surface behavior on the day, individual micro-performances, weather). This is an honest empirical baseline. <strong>Log Loss</strong> and calibration are the primary evaluation metrics here.`;
 
       el.innerHTML = `<div class="model-cards">${cards}</div>
         <div class="insight-box"><strong>Key Insight:</strong> ${insight}</div>`;

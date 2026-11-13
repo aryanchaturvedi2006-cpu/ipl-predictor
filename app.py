@@ -12,7 +12,21 @@ import numpy as np
 import json
 import urllib.request
 import urllib.error
-from tensorflow.keras.models import load_model
+
+# Safe lazy loading for ONNX Runtime and TensorFlow / Keras
+try:
+    import onnxruntime as ort
+    ONNX_AVAILABLE = True
+except (ImportError, Exception):
+    ort = None
+    ONNX_AVAILABLE = False
+
+try:
+    from tensorflow.keras.models import load_model
+    TENSORFLOW_AVAILABLE = True
+except (ImportError, Exception):
+    load_model = None
+    TENSORFLOW_AVAILABLE = False
 
 env_path = os.path.join(os.path.dirname(__file__), '.env')
 if os.path.exists(env_path):
@@ -57,6 +71,13 @@ scaler_post = None
 use_ffnn = False
 lstm_live = None
 
+onnx_ffnn_pre = None
+onnx_ffnn_post = None
+onnx_lstm = None
+use_onnx = False
+
+inn1_seq_artifact = None
+
 ipl_api = IPLT20API()
 
 
@@ -64,7 +85,8 @@ def load_assets():
     global model_pre, model_post, metadata, live_models, elo_dict, recent_form_dict
     global venue_stats_dict, venue_overall, h2h_stats, team_perf, valid_teams
     global ffnn_pre, ffnn_post, scaler_pre, scaler_post, use_ffnn, lstm_live
-    global season_form_dict
+    global onnx_ffnn_pre, onnx_ffnn_post, onnx_lstm, use_onnx
+    global season_form_dict, inn1_seq_artifact
 
     if not os.path.exists(MODEL_PRE_PATH) or not os.path.exists(ENCODERS_PATH):
         raise FileNotFoundError("Model files not found. Run train.py first.")
@@ -84,22 +106,62 @@ def load_assets():
 
     if os.path.exists(LIVE_MODEL_PATH):
         live_models = joblib.load(LIVE_MODEL_PATH)
-        
-    try:
-        ffnn_pre = load_model(os.path.join(BASE_DIR, "models", "ffnn_pre.keras"))
-        ffnn_post = load_model(os.path.join(BASE_DIR, "models", "ffnn_post.keras"))
-        scaler_pre = joblib.load(os.path.join(BASE_DIR, "models", "scaler_pre.pkl"))
-        scaler_post = joblib.load(os.path.join(BASE_DIR, "models", "scaler_post.pkl"))
-        use_ffnn = True
-    except Exception as e:
-        print(f"Failed to load FFNN models, falling back to Random Forest. Error: {e}")
-        use_ffnn = False
 
-    try:
-        lstm_live = load_model(os.path.join(BASE_DIR, "models", "lstm_live.keras"))
-        print("Loaded LSTM live model.")
-    except Exception as e:
-        print(f"Failed to load LSTM live model: {e}")
+    inn1_seq_path = os.path.join(BASE_DIR, "models", "inn1_sequence_model.pkl")
+    if os.path.exists(inn1_seq_path):
+        try:
+            inn1_seq_artifact = joblib.load(inn1_seq_path)
+            print("Loaded Inning 1 sequence model successfully.")
+        except Exception as e:
+            print(f"Failed to load Inning 1 sequence model: {e}")
+            inn1_seq_artifact = None
+        
+    # 1. Prefer ONNX Runtime for deployment (<50MB RAM ceiling)
+    if ONNX_AVAILABLE and ort is not None:
+        try:
+            p_pre = os.path.join(BASE_DIR, "models", "ffnn_pre.onnx")
+            p_post = os.path.join(BASE_DIR, "models", "ffnn_post.onnx")
+            s_pre = os.path.join(BASE_DIR, "models", "scaler_pre.pkl")
+            s_post = os.path.join(BASE_DIR, "models", "scaler_post.pkl")
+            if os.path.exists(p_pre) and os.path.exists(p_post):
+                onnx_ffnn_pre = ort.InferenceSession(p_pre, providers=["CPUExecutionProvider"])
+                onnx_ffnn_post = ort.InferenceSession(p_post, providers=["CPUExecutionProvider"])
+                scaler_pre = joblib.load(s_pre)
+                scaler_post = joblib.load(s_post)
+                use_onnx = True
+                print("Loaded ONNX FFNN models successfully.")
+
+            p_lstm = os.path.join(BASE_DIR, "models", "lstm_live.onnx")
+            if os.path.exists(p_lstm):
+                onnx_lstm = ort.InferenceSession(p_lstm, providers=["CPUExecutionProvider"])
+                print("Loaded ONNX LSTM live model successfully.")
+        except Exception as e:
+            print(f"ONNX initialization skipped: {e}")
+            use_onnx = False
+            onnx_lstm = None
+
+    # 2. Local Keras / TensorFlow fallback
+    if not use_onnx and TENSORFLOW_AVAILABLE and load_model is not None:
+        try:
+            ffnn_pre = load_model(os.path.join(BASE_DIR, "models", "ffnn_pre.keras"))
+            ffnn_post = load_model(os.path.join(BASE_DIR, "models", "ffnn_post.keras"))
+            scaler_pre = joblib.load(os.path.join(BASE_DIR, "models", "scaler_pre.pkl"))
+            scaler_post = joblib.load(os.path.join(BASE_DIR, "models", "scaler_post.pkl"))
+            use_ffnn = True
+            print("Loaded Keras FFNN models.")
+        except Exception as e:
+            print(f"Failed to load Keras FFNN models: {e}")
+            use_ffnn = False
+
+        try:
+            lstm_live = load_model(os.path.join(BASE_DIR, "models", "lstm_live.keras"))
+            print("Loaded Keras LSTM live model.")
+        except Exception as e:
+            print(f"Failed to load Keras LSTM live model: {e}")
+            lstm_live = None
+    elif not use_onnx:
+        print("DL engines unavailable. Using Random Forest and XGBoost baseline models.")
+        use_ffnn = False
         lstm_live = None
 
 
@@ -302,8 +364,30 @@ def predict():
         "toss_won": toss_won
     }])
 
-    if use_ffnn:
-        prediction_model_used = "FFNN (Deep Learning)"
+    if use_onnx:
+        prediction_model_used = "FFNN (Deep Learning / ONNX)"
+        if prediction_mode == 'pre_toss':
+            X = scaler_pre.transform(input_data_pre).astype(np.float32)
+            X_mir = scaler_pre.transform(-input_data_pre).astype(np.float32)
+            in_name = onnx_ffnn_pre.get_inputs()[0].name
+            p1 = float(onnx_ffnn_pre.run(None, {in_name: X})[0].flatten()[0])
+            p1_mir = float(onnx_ffnn_pre.run(None, {in_name: X_mir})[0].flatten()[0])
+            prob_t1 = 0.5 * (p1 + (1.0 - p1_mir))
+        else:
+            input_data_post_mir = input_data_post.copy()
+            for col in FEATURES_PRE + ["toss_impact"]:
+                input_data_post_mir[col] = -input_data_post_mir[col]
+            input_data_post_mir["toss_won"] = 1 - input_data_post_mir["toss_won"]
+
+            X = scaler_post.transform(input_data_post).astype(np.float32)
+            X_mir = scaler_post.transform(input_data_post_mir).astype(np.float32)
+            in_name = onnx_ffnn_post.get_inputs()[0].name
+            p1 = float(onnx_ffnn_post.run(None, {in_name: X})[0].flatten()[0])
+            p1_mir = float(onnx_ffnn_post.run(None, {in_name: X_mir})[0].flatten()[0])
+            prob_t1 = 0.5 * (p1 + (1.0 - p1_mir))
+        prob_t2 = 1.0 - prob_t1
+    elif use_ffnn:
+        prediction_model_used = "FFNN (Deep Learning / Keras)"
         if prediction_mode == 'pre_toss':
             X = scaler_pre.transform(input_data_pre)
             X_mir = scaler_pre.transform(-input_data_pre)
@@ -450,28 +534,56 @@ def predict_live():
     model_used_name = "XGBoost (ML Baseline)"
     
     if inning == 1:
-        features = live_models['features_inn1']
-        X = pd.DataFrame([{
-            'over': over, 'current_score': current_score,
-            'wickets_lost': wickets_lost, 'crr': crr
-        }])[features]
-        live_model = live_models['inn1_model']
-        proba = live_model.predict_proba(X)[0]
-        batting_win_prob = round(float(proba[1]) * 100, 1)
+        if inn1_seq_artifact is not None:
+            last3_runs = int(data.get("last3_runs", 0))
+            last3_wickets = int(data.get("last3_wickets", 0))
+            proj = current_score + (balls_remaining / 6.0) * crr if balls_remaining > 0 else float(current_score)
+            X = pd.DataFrame([{
+                'over': over,
+                'cum_score': current_score,
+                'cum_wickets': wickets_lost,
+                'crr': crr,
+                'balls_left': balls_remaining,
+                'last3_runs': last3_runs,
+                'last3_wickets': last3_wickets,
+                'projected_score': proj
+            }])[inn1_seq_artifact['features']]
+            proba = inn1_seq_artifact['model'].predict_proba(X)[0]
+            batting_win_prob = round(float(proba[1]) * 100, 1)
+            model_used_name = "Sequence Inning 1 (ML Baseline)"
+        else:
+            features = live_models['features_inn1']
+            X = pd.DataFrame([{
+                'over': over, 'current_score': current_score,
+                'wickets_lost': wickets_lost, 'crr': crr
+            }])[features]
+            live_model = live_models['inn1_model']
+            proba = live_model.predict_proba(X)[0]
+            batting_win_prob = round(float(proba[1]) * 100, 1)
+            model_used_name = "XGBoost (ML Baseline)"
     else:
         runs_needed = max(0, target - current_score) if target > 0 else 0
         req_rr = (runs_needed / balls_remaining * 6) if balls_remaining > 0 and runs_needed > 0 else (0.0 if runs_needed <= 0 else 99.0)
         
         used_lstm = False
         seq_hist = data.get("sequence_history")
-        if lstm_live is not None and seq_hist is not None:
+        if (onnx_lstm is not None or lstm_live is not None) and seq_hist is not None:
             try:
                 if len(seq_hist) == 20 and all(len(step) == 7 for step in seq_hist):
-                    seq_arr = np.array([seq_hist], dtype=np.float32)
-                    lstm_prob = lstm_live.predict(seq_arr, verbose=0).flatten()[0]
-                    batting_win_prob = round(float(lstm_prob) * 100, 1)
-                    model_used_name = "LSTM (Deep Learning)"
-                    used_lstm = True
+                    non_zero_steps = sum(1 for step in seq_hist if any(abs(v) > 1e-4 for v in step))
+                    expected_steps = max(1, min(20, int(over)))
+                    if non_zero_steps >= max(1, expected_steps - 2):
+                        seq_arr = np.array([seq_hist], dtype=np.float32)
+                        if onnx_lstm is not None:
+                            in_name = onnx_lstm.get_inputs()[0].name
+                            lstm_prob = float(onnx_lstm.run(None, {in_name: seq_arr})[0].flatten()[0])
+                            model_used_name = "LSTM (Deep Learning / ONNX)"
+                            used_lstm = True
+                        elif lstm_live is not None:
+                            lstm_prob = float(lstm_live.predict(seq_arr, verbose=0).flatten()[0])
+                            model_used_name = "LSTM (Deep Learning / Keras)"
+                            used_lstm = True
+                        batting_win_prob = round(lstm_prob * 100, 1)
             except Exception as e:
                 print(f"LSTM prediction failed: {e}")
                 
@@ -519,9 +631,13 @@ def predict_live():
         "bowling_team": bowling_team,
         "batting_team_win_probability": batting_win_prob,
         "bowling_team_win_probability": bowling_win_prob,
+        "batting_team_win_prob": batting_win_prob,
+        "bowling_team_win_prob": bowling_win_prob,
         "current_score": current_score,
         "wickets_lost": wickets_lost,
+        "wickets": wickets_lost,
         "overs_completed": over,
+        "over": over,
         "target": target if target > 0 else None,
         "current_rr": round(crr, 2),
         "required_rr": round(req_rr, 2) if inning == 2 and target > 0 else None,

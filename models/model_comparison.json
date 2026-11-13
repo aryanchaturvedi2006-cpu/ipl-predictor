@@ -3,7 +3,10 @@
     {
       "model": "Random Forest",
       "type": "ML Baseline",
+      "task": "Pre-Match (Pre-Toss)",
       "accuracy": 48.36,
+      "precision": 0.483,
+      "recall": 0.474,
       "f1": 0.479,
       "log_loss": 0.699,
       "roc_auc": 0.494
@@ -11,15 +14,21 @@
     {
       "model": "XGBoost",
       "type": "ML Baseline",
+      "task": "Pre-Match (Pre-Toss)",
       "accuracy": 48.59,
-      "f1": 0.49,
+      "precision": 0.486,
+      "recall": 0.494,
+      "f1": 0.490,
       "log_loss": 0.719,
       "roc_auc": 0.484
     },
     {
       "model": "FFNN",
       "type": "Deep Learning",
+      "task": "Pre-Match (Pre-Toss)",
       "accuracy": 49.06,
+      "precision": 0.491,
+      "recall": 0.350,
       "f1": 0.409,
       "log_loss": 0.697,
       "roc_auc": 0.495
@@ -29,7 +38,10 @@
     {
       "model": "Random Forest",
       "type": "ML Baseline",
+      "task": "Pre-Match (Post-Toss)",
       "accuracy": 51.41,
+      "precision": 0.515,
+      "recall": 0.493,
       "f1": 0.504,
       "log_loss": 0.698,
       "roc_auc": 0.491
@@ -37,15 +49,21 @@
     {
       "model": "XGBoost",
       "type": "ML Baseline",
+      "task": "Pre-Match (Post-Toss)",
       "accuracy": 47.65,
-      "f1": 0.46,
+      "precision": 0.475,
+      "recall": 0.446,
+      "f1": 0.460,
       "log_loss": 0.725,
       "roc_auc": 0.458
     },
     {
       "model": "FFNN",
       "type": "Deep Learning",
+      "task": "Pre-Match (Post-Toss)",
       "accuracy": 51.41,
+      "precision": 0.513,
+      "recall": 0.521,
       "f1": 0.517,
       "log_loss": 0.695,
       "roc_auc": 0.518
@@ -53,11 +71,26 @@
   ],
   "live_match": [
     {
-      "model": "LSTM",
+      "model": "LSTM (2nd Innings Chase)",
       "type": "Deep Learning",
+      "task": "In-Match (2nd Innings Run Chase)",
       "accuracy": 79.77,
+      "precision": 0.796,
+      "recall": 0.793,
       "f1": 0.794,
-      "log_loss": 0.395
+      "log_loss": 0.395,
+      "roc_auc": 0.871
+    },
+    {
+      "model": "Sequence Inning 1 (Defending)",
+      "type": "Sequential Model",
+      "task": "In-Match (1st Innings Target Setting)",
+      "accuracy": 63.36,
+      "precision": 0.565,
+      "recall": 0.776,
+      "f1": 0.654,
+      "log_loss": 0.670,
+      "roc_auc": 0.717
     }
   ]
 }

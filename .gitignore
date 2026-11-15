@@ -8,8 +8,11 @@ __pycache__/
 /encoder.pkl
 /model.pkl
 
-# Environment
+# Environment & Secrets
 .env
+.env.*
+*.env
+.env*.local
 .venv/
 venv/
 

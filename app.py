@@ -77,6 +77,7 @@ onnx_lstm = None
 use_onnx = False
 
 inn1_seq_artifact = None
+inn1_candidate_e_artifact = None
 
 ipl_api = IPLT20API()
 
@@ -86,7 +87,7 @@ def load_assets():
     global venue_stats_dict, venue_overall, h2h_stats, team_perf, valid_teams
     global ffnn_pre, ffnn_post, scaler_pre, scaler_post, use_ffnn, lstm_live
     global onnx_ffnn_pre, onnx_ffnn_post, onnx_lstm, use_onnx
-    global season_form_dict, inn1_seq_artifact
+    global season_form_dict, inn1_seq_artifact, inn1_candidate_e_artifact
 
     if not os.path.exists(MODEL_PRE_PATH) or not os.path.exists(ENCODERS_PATH):
         raise FileNotFoundError("Model files not found. Run train.py first.")
@@ -106,6 +107,15 @@ def load_assets():
 
     if os.path.exists(LIVE_MODEL_PATH):
         live_models = joblib.load(LIVE_MODEL_PATH)
+
+    inn1_candidate_e_path = os.path.join(BASE_DIR, "models", "inn1_candidate_e.pkl")
+    if os.path.exists(inn1_candidate_e_path):
+        try:
+            inn1_candidate_e_artifact = joblib.load(inn1_candidate_e_path)
+            print("Loaded Inning 1 Candidate E model successfully.")
+        except Exception as e:
+            print(f"Failed to load Inning 1 Candidate E model: {e}")
+            inn1_candidate_e_artifact = None
 
     inn1_seq_path = os.path.join(BASE_DIR, "models", "inn1_sequence_model.pkl")
     if os.path.exists(inn1_seq_path):
@@ -512,15 +522,19 @@ def predict_live():
         return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400
 
     inning = int(data.get("inning", 2))
-    over = float(data.get("over", 0))
-    current_score = int(data.get("current_score", 0))
-    wickets_lost = int(data.get("wickets_lost", 0))
+    raw_over = float(data.get("over", 0))
+    current_score = max(0, int(data.get("current_score", 0)))
+    raw_wickets = int(data.get("wickets_lost", 0))
     target = int(data.get("target", -1))
     batting_team = str(data.get("batting_team", "Team A"))
     bowling_team = str(data.get("bowling_team", "Team B"))
 
     if inning == 2 and target <= 0:
         return jsonify({"error": "A valid positive target score is required for inning 2."}), 400
+
+    # Defensive input clamping
+    over = min(20.0, max(0.0, raw_over))
+    wickets_lost = min(10, max(0, raw_wickets))
 
     completed_overs = int(over)
     completed_balls = int(round((over - completed_overs) * 10))
@@ -534,33 +548,95 @@ def predict_live():
     model_used_name = "XGBoost (ML Baseline)"
     
     if inning == 1:
-        if inn1_seq_artifact is not None:
-            last3_runs = int(data.get("last3_runs", 0))
-            last3_wickets = int(data.get("last3_wickets", 0))
-            proj = current_score + (balls_remaining / 6.0) * crr if balls_remaining > 0 else float(current_score)
-            X = pd.DataFrame([{
-                'over': over,
-                'cum_score': current_score,
-                'cum_wickets': wickets_lost,
-                'crr': crr,
-                'balls_left': balls_remaining,
-                'last3_runs': last3_runs,
-                'last3_wickets': last3_wickets,
-                'projected_score': proj
-            }])[inn1_seq_artifact['features']]
-            proba = inn1_seq_artifact['model'].predict_proba(X)[0]
-            batting_win_prob = round(float(proba[1]) * 100, 1)
-            model_used_name = "Sequence Inning 1 (ML Baseline)"
-        else:
-            features = live_models['features_inn1']
-            X = pd.DataFrame([{
-                'over': over, 'current_score': current_score,
-                'wickets_lost': wickets_lost, 'crr': crr
-            }])[features]
-            live_model = live_models['inn1_model']
-            proba = live_model.predict_proba(X)[0]
-            batting_win_prob = round(float(proba[1]) * 100, 1)
-            model_used_name = "XGBoost (ML Baseline)"
+        used_candidate_e = False
+        if inn1_candidate_e_artifact is not None:
+            try:
+                # 1. Defensive rolling feature handling
+                raw_l3_r = data.get("last3_runs")
+                raw_l3_w = data.get("last3_wickets")
+                last3_runs = float(raw_l3_r) if raw_l3_r is not None else 0.0
+                last3_wickets = float(raw_l3_w) if raw_l3_w is not None else 0.0
+                last3_runs = max(0.0, last3_runs)
+                last3_wickets = min(10.0, max(0.0, last3_wickets))
+
+                proj = current_score + (balls_remaining / 6.0) * crr if balls_remaining > 0 else float(current_score)
+
+                # 2. Derive Candidate E features
+                proj_vs_190 = float(proj - 190.0)
+                proj_ratio_185 = float(proj / 185.0)
+                wickets_in_hand = float(max(0.0, 10.0 - wickets_lost))
+                runs_per_wkt_lost = float(current_score / max(1.0, float(wickets_lost)))
+                run_rate_momentum = float((last3_runs / 3.0) - crr)
+
+                row_e = {
+                    'over': float(over),
+                    'cum_score': float(current_score),
+                    'cum_wickets': float(wickets_lost),
+                    'crr': float(crr),
+                    'balls_left': float(balls_remaining),
+                    'last3_runs': float(last3_runs),
+                    'last3_wickets': float(last3_wickets),
+                    'projected_score': float(proj),
+                    'proj_vs_190': proj_vs_190,
+                    'proj_ratio_185': proj_ratio_185,
+                    'wickets_in_hand': wickets_in_hand,
+                    'runs_per_wkt_lost': runs_per_wkt_lost,
+                    'run_rate_momentum': run_rate_momentum
+                }
+                X_e = pd.DataFrame([row_e])[inn1_candidate_e_artifact['features']]
+                proba_e = inn1_candidate_e_artifact['model'].predict_proba(X_e)[0]
+                raw_prob = float(proba_e[1])
+
+                if 0.0 <= raw_prob <= 1.0:
+                    batting_win_prob = round(raw_prob * 100, 1)
+                    model_used_name = "Sequence Inning 1 (Candidate E Calibrated)"
+                    used_candidate_e = True
+                else:
+                    app.logger.warning(f"Candidate E raw probability out of bounds: {raw_prob}. Triggering fallback.")
+            except Exception as e:
+                app.logger.warning(f"Candidate E inference failed: {e}. Falling back to baseline.")
+                used_candidate_e = False
+
+        if not used_candidate_e:
+            if inn1_seq_artifact is not None:
+                try:
+                    last3_runs = int(data.get("last3_runs") if data.get("last3_runs") is not None else 0)
+                    last3_wickets = int(data.get("last3_wickets") if data.get("last3_wickets") is not None else 0)
+                    proj = current_score + (balls_remaining / 6.0) * crr if balls_remaining > 0 else float(current_score)
+                    X = pd.DataFrame([{
+                        'over': over,
+                        'cum_score': current_score,
+                        'cum_wickets': wickets_lost,
+                        'crr': crr,
+                        'balls_left': balls_remaining,
+                        'last3_runs': last3_runs,
+                        'last3_wickets': last3_wickets,
+                        'projected_score': proj
+                    }])[inn1_seq_artifact['features']]
+                    proba = inn1_seq_artifact['model'].predict_proba(X)[0]
+                    batting_win_prob = round(float(proba[1]) * 100, 1)
+                    model_used_name = "Sequence Inning 1 (ML Baseline)"
+                except Exception as e:
+                    app.logger.warning(f"Legacy sequence model failed: {e}. Falling back to live_models.")
+                    features = live_models['features_inn1']
+                    X = pd.DataFrame([{
+                        'over': over, 'current_score': current_score,
+                        'wickets_lost': wickets_lost, 'crr': crr
+                    }])[features]
+                    live_model = live_models['inn1_model']
+                    proba = live_model.predict_proba(X)[0]
+                    batting_win_prob = round(float(proba[1]) * 100, 1)
+                    model_used_name = "XGBoost (ML Baseline)"
+            else:
+                features = live_models['features_inn1']
+                X = pd.DataFrame([{
+                    'over': over, 'current_score': current_score,
+                    'wickets_lost': wickets_lost, 'crr': crr
+                }])[features]
+                live_model = live_models['inn1_model']
+                proba = live_model.predict_proba(X)[0]
+                batting_win_prob = round(float(proba[1]) * 100, 1)
+                model_used_name = "XGBoost (ML Baseline)"
     else:
         runs_needed = max(0, target - current_score) if target > 0 else 0
         req_rr = (runs_needed / balls_remaining * 6) if balls_remaining > 0 and runs_needed > 0 else (0.0 if runs_needed <= 0 else 99.0)
@@ -599,7 +675,8 @@ def predict_live():
             proba = live_model.predict_proba(X)[0]
             batting_win_prob = round(float(proba[1]) * 100, 1)
 
-    bowling_win_prob = round(100 - batting_win_prob, 1)
+    batting_win_prob = min(100.0, max(0.0, batting_win_prob))
+    bowling_win_prob = round(100.0 - batting_win_prob, 1)
 
     pressure_index = 0
     if inning == 2 and target > 0 and balls_remaining > 0:

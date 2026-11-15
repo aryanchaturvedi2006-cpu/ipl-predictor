@@ -1,0 +1,100 @@
+{
+  "timestamp": "2026-11-15T14:57:22+0530",
+  "environment": {
+    "python_version": "3.14.3 (tags/v3.14.3:323c59a, Feb  3 2026, 16:04:56) [MSC v.1944 64 bit (AMD64)]",
+    "os": "win32",
+    "cpu_count": 16
+  },
+  "section1_code_review": {
+    "candidate_e_global_declared": true,
+    "dual_loader_implemented": true,
+    "defensive_clamping_implemented": true,
+    "safe_last3_defaults_implemented": true,
+    "five_era_features_exact_match": true,
+    "probability_bounds_clamp_implemented": true,
+    "candidate_e_isolated_to_inning_1": true,
+    "predict_pre_post_toss_untouched": true,
+    "all_code_checks_passed": true
+  },
+  "section2_artifact_verification": {
+    "candidate_e_artifact_path": "models\\inn1_candidate_e.pkl",
+    "candidate_e_exists": true,
+    "candidate_e_size_bytes": 161735,
+    "candidate_e_size_kb": 157.9,
+    "candidate_e_sha256": "f4a833039e02c0b7e2eec13f6cd02d619ed4ddf0fb31939d6d652ad874ce992f",
+    "candidate_e_feature_count": 13,
+    "candidate_e_features_order_verified": true,
+    "candidate_e_model_type": "<class 'sklearn.calibration.CalibratedClassifierCV'>",
+    "legacy_sequence_artifact_path": "models\\inn1_sequence_model.pkl",
+    "legacy_sequence_exists": true,
+    "legacy_sequence_size_bytes": 234601,
+    "legacy_sequence_sha256": "21838756d108c81c33bb94e68e0c564ccc77f98241cb6c009c9babbdd03795ad",
+    "legacy_sequence_features_verified": true,
+    "candidate_e_not_ignored_by_git": true,
+    "all_artifact_checks_passed": true
+  },
+  "section3_fallback_verification": {
+    "scenario1_candidate_e_missing": {
+      "passed": true,
+      "status_code": 200,
+      "model_used": "Sequence Inning 1 (ML Baseline)",
+      "batting_prob": 54.7
+    },
+    "scenario2_candidate_e_corrupted": {
+      "passed": true,
+      "status_code": 200,
+      "model_used": "Sequence Inning 1 (ML Baseline)",
+      "batting_prob": 54.7
+    },
+    "scenario3_candidate_e_inference_failure": {
+      "passed": true,
+      "status_code": 200,
+      "model_used": "Sequence Inning 1 (ML Baseline)",
+      "batting_prob": 54.7
+    },
+    "scenario4_legacy_sequence_missing": {
+      "passed": true,
+      "status_code": 200,
+      "model_used": "XGBoost (ML Baseline)",
+      "batting_prob": 52.0
+    },
+    "scenario5_double_model_exception": {
+      "passed": true,
+      "status_code": 200,
+      "model_used": "XGBoost (ML Baseline)",
+      "batting_prob": 52.0
+    },
+    "all_fallback_scenarios_passed": true
+  },
+  "section4_runtime_profiling": {
+    "process_rss_total_bytes": 310427648,
+    "process_rss_total_mb": 296.05,
+    "incremental_candidate_e_rss_bytes": 847872,
+    "incremental_candidate_e_rss_kb": 828.0,
+    "incremental_candidate_e_rss_mb": 0.8086,
+    "cold_start_load_assets_latency_ms": 155.35,
+    "warmup_request_latency_ms": 8.06,
+    "repeated_inference_100_runs": {
+      "mean_latency_ms": 6.18,
+      "median_latency_ms": 5.88,
+      "std_latency_ms": 0.93,
+      "min_latency_ms": 5.41,
+      "max_latency_ms": 11.43,
+      "p95_latency_ms": 8.28,
+      "p99_latency_ms": 9.82
+    },
+    "render_512mb_memory_budget_headroom_mb": 215.95,
+    "latency_budget_passed_under_50ms": true
+  },
+  "section5_regression_verification": {
+    "live_inning1_schema_keys_verified": true,
+    "missing_live_keys": [],
+    "live_inning2_schema_keys_verified": true,
+    "pre_toss_schema_keys_verified": true,
+    "missing_pre_keys": [],
+    "onnx_runtime_excluded_from_requirements": true,
+    "tensorflow_excluded_from_requirements": true,
+    "all_regression_checks_passed": true
+  },
+  "final_verdict": "READY FOR DEPLOYMENT"
+}

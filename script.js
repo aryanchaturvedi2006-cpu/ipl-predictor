@@ -1,81 +1,28 @@
 const WEATHER_API_KEY = "dccc683dce071a7396560a42a8c1ff33"; // free at openweathermap.org
-const VENUE_CITIES = {
-  'Wankhede': 'Mumbai',
-  'Eden Gardens': 'Kolkata', 
-  'Chinnaswamy': 'Bangalore',
-  'Chepauk': 'Chennai',
-  'Kotla': 'Delhi',
-  'Narendra Modi': 'Ahmedabad',
-  'Rajiv Gandhi': 'Hyderabad',
-  'Sawai Mansingh': 'Jaipur',
-  'Punjab Cricket': 'Chandigarh',
-  'BRSABV': 'Lucknow',
-  'Brabourne': 'Mumbai',
-  'DY Patil': 'Mumbai'
-};
 
-const VENUE_PITCH_PROFILE = {
-  'Wankhede': { 
-    avgScore: 182, avgWickets: 7.2, 
-    pitchType: 'Batting Friendly',
-    description: 'High-scoring venue. Last 10 matches avg: 182 runs, flat track.',
-    chasingWin: 58
-  },
-  'Chepauk': { 
-    avgScore: 155, avgWickets: 8.8,
-    pitchType: 'Bowling Friendly',
-    description: 'Low-scoring. Spinners dominant. Last 10 matches avg: 155 runs.',
-    chasingWin: 38
-  },
-  'Eden Gardens': { 
-    avgScore: 168, avgWickets: 7.8,
-    pitchType: 'Balanced',
-    description: 'Even contest. Dew factor significant in evening matches.',
-    chasingWin: 52
-  },
-  'Chinnaswamy': { 
-    avgScore: 190, avgWickets: 6.9,
-    pitchType: 'Batting Friendly',
-    description: 'Smallest boundary. Highest scoring IPL venue. Bowlers suffer.',
-    chasingWin: 55
-  },
-  'Kotla': { 
-    avgScore: 158, avgWickets: 8.1,
-    pitchType: 'Bowling Friendly',
-    description: 'Slow surface. Spinners effective. Batsmen struggle in 2nd half.',
-    chasingWin: 45
-  },
-  'Narendra Modi': { 
-    avgScore: 171, avgWickets: 7.5,
-    pitchType: 'Balanced',
-    description: 'Good batting surface. Large ground helps bowlers slightly.',
-    chasingWin: 50
-  },
-  'Rajiv Gandhi': { 
-    avgScore: 175, avgWickets: 7.3,
-    pitchType: 'Batting Friendly',
-    description: 'Pacers get bounce. Good batting track with true carry.',
-    chasingWin: 53
-  },
-  'Sawai Mansingh': { 
-    avgScore: 162, avgWickets: 8.0,
-    pitchType: 'Balanced',
-    description: 'Spin-friendly in later overs. Moderate scoring.',
-    chasingWin: 47
-  },
-  'BRSABV Ekana': { 
-    avgScore: 160, avgWickets: 8.3,
-    pitchType: 'Bowling Friendly',
-    description: 'Pacers dominate powerplay. Slowish outfield.',
-    chasingWin: 44
-  },
-  'Punjab Cricket': { 
-    avgScore: 174, avgWickets: 7.4,
-    pitchType: 'Batting Friendly',
-    description: 'Flat track. High powerplay typical.',
-    chasingWin: 51
+let venueProfilesData = null;
+let venueProfilesPromise = null;
+
+async function fetchVenueProfiles() {
+  if (venueProfilesData) return venueProfilesData;
+  if (!venueProfilesPromise) {
+    venueProfilesPromise = fetch('venue_profiles.json')
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        venueProfilesData = data;
+        return data;
+      })
+      .catch(err => {
+        console.error("Failed to load venue_profiles.json", err);
+        venueProfilesPromise = null;
+        return null;
+      });
   }
-};
+  return venueProfilesPromise;
+}
 
 let predictionChart = null;
 
@@ -132,8 +79,11 @@ document.addEventListener('DOMContentLoaded', initScoreboards);
 document.addEventListener('DOMContentLoaded', () => {
   populateDropdowns();
   wireRadioPills();
-  ['teamA', 'teamB', 'venue'].forEach(id => {
+  ['teamA', 'teamB', 'venue', 'tossWinner'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', checkReady);
+  });
+  document.querySelectorAll('input[name="pred_mode"], input[name="toss"], input[name="tossDecision"]').forEach(r => {
+    r.addEventListener('change', checkReady);
   });
   
   const venueEl = document.getElementById('venue');
@@ -145,8 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const autoWeather = document.getElementById('auto-weather-card');
       const autoPitch = document.getElementById('pitch-auto-card');
       
-      if (autoWeather) autoWeather.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--text-2);">⏳ Fetching live conditions...</div>';
-      if (autoPitch) autoPitch.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--text-2);">⏳ Loading pitch data...</div>';
+      if (autoWeather) autoWeather.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--text-2);">Fetching live conditions...</div>';
+      if (autoPitch) autoPitch.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--text-2);">Loading pitch data...</div>';
       
       const [weather] = await Promise.all([
         fetchWeatherForVenue(venue),
@@ -176,6 +126,7 @@ function toggleTossUI() {
   } else {
     tossGroups.forEach(g => g.style.display = 'none');
   }
+  checkReady();
 }
 
 
@@ -186,11 +137,11 @@ function updateTimingHint() {
   const hint = document.getElementById('timingHint');
   if (!hint) return;
   if (val === 'day') {
-    hint.innerHTML = '☀️ <strong>Day Match:</strong> Pitch gets drier under sun — spinners become increasingly dangerous. No dew, so bowling 2nd innings is easier. Batting on a used pitch is harder.';
+    hint.innerHTML = '<strong>Day Match:</strong> Pitch gets drier under sun — spinners become increasingly dangerous. No dew, so bowling 2nd innings is easier. Batting on a used pitch is harder.';
     hint.style.borderColor = 'rgba(245,158,11,0.3)';
     hint.style.background  = 'rgba(245,158,11,0.05)';
   } else {
-    hint.innerHTML = '🌙 <strong>Night/Day-Night:</strong> Dew makes the ball slippery for spinners in 2nd innings. Pacers get extra swing. Chasing team has a significant advantage at venues with heavy dew.';
+    hint.innerHTML = '<strong>Night/Day-Night:</strong> Dew makes the ball slippery for spinners in 2nd innings. Pacers get extra swing. Chasing team has a significant advantage at venues with heavy dew.';
     hint.style.borderColor = 'rgba(0,200,230,0.1)';
     hint.style.background  = 'rgba(0,200,230,0.05)';
   }
@@ -242,9 +193,9 @@ function updateTeam(side) {
     document.getElementById(`badge${side}Short`).style.color = t.primaryColor;
     document.getElementById(`badge${side}Name`).textContent = t.name;
     document.getElementById(`badge${side}Name`).style.color = '#ffffff';
-    document.getElementById(`badge${side}City`).textContent = `📍 ${t.city}`;
+    document.getElementById(`badge${side}City`).textContent = t.city;
     badge.style.borderColor = t.primaryColor;
-    badge.style.background = `linear-gradient(135deg, rgba(0,0,0,0.8), ${t.primaryColor}33)`;
+    badge.style.background = 'rgba(0,0,0,0.8)';
     badge.style.boxShadow = `0 0 20px ${t.primaryColor}55, inset 0 0 10px ${t.primaryColor}33`;
   } else {
     document.getElementById(`badge${side}Short`).textContent = '?';
@@ -265,11 +216,18 @@ function updateTeam(side) {
 function refreshTossOptions() {
   const tw = document.getElementById('tossWinner');
   if (!tw) return;
-  const aKey = document.getElementById('teamA').value;
-  const bKey = document.getElementById('teamB').value;
+  const prevVal = tw.value;
+  const aKey = document.getElementById('teamA')?.value;
+  const bKey = document.getElementById('teamB')?.value;
   tw.innerHTML = '<option value="">-- Select Toss Winner --</option>';
   if (aKey && TEAMS[aKey]) tw.innerHTML += `<option value="${aKey}">${TEAMS[aKey].name}</option>`;
   if (bKey && TEAMS[bKey]) tw.innerHTML += `<option value="${bKey}">${TEAMS[bKey].name}</option>`;
+  if (prevVal === aKey || prevVal === bKey) {
+    tw.value = prevVal;
+  } else {
+    tw.value = '';
+  }
+  checkReady();
 }
 
 // ---- Update Venue Info ----
@@ -279,13 +237,13 @@ function updateVenue() {
   if (!meta) return;
   if (!key || !VENUES[key]) { meta.innerHTML = ''; return; }
   const v = VENUES[key];
-  const dewLabel = { low: '🟢 Low Dew', medium: '🟡 Medium Dew', high: '🔴 High Dew' }[v.dewFactor];
-  const dimLabel = { small: '📐 Small Ground', average: '📐 Average Ground', large: '📐 Large Ground' }[v.dimensions];
-  const sizeLabel = v.groundDimensions ? `📏 ${v.groundDimensions}` : '';
+  const dewLabel = { low: 'Low Dew', medium: 'Medium Dew', high: 'High Dew' }[v.dewFactor];
+  const dimLabel = { small: 'Small Ground', average: 'Average Ground', large: 'Large Ground' }[v.dimensions];
+  const sizeLabel = v.groundDimensions ? v.groundDimensions : '';
   meta.innerHTML = `
-    <span class="tag tag-cyan">⭐ Avg ${v.avgScore}</span>
-    <span class="tag tag-${v.batFirstWinPct > 50 ? 'green' : 'red'}">🏏 Bat 1st ${v.batFirstWinPct}%</span>
-    <span class="tag tag-${v.chaseWinPct > 50 ? 'green' : 'red'}">🎯 Chase ${v.chaseWinPct}%</span>
+    <span class="tag tag-cyan">Avg ${v.avgScore}</span>
+    <span class="tag tag-${v.batFirstWinPct > 50 ? 'green' : 'red'}">Bat 1st ${v.batFirstWinPct}%</span>
+    <span class="tag tag-${v.chaseWinPct > 50 ? 'green' : 'red'}">Chase ${v.chaseWinPct}%</span>
     <span class="tag tag-purple">${dewLabel}</span>
     <span class="tag tag-gold">${dimLabel}</span>
     ${sizeLabel ? `<span class="tag tag-slate">${sizeLabel}</span>` : ''}`;
@@ -320,30 +278,47 @@ function checkReady() {
   const tB = document.getElementById('teamB')?.value;
   const venue = document.getElementById('venue')?.value;
   const hint = document.getElementById('predictHint');
-  
-  if (tA && tB && tA !== tB && venue) {
-    btn.disabled = false;
-    if (hint) hint.textContent = '✅ Ready! Adjust conditions above then click Predict.';
-    
-    // UI Interaction: VS Clash Animation
-    const badgeA = document.getElementById('badgeA');
-    const badgeB = document.getElementById('badgeB');
-    const vsRing = document.querySelector('.vs-ring');
-    if(badgeA && badgeB && vsRing) {
-      badgeA.classList.remove('clash-animate-left');
-      badgeB.classList.remove('clash-animate-right');
-      vsRing.classList.remove('clash-ring-glow');
-      void badgeA.offsetWidth;
-      badgeA.classList.add('clash-animate-left');
-      badgeB.classList.add('clash-animate-right');
-      vsRing.classList.add('clash-ring-glow');
-    }
-  } else if (tA && tB && tA === tB) {
-    btn.disabled = true;
-    if (hint) hint.textContent = '⚡ Both teams cannot be the same.';
-  } else {
+  const mode = document.querySelector('input[name="pred_mode"]:checked')?.value || 'pre_toss';
+
+  if (!btn) return;
+
+  if (!tA || !tB || !venue) {
     btn.disabled = true;
     if (hint) hint.textContent = 'Select both teams and a venue to enable prediction';
+    return;
+  }
+  if (tA === tB) {
+    btn.disabled = true;
+    if (hint) hint.textContent = 'Both teams cannot be the same.';
+    return;
+  }
+
+  if (mode === 'post_toss') {
+    const tossWinner = document.getElementById('tossWinner')?.value;
+    const tossDecision = document.querySelector('input[name="toss"]:checked')?.value
+                      || document.querySelector('input[name="tossDecision"]:checked')?.value;
+    if (!tossWinner || !tossDecision) {
+      btn.disabled = true;
+      if (hint) hint.textContent = 'Select toss winner and toss decision to enable prediction';
+      return;
+    }
+  }
+
+  btn.disabled = false;
+  if (hint) hint.textContent = 'Ready! Adjust conditions above then click Predict.';
+  
+  // UI Interaction: VS Clash Animation
+  const badgeA = document.getElementById('badgeA');
+  const badgeB = document.getElementById('badgeB');
+  const vsRing = document.querySelector('.vs-ring');
+  if(badgeA && badgeB && vsRing) {
+    badgeA.classList.remove('clash-animate-left');
+    badgeB.classList.remove('clash-animate-right');
+    vsRing.classList.remove('clash-ring-glow');
+    void badgeA.offsetWidth;
+    badgeA.classList.add('clash-animate-left');
+    badgeB.classList.add('clash-animate-right');
+    vsRing.classList.add('clash-ring-glow');
   }
 }
 
@@ -384,34 +359,41 @@ async function runPrediction() {
     alert("Please select a venue.");
     return;
   }
-  const tossWinner  = document.getElementById('tossWinner').value || aKey;
-  const tossDecision = document.querySelector('input[name="toss"]:checked')?.value
-                     || document.querySelector('input[name="tossDecision"]:checked')?.value || 'bat';
+  const mode = document.querySelector('input[name="pred_mode"]:checked')?.value || 'pre_toss';
+  let tossWinner = null;
+  let tossDecision = null;
+  if (mode === 'post_toss') {
+    tossWinner = document.getElementById('tossWinner')?.value;
+    tossDecision = document.querySelector('input[name="toss"]:checked')?.value
+                || document.querySelector('input[name="tossDecision"]:checked')?.value;
+    if (!tossWinner || !tossDecision) {
+      alert("Please select both toss winner and toss decision.");
+      return;
+    }
+  }
   const pitch   = getAutoPitchType(venueKey);
-  const weather = lastWeatherData ? lastWeatherData.weatherMain.toLowerCase() : 'sunny';
-  const wind    = lastWeatherData ? lastWeatherData.windCondition.toLowerCase() : 'calm';
+  const weather = (lastWeatherData && !lastWeatherData.unavailable && lastWeatherData.weatherMain) ? lastWeatherData.weatherMain.toLowerCase() : 'sunny';
+  const wind    = (lastWeatherData && !lastWeatherData.unavailable && lastWeatherData.windCondition) ? lastWeatherData.windCondition.toLowerCase() : 'calm';
 
   const timing     = document.querySelector('input[name="timing"]:checked')?.value || 'night';
 
   const tA = TEAMS[aKey];
   const tB = TEAMS[bKey];
   const v = VENUES[venueKey];
-  const tw = TEAMS[tossWinner];
+  const tw = tossWinner ? TEAMS[tossWinner] : null;
 
   const btn = document.getElementById('predictBtn');
   let originalText = '';
   if (btn) {
     originalText = btn.innerHTML;
     btn.classList.add('loading');
-    btn.innerHTML = '<span class="coin-icon">🏏</span> Analysing...';
+    btn.innerHTML = 'Analysing...';
   }
   const waitDelay = new Promise(r => setTimeout(r, 1500));
   
   showLoader();
   
   try {
-    const mode = document.querySelector('input[name="pred_mode"]:checked')?.value || 'pre_toss';
-    
     let payload = {
       team1: tA.name,
       team2: tB.name,
@@ -448,6 +430,42 @@ async function runPrediction() {
     
     const data = await response.json();
     await waitDelay;
+
+    // Fix 4: Real model what-if scenarios in pre-toss mode
+    let whatIfScenarios = null;
+    if (mode === 'pre_toss') {
+      try {
+        const scenarios = [
+          { team: tA, decision: 'bat', action: 'bat' },
+          { team: tA, decision: 'field', action: 'field' },
+          { team: tB, decision: 'bat', action: 'bat' },
+          { team: tB, decision: 'field', action: 'field' }
+        ];
+        const scenarioPromises = scenarios.map(s =>
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...payload,
+              toss_winner: s.team.name,
+              toss_decision: s.decision
+            })
+          }).then(res => {
+            if (!res.ok) throw new Error('What-if request failed');
+            return res.json();
+          })
+        );
+        const scenarioResults = await Promise.all(scenarioPromises);
+        whatIfScenarios = scenarioResults.map((resData, idx) => {
+          const s = scenarios[idx];
+          const prob = (resData.probabilities[s.team.name] || resData.probabilities[s.team.shortName] || 0) * 100;
+          return `If ${s.team.shortName} win toss & ${s.action}: ${s.team.shortName} ${prob.toFixed(1)}%`;
+        });
+      } catch (err) {
+        console.warn("What-if scenarios failed", err);
+        whatIfScenarios = null;
+      }
+    }
     
     // Process API response
     const probA = (data.probabilities[tA.name] || data.probabilities[tA.shortName] || 0) * 100;
@@ -468,7 +486,8 @@ async function runPrediction() {
       mode: data.prediction_mode,
       prediction_model: data.prediction_model || "Unknown Model",
       tossSwing: data.possible_toss_swing || null,
-      dewExpected: isDewExpected
+      dewExpected: isDewExpected,
+      whatIfs: whatIfScenarios
     };
     
     hideLoader();
@@ -476,7 +495,7 @@ async function runPrediction() {
   } catch (error) {
     hideLoader();
     const hint = document.getElementById('predictHint');
-    if (hint) hint.textContent = '❌ Error: ' + error.message;
+    if (hint) hint.textContent = 'Error: ' + error.message;
     btn.classList.remove('loading');
     alert("Prediction failed: " + error.message);
   }
@@ -487,31 +506,28 @@ async function runPrediction() {
 // ================================================================
 
 function displayResults(r) {
-  // --- DEW FACTOR ADJUSTMENT ---
-  let probA = r.totalA;
-  let probB = r.totalB;
+  // --- FACTOR ADJUSTMENTS (FOR SEPARATE RULE-BASED VIEW) ---
   let dewImpactValA = 0, dewImpactValB = 0;
-  let dewImpactNote = `No significant dew expected.`;
+  let dewImpactNote = 'No significant dew expected.';
 
   if (r.dewExpected) {
     if (r.mode === 'post_toss') {
       const tossWinnerKey = r.tossWinner; 
-      if (r.tossDecision === 'bowl') {
+      if (r.tossDecision === 'bowl' || r.tossDecision === 'field') {
         dewImpactNote = `Dew is active. ${TEAMS[tossWinnerKey].shortName} chose to field (+7% advantage).`;
-        if (tossWinnerKey === r.aKey) { probA += 7; probB -= 7; dewImpactValA = 7; dewImpactValB = -7; }
-        else { probB += 7; probA -= 7; dewImpactValA = -7; dewImpactValB = 7; }
+        if (tossWinnerKey === r.aKey) { dewImpactValA = 7; dewImpactValB = -7; }
+        else { dewImpactValA = -7; dewImpactValB = 7; }
       } else if (r.tossDecision === 'bat') {
         dewImpactNote = `Dew is active. ${TEAMS[tossWinnerKey].shortName} chose to bat (-5% penalty).`;
-        if (tossWinnerKey === r.aKey) { probA -= 5; probB += 5; dewImpactValA = -5; dewImpactValB = 5; }
-        else { probB -= 5; probA += 5; dewImpactValA = 5; dewImpactValB = -5; }
+        if (tossWinnerKey === r.aKey) { dewImpactValA = -5; dewImpactValB = 5; }
+        else { dewImpactValA = 5; dewImpactValB = -5; }
       }
     } else {
-      dewImpactNote = `Dew expected. Potential: Fielding toss winner +7% | Batting toss winner -5%.`;
+      dewImpactNote = 'Dew expected. Potential: Fielding toss winner +7% | Batting toss winner -5%.';
     }
   }
 
-  // --- NEW FACTORS ADJUSTMENTS ---
-  // 1. Squad Strength
+  // 1. Squad Strength Adjustment
   const squadSelectA = document.getElementById('teamASquad')?.value || '1.0';
   const squadSelectB = document.getElementById('teamBSquad')?.value || '1.0';
 
@@ -521,31 +537,27 @@ function displayResults(r) {
     const impactB = (typeof squadImpacts !== 'undefined' && (squadImpacts.B.bat > 0 || squadImpacts.B.bowl > 0)) ? ((squadImpacts.B.bat + squadImpacts.B.bowl) / 2) : (1.0 - parseFloat(squadSelectB)) * 50;
     squadImpactValA = -(impactA - impactB);
   }
-  
-  probA += squadImpactValA;
-  probB -= squadImpactValA;
 
-  // 2. Pitch Type
+  // 2. Pitch Type Adjustment
   const batRatingA = TEAMS[r.aKey].powerHitting + TEAMS[r.aKey].battingDepth;
   const batRatingB = TEAMS[r.bKey].powerHitting + TEAMS[r.bKey].battingDepth;
   const bowlRatingA = TEAMS[r.aKey].pacerQuality + TEAMS[r.aKey].spinnerQuality;
   const bowlRatingB = TEAMS[r.bKey].pacerQuality + TEAMS[r.bKey].spinnerQuality;
 
   let pitchImpactA = 0;
-  if (r.pitch === 'flat') {
+  const normPitch = (r.pitch || '').toLowerCase();
+  if (normPitch === 'flat' || normPitch === 'batting friendly') {
     if (batRatingA > batRatingB + 5) pitchImpactA = 8;
     else if (batRatingB > batRatingA + 5) pitchImpactA = -8;
-  } else if (r.pitch === 'green') {
+  } else if (normPitch === 'green' || normPitch === 'bowling friendly') {
     if (bowlRatingA > bowlRatingB + 5) pitchImpactA = 8;
     else if (bowlRatingB > bowlRatingA + 5) pitchImpactA = -8;
-  } else if (r.pitch === 'dry') {
+  } else if (normPitch === 'dry') {
     if (TEAMS[r.aKey].spinnerQuality > TEAMS[r.bKey].spinnerQuality + 5) pitchImpactA = 10;
     else if (TEAMS[r.bKey].spinnerQuality > TEAMS[r.aKey].spinnerQuality + 5) pitchImpactA = -10;
   }
-  probA += pitchImpactA;
-  probB -= pitchImpactA;
 
-  // 3. Venue Chase Bias & Toss Decision Quality
+  // 3. Venue Chase Bias & Toss Decision Quality Adjustment
   const venueBias = {
     'Wankhede': { chasing: 0.58, defending: 0.42 },
     'Eden Gardens': { chasing: 0.52, defending: 0.48 },
@@ -558,7 +570,7 @@ function displayResults(r) {
   };
   let venueName = 'default';
   Object.keys(venueBias).forEach(k => {
-    if (r.venue.name.includes(k) || r.venue.city.includes(k)) venueName = k;
+    if (r.venue.name.includes(k) || (r.venue.city && r.venue.city.includes(k))) venueName = k;
   });
 
   let venueChaseBiasA = 0;
@@ -566,7 +578,7 @@ function displayResults(r) {
   let tossDecisionStr = "Neutral";
 
   if (r.mode === 'post_toss') {
-    const isTeamAChasing = (r.tossWinner === r.aKey && r.tossDecision === 'bowl') || (r.tossWinner === r.bKey && r.tossDecision === 'bat');
+    const isTeamAChasing = (r.tossWinner === r.aKey && (r.tossDecision === 'bowl' || r.tossDecision === 'field')) || (r.tossWinner === r.bKey && r.tossDecision === 'bat');
     const chaseProb = venueBias[venueName].chasing; 
     const biasShift = (chaseProb - 0.50) * 100;
     venueChaseBiasA = isTeamAChasing ? biasShift : -biasShift;
@@ -575,35 +587,36 @@ function displayResults(r) {
     const isDewProne = dewProneVenues.includes(venueName);
     
     if (isDewProne && r.tossDecision === 'bat') {
-      tossDecisionStr = "Questionable ⚠️";
+      tossDecisionStr = "Questionable";
       if (r.tossWinner === r.aKey) tossDecisionQualityA = -4;
       else tossDecisionQualityA = 4;
-    } else if (chaseProb > 0.50 && r.tossDecision === 'bowl') {
-      tossDecisionStr = "Smart ✅";
+    } else if (chaseProb > 0.50 && (r.tossDecision === 'bowl' || r.tossDecision === 'field')) {
+      tossDecisionStr = "Smart";
       if (r.tossWinner === r.aKey) tossDecisionQualityA = 4;
       else tossDecisionQualityA = -4;
     }
-    
-    probA += venueChaseBiasA;
-    probA += tossDecisionQualityA;
-    probB -= venueChaseBiasA;
-    probB -= tossDecisionQualityA;
   }
 
-  // Clamp probabilities
-  r.totalA = Math.max(1, Math.min(99, probA));
-  r.totalB = 100 - r.totalA;
+  // Fix 6: Do not modify headline probabilities (r.totalA / r.totalB).
+  // The headline gauge and percentages must equal the API probabilities exactly (model output).
+  const netAdjustmentA = dewImpactValA + squadImpactValA + pitchImpactA + venueChaseBiasA + tossDecisionQualityA;
+  const isAdjustmentActive = (dewImpactValA !== 0 || squadImpactValA !== 0 || pitchImpactA !== 0 || venueChaseBiasA !== 0 || tossDecisionQualityA !== 0);
+  let adjProbA = r.totalA;
+  let adjProbB = r.totalB;
+  if (isAdjustmentActive) {
+    adjProbA = Math.max(1, Math.min(99, r.totalA + netAdjustmentA));
+    adjProbB = 100 - adjProbA;
+  }
 
   const tA = TEAMS[r.aKey], tB = TEAMS[r.bKey];
-  const winner = TEAMS[r.winner];
-  const loser  = r.winner === r.aKey ? tB : tA;
+  const winner = r.totalA >= r.totalB ? tA : tB;
+  const loser  = r.totalA >= r.totalB ? tB : tA;
 
   // Winner Panel
   document.getElementById('winnerName').textContent = winner.name;
   document.getElementById('winnerName').style.color = winner.primaryColor;
   const winnerPanel = document.getElementById('winnerPanel');
   if (winnerPanel) {
-    winnerPanel.style.setProperty('--winner-gradient', winner.primaryColor);
     winnerPanel.style.borderColor = winner.primaryColor + '44';
   }
   const diff = Math.abs(r.totalA - r.totalB);
@@ -616,68 +629,88 @@ function displayResults(r) {
     confEl.style.background = confEl.style.color + '15';
   }
 
-  // Model Badge (dynamic insertion)
+  // Model Badge & Toss Mode Badge (Fix 3b)
+  let badgeContainer = document.getElementById('predictionBadgesContainer');
+  if (!badgeContainer) {
+    badgeContainer = document.createElement('div');
+    badgeContainer.id = 'predictionBadgesContainer';
+    badgeContainer.style.cssText = "margin-top:12px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; align-items:center;";
+    if (winnerPanel) {
+      winnerPanel.appendChild(badgeContainer);
+    }
+  }
+
   let modelBadge = document.getElementById('predictionModelBadge');
   if (!modelBadge) {
     modelBadge = document.createElement('div');
     modelBadge.id = 'predictionModelBadge';
-    modelBadge.style.cssText = "margin-top:12px;font-size:0.85rem;color:#a5b4fc;font-weight:600;font-family:'Orbitron', sans-serif;background:rgba(129,140,248,0.1);padding:4px 12px;border-radius:20px;display:inline-block;";
-    if (winnerPanel) {
-      winnerPanel.appendChild(modelBadge);
-    }
+    modelBadge.style.cssText = "font-size:0.85rem;color:#a5b4fc;font-weight:600;font-family:'Orbitron', sans-serif;background:rgba(129,140,248,0.1);padding:4px 12px;border-radius:20px;display:inline-block;";
+    badgeContainer.appendChild(modelBadge);
   }
-  modelBadge.innerHTML = `Powered by ${r.prediction_model || 'Unknown Model'}`;
+  modelBadge.textContent = `Powered by ${r.prediction_model || 'Unknown Model'}`;
 
-  // Probability
-  document.getElementById('probPctA').textContent  = r.totalA.toFixed(1) + '%';
+  let tossModeBadge = document.getElementById('predictionTossModeBadge');
+  if (!tossModeBadge) {
+    tossModeBadge = document.createElement('div');
+    tossModeBadge.id = 'predictionTossModeBadge';
+    tossModeBadge.style.cssText = "font-size:0.85rem;color:#38bdf8;font-weight:600;font-family:'Orbitron', sans-serif;background:rgba(56,189,248,0.1);padding:4px 12px;border-radius:20px;display:inline-block;";
+    badgeContainer.appendChild(tossModeBadge);
+  }
+  tossModeBadge.textContent = r.mode === 'post_toss' ? 'POST-TOSS PREDICTION' : 'PRE-TOSS PREDICTION';
+
+  // Probability displays (Model headline probabilities)
+  document.getElementById('probPctA').textContent = r.totalA.toFixed(1) + '%';
+  document.getElementById('probPctB').textContent = r.totalB.toFixed(1) + '%';
   const btn = document.getElementById('predictBtn');
-  if (btn) { btn.classList.remove('loading'); btn.innerHTML = 'Predict Now'; }
+  if (btn) { btn.classList.remove('loading'); btn.innerHTML = 'Predict Match Winner'; }
 
-  const pA = Math.round(r.totalA);
-  const pB = Math.round(r.totalB);
-  
-  // Scoreboard Flip Animation class toggle
   const pctAEl = document.getElementById('probPctA');
   const pctBEl = document.getElementById('probPctB');
   pctAEl.classList.remove('flip-animate');
   pctBEl.classList.remove('flip-animate');
-  
-  // Trigger reflow
   void pctAEl.offsetWidth;
-  
   pctAEl.classList.add('flip-animate');
   pctBEl.classList.add('flip-animate');
 
-  pctAEl.textContent = pA + '%';
-  pctBEl.textContent = pB + '%';
+  pctAEl.textContent = r.totalA.toFixed(1) + '%';
+  pctBEl.textContent = r.totalB.toFixed(1) + '%';
 
   document.getElementById('probShortA').textContent = tA.shortName;
   document.getElementById('probShortB').textContent = tB.shortName;
-  // Ensure legibility by making text bright and using team color as glow
   document.getElementById('probPctA').style.color = 'var(--floodlight)';
   document.getElementById('probPctA').style.textShadow = `0 0 10px ${tA.primaryColor}, 0 0 20px ${tA.primaryColor}`;
   document.getElementById('probPctB').style.color = 'var(--floodlight)';
   document.getElementById('probPctB').style.textShadow = `0 0 10px ${tB.primaryColor}, 0 0 20px ${tB.primaryColor}`;
   
-  // Apply Jersey Glow
   document.getElementById('badgeA').style.boxShadow = `0 0 30px ${tA.primaryColor}88`;
   document.getElementById('badgeB').style.boxShadow = `0 0 30px ${tB.primaryColor}88`;
 
+  // Fix 6: Show rule-based adjusted view as a separate line under gauge if active
+  const ruleView = document.getElementById('ruleAdjustedView');
+  if (ruleView) {
+    if (isAdjustmentActive) {
+      ruleView.textContent = `Rule-based adjusted view: ${adjProbA.toFixed(1)}% / ${adjProbB.toFixed(1)}% (dew, pitch, squad and venue rules, not learned by the model)`;
+      ruleView.style.display = 'block';
+    } else {
+      ruleView.style.display = 'none';
+      ruleView.textContent = '';
+    }
+  }
 
   setTimeout(() => {
-    if(typeof predictionChart !== 'undefined' && predictionChart) {
+    if (typeof predictionChart !== 'undefined' && predictionChart) {
       predictionChart.data.datasets[0].data = [r.totalA, r.totalB];
       predictionChart.data.datasets[0].backgroundColor = [tA.primaryColor, tB.primaryColor];
       predictionChart.update();
     }
     const gt = document.getElementById('gaugeText');
-    if(gt) gt.textContent = pA > pB ? tA.shortName + ' Favored' : (pB > pA ? tB.shortName + ' Favored' : 'Even Match');
+    if (gt) gt.textContent = r.totalA > r.totalB ? tA.shortName + ' Favored' : (r.totalB > r.totalA ? tB.shortName + ' Favored' : 'Even Match');
     
     // Prediction Confidence Badge
     const winProbValue = Math.max(r.totalA, r.totalB);
     const confScore = Math.round(Math.abs(winProbValue - 50) * 2);
     const confBadge = document.getElementById('confBadge');
-    if(confBadge) {
+    if (confBadge) {
       if (winProbValue > 70 || winProbValue < 30) {
         confBadge.innerHTML = `HIGH CONFIDENCE — ${confScore}/100`;
       } else if (winProbValue >= 55) {
@@ -691,52 +724,132 @@ function displayResults(r) {
     }
   }, 80);
 
-  // Factor Cards - 6 XGBoost Features
-  const f = r.features;
+  // Fix 5a: Match Factor Indicators with honest scaling
+  const f = r.features || {};
 
-  // Normalize each diff value to a 0-100 scale for display
-  function normDiff(val, scale) {
-    return Math.max(5, Math.min(95, 50 + (val / scale) * 50));
+  const FEATURE_STD = {
+    elo_diff: 82.6,
+    recent_win_rate_diff: 0.246,
+    venue_win_rate_diff: 0.407,
+    batting_strength_diff: 10.63,
+    bowling_strength_diff: 12.80,
+    recent_bat_run_rate_diff: 0.966,
+    recent_bowl_wkts_diff: 1.26,
+    recent_runs_scored_avg_diff: 18.97,
+    recent_runs_conceded_avg_diff: 19.11,
+    season_win_rate_diff: 0.346,
+    toss_impact: 0.102
+  };
+
+  function getShare(diff, featureKey) {
+    const std = FEATURE_STD[featureKey];
+    if (!std) return { a: 50, b: 50 };
+    const shareA = 100 / (1 + Math.exp(-0.4 * diff / std));
+    const shareB = 100 - shareA;
+    return { a: shareA, b: shareB };
   }
 
-  // Update section title to clarify these are heuristics, not model weights
+  // Relabel the section "Relative advantage (not win probability)"
+  const factorTitle = document.getElementById('factorSectionTitle');
+  if (factorTitle) {
+    factorTitle.textContent = 'Relative advantage (not win probability)';
+  }
   document.querySelectorAll('.section-title').forEach(el => {
-    if(el.textContent.includes('FACTOR BREAKDOWN')) {
-      el.textContent = 'MATCH FACTOR INDICATORS (Heuristic Diagnostics)';
+    if (el.textContent.includes('FACTOR BREAKDOWN') || el.textContent.includes('MATCH FACTOR INDICATORS') || el.textContent.includes('Relative advantage')) {
+      el.textContent = 'Relative advantage (not win probability)';
     }
   });
 
-  const eloA = normDiff(f.elo_diff || 0, 400), eloB = 100 - eloA;
-  const recentWinA = normDiff(f.recent_win_rate_diff || 0, 1.0), recentWinB = 100 - recentWinA;
-  const venueWinA = normDiff(f.venue_win_rate_diff || 0, 1.0), venueWinB = 100 - venueWinA;
-  const batA = normDiff(f.batting_strength_diff || 0, 15), batB = 100 - batA;
-  const bowlA = normDiff(f.bowling_strength_diff || 0, 60), bowlB = 100 - bowlA;
-  const runRateA = normDiff(f.recent_bat_run_rate_diff || 0, 2.0), runRateB = 100 - runRateA;
-  
   const factors = [
-    { name: 'Elo Rating Diff', weight: 'STAT', f: {a: eloA, b: eloB}, note: `Elo diff: ${(f.elo_diff||0).toFixed(0)} pts. Tracks long-run team quality.` },
-    { name: 'Recent Win Rate', weight: 'STAT', f: {a: recentWinA, b: recentWinB}, note: `Diff: ${((f.recent_win_rate_diff||0)*100).toFixed(0)}%. Win rate in recent matches.` },
-    { name: 'Venue Win Rate', weight: 'STAT', f: {a: venueWinA, b: venueWinB}, note: `Diff: ${((f.venue_win_rate_diff||0)*100).toFixed(0)}%. Historical win rate at this venue.` },
-    { name: 'Batting Strength', weight: 'STAT', f: {a: batA, b: batB}, note: `Diff: ${(f.batting_strength_diff||0).toFixed(1)}. Composite of phase-wise batting stats.` },
-    { name: 'Bowling Strength', weight: 'STAT', f: {a: bowlA, b: bowlB}, note: `Diff: ${(f.bowling_strength_diff||0).toFixed(1)}. Composite of phase-wise bowling stats.` },
-    { name: 'Recent Run Rate', weight: 'STAT', f: {a: runRateA, b: runRateB}, note: `Diff: ${(f.recent_bat_run_rate_diff||0).toFixed(2)}. Run rate in recent matches.` },
-    { name: 'Pitch Type <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">Auto</span>', weight: 'COND', f: {
-        a: pitchImpactA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (pitchImpactA / 15) * 50)),
-        b: pitchImpactA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (-pitchImpactA / 15) * 50))
-      }, note: `Pitch condition calculated from historical averages.` 
+    {
+      name: 'Elo Rating Diff',
+      weight: 'STAT',
+      f: getShare(f.elo_diff || 0, 'elo_diff'),
+      note: `Elo diff: ${(f.elo_diff||0) > 0 ? '+' : ''}${(f.elo_diff||0).toFixed(0)} pts. Tracks long-run team quality.`
     },
-    { name: 'Dew Factor <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">Auto</span>', weight: 'COND', f: {
-        a: dewImpactValA === 0 ? 50 : Math.max(5, Math.min(95, 50 + (dewImpactValA / 14) * 50)),
-        b: dewImpactValB === 0 ? 50 : Math.max(5, Math.min(95, 50 + (dewImpactValB / 14) * 50))
-      }, note: dewImpactNote 
+    {
+      name: 'Recent Win Rate',
+      weight: 'STAT',
+      f: getShare(f.recent_win_rate_diff || 0, 'recent_win_rate_diff'),
+      note: `Diff: ${((f.recent_win_rate_diff||0)*100) > 0 ? '+' : ''}${((f.recent_win_rate_diff||0)*100).toFixed(1)}%. Win rate in recent matches.`
+    },
+    {
+      name: 'Venue Win Rate',
+      weight: 'STAT',
+      f: getShare(f.venue_win_rate_diff || 0, 'venue_win_rate_diff'),
+      note: `Diff: ${((f.venue_win_rate_diff||0)*100) > 0 ? '+' : ''}${((f.venue_win_rate_diff||0)*100).toFixed(1)}%. Historical win rate at this venue.`
+    },
+    {
+      name: 'Batting Strength',
+      weight: 'STAT',
+      f: getShare(f.batting_strength_diff || 0, 'batting_strength_diff'),
+      note: `Diff: ${(f.batting_strength_diff||0) > 0 ? '+' : ''}${(f.batting_strength_diff||0).toFixed(1)}. Composite of phase-wise batting stats.`
+    },
+    {
+      name: 'Bowling Strength',
+      weight: 'STAT',
+      f: getShare(f.bowling_strength_diff || 0, 'bowling_strength_diff'),
+      note: `Diff: ${(f.bowling_strength_diff||0) > 0 ? '+' : ''}${(f.bowling_strength_diff||0).toFixed(1)}. Composite of phase-wise bowling stats.`
+    },
+    {
+      name: 'Recent Run Rate',
+      weight: 'STAT',
+      f: getShare(f.recent_bat_run_rate_diff || 0, 'recent_bat_run_rate_diff'),
+      note: `Diff: ${(f.recent_bat_run_rate_diff||0) > 0 ? '+' : ''}${(f.recent_bat_run_rate_diff||0).toFixed(2)} rpo. Run rate in recent matches.`
+    },
+    {
+      name: 'Recent Bowling Wickets',
+      weight: 'STAT',
+      f: getShare(f.recent_bowl_wkts_diff || 0, 'recent_bowl_wkts_diff'),
+      note: `Diff: ${(f.recent_bowl_wkts_diff||0) > 0 ? '+' : ''}${(f.recent_bowl_wkts_diff||0).toFixed(2)} wkts. Average wickets in recent matches.`
+    },
+    {
+      name: 'Recent Runs Scored Avg',
+      weight: 'STAT',
+      f: getShare(f.recent_runs_scored_avg_diff || 0, 'recent_runs_scored_avg_diff'),
+      note: `Diff: ${(f.recent_runs_scored_avg_diff||0) > 0 ? '+' : ''}${(f.recent_runs_scored_avg_diff||0).toFixed(1)} runs. Average runs scored in recent matches.`
+    },
+    {
+      name: 'Recent Runs Conceded Avg',
+      weight: 'STAT',
+      f: getShare(f.recent_runs_conceded_avg_diff || 0, 'recent_runs_conceded_avg_diff'),
+      note: `Diff: ${(f.recent_runs_conceded_avg_diff||0) > 0 ? '+' : ''}${(f.recent_runs_conceded_avg_diff||0).toFixed(1)} runs. Conceding fewer runs favors team quality.`
+    },
+    {
+      name: 'Season Win Rate',
+      weight: 'STAT',
+      f: getShare(f.season_win_rate_diff || 0, 'season_win_rate_diff'),
+      note: `Diff: ${((f.season_win_rate_diff||0)*100) > 0 ? '+' : ''}${((f.season_win_rate_diff||0)*100).toFixed(1)}%. Current season performance.`
     }
   ];
+
+  // Fix 3c: Also add two cards in Match Factor Indicators, post-toss only: "Toss Impact (model input)" and "Toss Winner / Decision"
+  if (r.mode === 'post_toss') {
+    const twTeam = (r.tossWinner && TEAMS[r.tossWinner]) ? TEAMS[r.tossWinner] : { shortName: r.tossWinner || 'Toss Winner' };
+    const decText = (r.tossDecision === 'bowl' || r.tossDecision === 'field') ? 'field' : 'bat';
+    const isWinnerA = r.tossWinner === r.aKey;
+
+    factors.push({
+      name: 'Toss Impact (model input)',
+      weight: 'MODEL',
+      f: getShare(f.toss_impact || 0, 'toss_impact'),
+      note: `Model input toss_impact: ${(f.toss_impact||0) > 0 ? '+' : ''}${(f.toss_impact||0).toFixed(4)}. Impact on advantage.`
+    });
+
+    factors.push({
+      name: 'Toss Winner / Decision',
+      weight: 'TOSS',
+      f: { a: isWinnerA ? 100 : 0, b: isWinnerA ? 0 : 100 },
+      note: `${twTeam.shortName} won the toss and chose to ${decText}.`
+    });
+  }
 
   const grid = document.getElementById('factorGrid');
   if (grid) {
     grid.innerHTML = factors.map(fac => {
       const pA = fac.f.a.toFixed(1), pB = fac.f.b.toFixed(1);
-      const barA = ((fac.f.a / (fac.f.a + fac.f.b)) * 100).toFixed(1);
+      const sum = fac.f.a + fac.f.b;
+      const barA = sum > 0 ? ((fac.f.a / sum) * 100).toFixed(1) : '50.0';
       const barB = (100 - +barA).toFixed(1);
       return `<div class="fc">
         <div class="fc-head">
@@ -756,55 +869,192 @@ function displayResults(r) {
     }).join('');
   }
 
-  // WHY Explainer Panel
+  // Fix 5b & Fix 3c: WHY Explainer Panel
   const whyTeamA = document.getElementById('whyTeamA');
-  if(whyTeamA) {
+  if (whyTeamA) {
     whyTeamA.textContent = tA.shortName;
     document.getElementById('whyTeamB').textContent = tB.shortName;
     
-    function formatImpact(val) {
-      if (val > 0) return `<span class="impact-val impact-pos">+${val.toFixed(1)}%</span><span class="impact-val impact-neg">−${val.toFixed(1)}%</span>`;
-      if (val < 0) return `<span class="impact-val impact-neg">−${Math.abs(val).toFixed(1)}%</span><span class="impact-val impact-pos">+${Math.abs(val).toFixed(1)}%</span>`;
-      return `<span class="impact-val impact-neu">Even</span><span class="impact-val impact-neu">Even</span>`;
-    }
-    
-    // Scale features down to look like percentage impacts roughly
     const whyFactors = [
-      { name: 'Elo Rating', diff: (f.elo_diff || 0) / 15 },
-      { name: 'Recent Win Rate', diff: (f.recent_win_rate_diff || 0) * 15 },
-      { name: 'Venue Win Rate', diff: (f.venue_win_rate_diff || 0) * 10 },
-      { name: 'Pitch Type <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">⚡ Auto</span>', diff: pitchImpactA },
-      { name: 'Squad Strength', diff: squadImpactValA },
-      { name: 'Dew Factor <span style="font-size:0.65rem; color:#f97316; margin-left:4px; background:rgba(249,115,22,0.1); padding:2px 4px; border-radius:4px;">⚡ Auto</span>', diff: dewImpactValA }
+      {
+        key: 'elo_diff',
+        name: 'Elo',
+        diff: f.elo_diff || 0,
+        formatVal: (d) => `${Math.round(Math.abs(d))} pts`
+      },
+      {
+        key: 'recent_win_rate_diff',
+        name: 'Recent Win Rate',
+        diff: f.recent_win_rate_diff || 0,
+        formatVal: (d) => `${(Math.abs(d) * 100).toFixed(1)}%`
+      },
+      {
+        key: 'venue_win_rate_diff',
+        name: 'Venue Win Rate',
+        diff: f.venue_win_rate_diff || 0,
+        formatVal: (d) => `${(Math.abs(d) * 100).toFixed(1)}%`
+      },
+      {
+        key: 'batting_strength_diff',
+        name: 'Batting Strength',
+        diff: f.batting_strength_diff || 0,
+        formatVal: (d) => `${Math.abs(d).toFixed(1)}`
+      },
+      {
+        key: 'bowling_strength_diff',
+        name: 'Bowling Strength',
+        diff: f.bowling_strength_diff || 0,
+        formatVal: (d) => `${Math.abs(d).toFixed(1)}`
+      },
+      {
+        key: 'recent_bat_run_rate_diff',
+        name: 'Recent Bat Run Rate',
+        diff: f.recent_bat_run_rate_diff || 0,
+        formatVal: (d) => `${Math.abs(d).toFixed(2)} rpo`
+      },
+      {
+        key: 'recent_bowl_wkts_diff',
+        name: 'Recent Bowling Wickets',
+        diff: f.recent_bowl_wkts_diff || 0,
+        formatVal: (d) => `${Math.abs(d).toFixed(2)} wkts`
+      },
+      {
+        key: 'recent_runs_scored_avg_diff',
+        name: 'Recent Runs Scored Avg',
+        diff: f.recent_runs_scored_avg_diff || 0,
+        formatVal: (d) => `${Math.abs(d).toFixed(1)} runs`
+      },
+      {
+        key: 'recent_runs_conceded_avg_diff',
+        name: 'Recent Runs Conceded Avg',
+        diff: f.recent_runs_conceded_avg_diff || 0,
+        formatVal: (d) => `${Math.abs(d).toFixed(1)} runs`
+      },
+      {
+        key: 'season_win_rate_diff',
+        name: 'Season Win Rate',
+        diff: f.season_win_rate_diff || 0,
+        formatVal: (d) => `${(Math.abs(d) * 100).toFixed(1)}%`
+      }
     ];
-    
-    if (r.mode === 'post_toss') {
-      whyFactors.push({ name: 'Venue Chase Bias', diff: venueChaseBiasA });
-      whyFactors.push({ name: `Toss Decision Quality (${tossDecisionStr})`, diff: tossDecisionQualityA });
-    }
-    
-    let strongest = whyFactors[0];
+
     let whyHtml = '';
-    
+
     whyFactors.forEach((fac, idx) => {
-      if (Math.abs(fac.diff) > Math.abs(strongest.diff)) strongest = fac;
-      
-      // Fix 1: Hide "Even" or negligible rows (diff < 0.5%), but always show Elo Rating as baseline
-      if (fac.name !== 'Elo Rating' && Math.abs(fac.diff) < 0.5) return;
-      
+      const valStr = fac.formatVal(fac.diff);
+      let summaryText = '';
+      let cellA = '<span class="impact-val impact-neu">Even</span>';
+      let cellB = '<span class="impact-val impact-neu">Even</span>';
+
+      if (fac.diff > 0.0001) {
+        summaryText = `${fac.name}: ${tA.shortName} +${valStr}`;
+        cellA = `<span class="impact-val impact-pos">+${valStr}</span>`;
+        cellB = `<span class="impact-val impact-neg">−${valStr}</span>`;
+      } else if (fac.diff < -0.0001) {
+        summaryText = `${fac.name}: ${tB.shortName} +${valStr}`;
+        cellA = `<span class="impact-val impact-neg">−${valStr}</span>`;
+        cellB = `<span class="impact-val impact-pos">+${valStr}</span>`;
+      } else {
+        summaryText = `${fac.name}: Even`;
+      }
+
       whyHtml += `<div class="why-row" id="whyRow${idx}">
-        <div>${fac.name}</div>
-        ${formatImpact(fac.diff)}
+        <div>${summaryText}</div>
+        ${cellA}
+        ${cellB}
       </div>`;
     });
-    
+
+    // Fix 3c: In post-toss mode, ALWAYS show these rows in the WHY table (even when near zero, do not hide them):
+    // "Toss: <team> won, chose to <bat/field>" and "Toss impact (model input)" using feature_values_used.toss_impact from the API.
+    if (r.mode === 'post_toss') {
+      const twTeam = (r.tossWinner && TEAMS[r.tossWinner]) ? TEAMS[r.tossWinner] : { shortName: r.tossWinner || '?' };
+      const decText = (r.tossDecision === 'bowl' || r.tossDecision === 'field') ? 'field' : 'bat';
+      const isWinnerA = r.tossWinner === r.aKey;
+
+      const tossDecisionRow = `<div class="why-row" id="whyRowTossDecision">
+        <div>Toss: ${twTeam.shortName} won, chose to ${decText}</div>
+        ${isWinnerA ? '<span class="impact-val impact-pos">Won (' + decText + ')</span>' : '<span class="impact-val impact-neg">Lost</span>'}
+        ${!isWinnerA ? '<span class="impact-val impact-pos">Won (' + decText + ')</span>' : '<span class="impact-val impact-neg">Lost</span>'}
+      </div>`;
+
+      const tossImpactVal = f.toss_impact || 0;
+      const tossImpactStr = Math.abs(tossImpactVal).toFixed(4);
+      let tossSummary = `Toss impact (model input): Even`;
+      let tossCellA = '<span class="impact-val impact-neu">0.0000</span>';
+      let tossCellB = '<span class="impact-val impact-neu">0.0000</span>';
+
+      if (tossImpactVal > 0.00001) {
+        tossSummary = `Toss impact (model input): ${tA.shortName} +${tossImpactStr}`;
+        tossCellA = `<span class="impact-val impact-pos">+${tossImpactStr}</span>`;
+        tossCellB = `<span class="impact-val impact-neg">−${tossImpactStr}</span>`;
+      } else if (tossImpactVal < -0.00001) {
+        tossSummary = `Toss impact (model input): ${tB.shortName} +${tossImpactStr}`;
+        tossCellA = `<span class="impact-val impact-neg">−${tossImpactStr}</span>`;
+        tossCellB = `<span class="impact-val impact-pos">+${tossImpactStr}</span>`;
+      }
+
+      const tossImpactRow = `<div class="why-row" id="whyRowTossImpact">
+        <div>${tossSummary}</div>
+        ${tossCellA}
+        ${tossCellB}
+      </div>`;
+
+      whyHtml += tossDecisionRow + tossImpactRow;
+    }
+
     document.getElementById('whyRows').innerHTML = whyHtml;
-    document.getElementById('whyStrongest').textContent = `${strongest.name} difference is the strongest predictor in this matchup.`;
-    
-    document.getElementById('chipRain').innerHTML = `🌧️ Rain → ${tB.shortName} +3%`;
-    document.getElementById('chipToss').innerHTML = `🏏 Toss (bat) → ${tA.shortName} +5%`;
-    document.getElementById('chipVenue').innerHTML = `📍 Venue change → Even`;
-    
+
+    // Fix 5b: Replace "X is the strongest predictor" with "Largest gap vs a typical matchup: X", chosen by |diff|/STD
+    let largestGapFactor = whyFactors[0];
+    let maxGapRatio = Math.abs(whyFactors[0].diff) / (FEATURE_STD[whyFactors[0].key] || 1);
+
+    whyFactors.forEach(fac => {
+      const std = FEATURE_STD[fac.key];
+      if (std) {
+        const ratio = Math.abs(fac.diff) / std;
+        if (ratio > maxGapRatio) {
+          maxGapRatio = ratio;
+          largestGapFactor = fac;
+        }
+      }
+    });
+
+    if (r.mode === 'post_toss') {
+      const tossRatio = Math.abs(f.toss_impact || 0) / FEATURE_STD.toss_impact;
+      if (tossRatio > maxGapRatio) {
+        maxGapRatio = tossRatio;
+        largestGapFactor = { name: 'Toss impact' };
+      }
+    }
+
+    document.getElementById('whyStrongest').textContent = `Largest gap vs a typical matchup: ${largestGapFactor.name}`;
+
+    // Fix 5b: Add caption: "Input differences, not model attribution. The neural network’s output is not an additive sum of these."
+    let whyCaption = document.getElementById('whyCaption');
+    if (!whyCaption) {
+      whyCaption = document.createElement('div');
+      whyCaption.id = 'whyCaption';
+      whyCaption.style.cssText = "margin-top: 10px; font-size: 0.8rem; color: var(--text-2); font-style: italic;";
+      whyCaption.textContent = "Input differences, not model attribution. The neural network’s output is not an additive sum of these.";
+      document.getElementById('whyStrongest')?.insertAdjacentElement('afterend', whyCaption);
+    }
+
+    // Fix 4: Real model what-if chips in pre-toss mode, hide in post-toss mode or if failed
+    const whatIfSection = document.getElementById('whatIfSection');
+    const whatIfChips = document.getElementById('whatIfChips');
+    if (whatIfSection && whatIfChips) {
+      if (r.mode === 'pre_toss' && r.whatIfs && r.whatIfs.length === 4) {
+        whatIfChips.innerHTML = r.whatIfs.map(text =>
+          `<span class="tag" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border);">${text}</span>`
+        ).join('');
+        whatIfSection.style.display = 'block';
+      } else {
+        whatIfSection.style.display = 'none';
+        whatIfChips.innerHTML = '';
+      }
+    }
+
     // Hide panel by default on new prediction
     document.getElementById('whyPanel').style.display = 'none';
   }
@@ -1271,15 +1521,25 @@ window.calculateSquadImpact = function(team) {
 let lastWeatherData = null;
 
 async function fetchWeatherForVenue(venue) {
-  const city = VENUE_CITIES[venue] || 'Mumbai';
+  const v = (typeof VENUES !== 'undefined' && VENUES[venue]) ? VENUES[venue] : null;
+  const city = v ? v.city : null;
+  if (!city) {
+    return { unavailable: true, dewProbability: 'None' };
+  }
   try {
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API_KEY}&units=metric`;
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${WEATHER_API_KEY}&units=metric`;
     const res = await fetch(url);
+    if (!res.ok) {
+      return { unavailable: true, dewProbability: 'None' };
+    }
     const data = await res.json();
+    if (!data || !data.main || !data.weather || !data.weather[0]) {
+      return { unavailable: true, dewProbability: 'None' };
+    }
     
     const temp = data.main.temp;
     const humidity = data.main.humidity;
-    const windSpeed = data.wind.speed;
+    const windSpeed = data.wind ? data.wind.speed : 0;
     const weatherMain = data.weather[0].main;
     
     let dewProbability = 'Low';
@@ -1296,63 +1556,130 @@ async function fetchWeatherForVenue(venue) {
     
     const windCondition = windSpeed > 6 ? 'Strong' : windSpeed > 3 ? 'Moderate' : 'Calm';
     
-    return { temp, humidity, windSpeed, dewProbability, rainChance, windCondition, weatherMain };
+    return { unavailable: false, temp, humidity, windSpeed, dewProbability, rainChance, windCondition, weatherMain };
   } catch(e) {
     console.log("Weather API error", e);
-    // fallback
-    return { temp: 30, humidity: 65, windSpeed: 2, dewProbability: 'Low', rainChance: 'Low', windCondition: 'Calm', weatherMain: 'Clear' };
+    return { unavailable: true, dewProbability: 'None' };
   }
 }
 
-function autoPitchFromVenue(venue) {
-  const profile = VENUE_PITCH_PROFILE[venue];
-  if (!profile) return;
-  
+async function autoPitchFromVenue(venue) {
   const pitchCard = document.getElementById('pitch-auto-card');
-  if (pitchCard) {
-    pitchCard.innerHTML = `
-      <div style="font-weight: 700; font-family: 'Orbitron'; margin-bottom: 12px;">🏏 PITCH INTELLIGENCE — ${venue}</div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <div>📊 Avg Score: <strong>${profile.avgScore}</strong></div>
-        <div>🎯 Avg Wickets: <strong>${profile.avgWickets}</strong></div>
+  const v = (typeof VENUES !== 'undefined' && VENUES[venue]) ? VENUES[venue] : { name: venue };
+  
+  let profiles = null;
+  try {
+    profiles = await fetchVenueProfiles();
+  } catch (e) {
+    profiles = null;
+  }
+  
+  if (!profiles || !profiles[venue]) {
+    if (pitchCard) {
+      pitchCard.innerHTML = `
+        <div style="font-weight: 700; font-family: 'Orbitron'; margin-bottom: 12px;">PITCH INTELLIGENCE — ${v.name || venue}</div>
+        <div style="text-align:center; padding: 20px; color:var(--text-2);">Pitch data unavailable</div>
+      `;
+    }
+    window.VENUE_CHASE_BIAS = 50;
+    return;
+  }
+  
+  const profile = profiles[venue];
+  const meta = profiles._meta || {};
+  const leagueAvg = meta.league_recent_avg_first_innings != null ? meta.league_recent_avg_first_innings : 192.0;
+  const quality = profile.data_quality || 'ok';
+  
+  let displayedPitchType = profile.pitch_type || 'Unknown';
+  let qualityWarningHtml = '';
+  
+  const matchesCount = profile.last10?.matches ?? profile.all_time?.matches ?? 0;
+  const lastMatchDate = profile.last_match_date || 'N/A';
+  const avgScore = profile.last10?.avg_first_innings != null ? profile.last10.avg_first_innings : 'N/A';
+  const avgWickets = profile.last10?.avg_first_innings_wkts != null ? profile.last10.avg_first_innings_wkts : 'N/A';
+  const chaseWin = profile.last10?.chase_win_pct != null ? `${profile.last10.chase_win_pct}%` : 'N/A';
+  
+  if (quality === 'none') {
+    if (pitchCard) {
+      pitchCard.innerHTML = `
+        <div style="font-weight: 700; font-family: 'Orbitron'; margin-bottom: 12px;">PITCH INTELLIGENCE — ${v.name || venue}</div>
+        <div style="text-align:center; padding: 20px; color:var(--text-2);">No IPL matches in dataset</div>
+      `;
+    }
+    window.VENUE_CHASE_BIAS = 50;
+    return;
+  } else if (quality === 'stale') {
+    displayedPitchType = 'Unknown';
+    qualityWarningHtml = `
+      <div style="padding: 6px 10px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; color: #ef4444; font-size: 0.75rem; margin-bottom: 10px;">
+        No recent matches here (last: ${lastMatchDate}). Pitch profile not reliable
       </div>
-      <div style="margin-bottom: 12px;">🏃 Chasing Win %: <strong>${profile.chasingWin}%</strong></div>
-      <div style="display: inline-block; padding: 4px 12px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 100px; color: #22c55e; font-size: 0.8rem; font-weight: bold; margin-bottom: 12px;">
-        ${profile.pitchType}
+    `;
+  } else if (quality === 'limited') {
+    qualityWarningHtml = `
+      <div style="padding: 6px 10px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 6px; color: #f59e0b; font-size: 0.75rem; margin-bottom: 10px;">
+        Limited data (${matchesCount} matches)
       </div>
-      <div style="font-size: 0.85rem; color: var(--text-2); margin-bottom: 12px;">${profile.description}</div>
-      <div style="font-size: 0.75rem; color: #f97316;">⚡ Auto-detected from IPL historical data</div>
     `;
   }
   
+  if (pitchCard) {
+    pitchCard.innerHTML = `
+      <div style="font-weight: 700; font-family: 'Orbitron'; margin-bottom: 12px;">PITCH INTELLIGENCE — ${v.name || venue}</div>
+      ${qualityWarningHtml}
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem;">
+        <div>Avg 1st-Innings Score: <strong>${avgScore}</strong></div>
+        <div>Avg 1st-Innings Wickets: <strong>${avgWickets}</strong></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem;">
+        <div>Chase Win % (last 10): <strong>${chaseWin}</strong></div>
+        <div>Matches: <strong>${matchesCount}</strong></div>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-2); margin-bottom: 10px;">Last Match Date: <strong>${lastMatchDate}</strong></div>
+      <div style="display: inline-block; padding: 4px 12px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 100px; color: #22c55e; font-size: 0.8rem; font-weight: bold; margin-bottom: 6px;">
+        ${displayedPitchType}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-2); margin-bottom: 8px;">relative to league recent avg (${leagueAvg})</div>
+      <div style="font-size: 0.75rem; color: #f97316;">Auto-detected from historical match data</div>
+    `;
+  }
+  
+  const chasingWinPct = profile.last10?.chase_win_pct != null ? profile.last10.chase_win_pct : 50;
   if (typeof updateVenueChaseBias === 'function') {
-    updateVenueChaseBias(profile.chasingWin);
+    updateVenueChaseBias(chasingWinPct);
   } else {
-     // If not defined, just create it on window so it doesn't crash, we'll apply it in displayResults
-     window.VENUE_CHASE_BIAS = profile.chasingWin;
+    window.VENUE_CHASE_BIAS = chasingWinPct;
   }
 }
 
 function populateWeatherCard(weather, venue) {
   const card = document.getElementById('auto-weather-card');
   if (!card) return;
-  const city = VENUE_CITIES[venue] || 'Mumbai';
+  const v = (typeof VENUES !== 'undefined' && VENUES[venue]) ? VENUES[venue] : { name: venue, city: '' };
+  
+  if (!weather || weather.unavailable) {
+    card.innerHTML = `
+      <div style="font-weight: 700; font-family: 'Orbitron'; margin-bottom: 12px;">LIVE CONDITIONS — ${v.name}, ${v.city}</div>
+      <div style="text-align: center; padding: 24px 12px; color: var(--text-2); font-size: 0.95rem;">Weather unavailable</div>
+    `;
+    return;
+  }
   
   card.innerHTML = `
-    <div style="font-weight: 700; font-family: 'Orbitron'; margin-bottom: 12px;">🌤️ LIVE CONDITIONS — ${city} (${venue})</div>
+    <div style="font-weight: 700; font-family: 'Orbitron'; margin-bottom: 12px;">LIVE CONDITIONS — ${v.name}, ${v.city}</div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; font-size: 0.9rem;">
-      <div>🌡️ Temp: <strong>${Math.round(weather.temp)}°C</strong></div>
-      <div>💧 Humidity: <strong>${weather.humidity}%</strong></div>
-      <div>💨 Wind: <strong>${weather.windCondition} (${weather.windSpeed} m/s)</strong></div>
-      <div>🌧️ Rain: <strong>${weather.rainChance}</strong></div>
+      <div>Temp: <strong>${Math.round(weather.temp)}°C</strong></div>
+      <div>Humidity: <strong>${weather.humidity}%</strong></div>
+      <div>Wind: <strong>${weather.windCondition} (${weather.windSpeed} m/s)</strong></div>
+      <div>Rain: <strong>${weather.rainChance}</strong></div>
     </div>
     
     <div style="padding: 12px; background: rgba(0, 200, 230, 0.05); border: 1px solid rgba(0, 200, 230, 0.1); border-radius: 8px; margin-bottom: 12px;">
-      🌫️ Dew Expected: <strong style="color: ${weather.dewProbability==='High'?'#ef4444':weather.dewProbability==='Medium'?'#f59e0b':'#22c55e'};">${weather.dewProbability.toUpperCase()}</strong>
+      Dew Expected: <strong style="color: ${weather.dewProbability==='High'?'#ef4444':weather.dewProbability==='Medium'?'#f59e0b':'#22c55e'};">${weather.dewProbability.toUpperCase()}</strong>
       <div style="font-size: 0.75rem; color: var(--text-2); margin-top: 4px;">(Humidity ${weather.humidity}%, Temp ${Math.round(weather.temp)}°C, ${weather.windCondition} wind)</div>
     </div>
     
-    <div style="font-size: 0.75rem; color: #f97316;">⚡ Auto-detected from real-time weather data</div>
+    <div style="font-size: 0.75rem; color: #f97316;">Auto-detected from real-time weather data</div>
   `;
 }
 
@@ -1360,24 +1687,39 @@ function showConditionsSummary(venue, weather) {
   const summary = document.getElementById('conditions-summary');
   if (!summary) return;
   const pitchType = getAutoPitchType(venue);
+  const v = (typeof VENUES !== 'undefined' && VENUES[venue]) ? VENUES[venue] : { name: venue };
+  
+  if (!weather || weather.unavailable) {
+    summary.innerHTML = `
+      <div style="padding: 12px 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 6px;">
+        <div><strong>${v.name || venue}</strong> conditions loaded — Weather unavailable • Dew: <strong>Not expected</strong> • Pitch: <strong>${pitchType}</strong></div>
+        <div style="color: var(--text-2); font-size: 0.75rem;">Pitch auto-configured for prediction</div>
+      </div>
+    `;
+    return;
+  }
+
   summary.innerHTML = `
     <div style="padding: 12px 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 6px;">
-      <div>✅ <strong>${venue}</strong> conditions loaded — 
+      <div><strong>${v.name || venue}</strong> conditions loaded — 
       ${weather.weatherMain} • ${Math.round(weather.temp)}°C • 
       Dew: <strong>${weather.dewProbability}</strong> • 
       Pitch: <strong>${pitchType}</strong></div>
-      <div style="color: var(--text-2); font-size: 0.75rem;">🏏 Pitch & dew auto-configured for prediction</div>
+      <div style="color: var(--text-2); font-size: 0.75rem;">Pitch & dew auto-configured for prediction</div>
     </div>
   `;
 }
 
 function getAutoPitchType(venue) {
-  const profile = VENUE_PITCH_PROFILE[venue];
-  if (!profile) return 'Balanced'; 
-  return profile.pitchType; 
+  if (!venueProfilesData || !venueProfilesData[venue]) return 'Balanced';
+  const profile = venueProfilesData[venue];
+  if (profile.data_quality === 'stale' || profile.data_quality === 'none' || !profile.pitch_type || profile.pitch_type === 'Unknown') {
+    return 'Balanced';
+  }
+  return profile.pitch_type;
 }
 
 function getAutoDew(weatherData) {
-  if (!weatherData) return false;
-  return weatherData.dewProbability === 'High' ? true : false;
+  if (!weatherData || weatherData.unavailable) return false;
+  return weatherData.dewProbability === 'High';
 }

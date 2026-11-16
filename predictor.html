@@ -131,7 +131,7 @@
 <main class="page">
   <div class="container">
     <section class="page-hero" style="padding-bottom:24px">
-      <div class="page-badge">⚡ Predictor</div>
+      <div class="page-badge">Predictor</div>
       <h1 class="page-title">Match <span class="gradient-text">Predictor</span></h1>
       <p class="page-subtitle">Configure the match conditions and let our 8-factor AI engine calculate win probability.</p>
     </section>
@@ -146,9 +146,9 @@
         </select>
         <label class="label" style="margin-top: 12px; font-size: 0.8rem; color: var(--text-2);">Squad Strength</label>
         <select class="select" id="teamASquad" style="margin-bottom: 8px; font-size: 0.85rem; padding: 8px;" onchange="updateSquadInputs('A')">
-          <option value="1.0">Full Strength 💪</option>
-          <option value="0.85">1 Key Player Missing ⚠️</option>
-          <option value="0.70">2+ Players Missing 🚨</option>
+          <option value="1.0">Full Strength</option>
+          <option value="0.85">1 Key Player Missing</option>
+          <option value="0.70">2+ Players Missing</option>
         </select>
         <div id="squadInputsA"></div>
         <div id="squadImpactA" style="font-size:0.75rem; color:var(--text-2); margin-bottom:12px; min-height: 16px;"></div>
@@ -171,9 +171,9 @@
         </select>
         <label class="label" style="margin-top: 12px; font-size: 0.8rem; color: var(--text-2);">Squad Strength</label>
         <select class="select" id="teamBSquad" style="margin-bottom: 8px; font-size: 0.85rem; padding: 8px;" onchange="updateSquadInputs('B')">
-          <option value="1.0">Full Strength 💪</option>
-          <option value="0.85">1 Key Player Missing ⚠️</option>
-          <option value="0.70">2+ Players Missing 🚨</option>
+          <option value="1.0">Full Strength</option>
+          <option value="0.85">1 Key Player Missing</option>
+          <option value="0.70">2+ Players Missing</option>
         </select>
         <div id="squadInputsB"></div>
         <div id="squadImpactB" style="font-size:0.75rem; color:var(--text-2); margin-bottom:12px; min-height: 16px;"></div>
@@ -194,7 +194,7 @@
       <div class="cond-grid">
         <!-- Prediction Mode Switcher -->
         <div class="form-group cond-full" style="border-bottom: 1px solid var(--border); padding-bottom: 16px;">
-          <label class="label">🎯 Prediction Stage</label>
+          <label class="label">Prediction Stage</label>
           <div class="radio-row" id="modeRow">
             <label class="radio-pill active" data-val="pre_toss"><input type="radio" name="pred_mode" value="pre_toss" checked onchange="toggleTossUI()"/><span class="rp-title">Pre-Toss Mode</span><span class="rp-sub">Before toss happens</span></label>
             <label class="radio-pill" data-val="post_toss"><input type="radio" name="pred_mode" value="post_toss" onchange="toggleTossUI()"/><span class="rp-title">Post-Toss Mode</span><span class="rp-sub">Toss completed</span></label>
@@ -203,7 +203,7 @@
 
         <!-- Venue -->
         <div class="form-group cond-full">
-          <label class="label">🏟️ Venue</label>
+          <label class="label">Venue</label>
           <select class="select" id="venue" onchange="updateVenue()">
             <option value="">-- Select Venue --</option>
           </select>
@@ -227,14 +227,14 @@
 
         <!-- Toss (Hidden in Pre-Toss Mode) -->
         <div class="form-group toss-group" style="display: none;">
-          <label class="label">🪙 Toss Winner</label>
+          <label class="label">Toss Winner</label>
           <select class="select" id="tossWinner"><option value="">-- Select --</option></select>
         </div>
         <div class="form-group toss-group" style="display: none;">
-          <label class="label">🏏 Toss Decision</label>
+          <label class="label">Toss Decision</label>
           <div class="radio-row" id="tossRow">
-            <label class="radio-pill active" data-val="bat"><input type="radio" name="toss" value="bat" checked/><span class="rp-icon">🏏</span><span class="rp-title">Bat First</span><span class="rp-sub">Set target</span></label>
-            <label class="radio-pill" data-val="bowl"><input type="radio" name="toss" value="bowl"/><span class="rp-icon">🎳</span><span class="rp-title">Bowl First</span><span class="rp-sub">Chase target</span></label>
+            <label class="radio-pill" data-val="bat"><input type="radio" name="toss" value="bat"/><span class="rp-title">Bat First</span><span class="rp-sub">Set target</span></label>
+            <label class="radio-pill" data-val="bowl"><input type="radio" name="toss" value="bowl"/><span class="rp-title">Bowl First</span><span class="rp-sub">Chase target</span></label>
           </div>
         </div>
 
@@ -244,7 +244,7 @@
 
     <!-- ---- Predict Button ---- -->
     <div style="text-align:center;margin:32px 0">
-      <button class="btn btn-primary btn-lg" id="predictBtn" onclick="runPrediction()" disabled><span class="coin-icon">🪙</span> ⚡ Predict Match Winner</button>
+      <button class="btn btn-primary btn-lg" id="predictBtn" onclick="runPrediction()" disabled>Predict Match Winner</button>
       <p class="label" style="margin-top:10px;text-align:center;margin-bottom:0" id="predictHint">Select both teams to enable prediction</p>
     </div>
 
@@ -252,7 +252,7 @@
     <div id="resultsSection" style="display:none">
       <!-- Winner -->
       <div class="winner-panel" id="winnerPanel">
-        <div class="winner-crown">👑</div>
+        <div class="winner-crown"></div>
         <div class="winner-label">Predicted Winner</div>
         <div class="winner-name gradient-text" id="winnerName">—</div>
         <div class="winner-confidence" id="winnerConf">—</div>
@@ -278,12 +278,13 @@
               <span class="prob-short" id="probShortB">B</span>
             </div>
           </div>
+          <div id="ruleAdjustedView" style="display: none; text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--text-2); padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid var(--border);"></div>
         </div>
       </div>
 
       <!-- WHY Explainer Panel -->
       <div class="card" style="margin-bottom:24px; text-align: center;">
-        <button class="btn btn-outline" id="btnWhy" onclick="toggleWhyPanel()" style="width: 100%; font-family: 'Orbitron', sans-serif;">📊 WHY THIS PREDICTION?</button>
+        <button class="btn btn-outline" id="btnWhy" onclick="toggleWhyPanel()" style="width: 100%; font-family: 'Orbitron', sans-serif;">WHY THIS PREDICTION?</button>
         
         <div id="whyPanel" style="display: none; text-align: left; margin-top: 20px; overflow: hidden;">
           <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px; font-weight: 700; color: var(--text-2); font-size: 0.85rem;">
@@ -297,20 +298,19 @@
           <div id="whyStrongest" style="margin-top: 16px; padding: 12px; background: rgba(0,200,230,0.05); border-left: 3px solid var(--accent); font-size: 0.9rem; color: var(--text-1);">
             <!-- Strongest predictor text -->
           </div>
+          <div id="whyCaption" style="margin-top: 10px; font-size: 0.8rem; color: var(--text-2); font-style: italic;">
+            Input differences, not model attribution. The neural network’s output is not an additive sum of these.
+          </div>
           
-          <div style="margin-top: 24px;">
+          <div style="margin-top: 24px; display: none;" id="whatIfSection">
             <p style="font-size: 0.85rem; font-weight: 700; color: var(--text-2); margin-bottom: 12px; text-transform: uppercase;">What changes this prediction?</p>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <span class="tag" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border);" id="chipRain">🌧️ Rain → </span>
-              <span class="tag" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border);" id="chipToss">🏏 Toss (bat) → </span>
-              <span class="tag" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border);" id="chipVenue">📍 Venue change → Even</span>
-            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;" id="whatIfChips"></div>
           </div>
         </div>
       </div>
 
-      <!-- Factor Breakdown -->
-      <p class="section-title" style="margin-bottom:16px">FACTOR BREAKDOWN</p>
+      <!-- Relative advantage (not win probability) -->
+      <p class="section-title" id="factorSectionTitle" style="margin-bottom:16px">Relative advantage (not win probability)</p>
       <div class="factor-grid" id="factorGrid" style="margin-bottom:28px"></div>
 
       <!-- Informational H2H -->
@@ -319,21 +319,21 @@
       <!-- AI Analysis -->
       <div class="card" style="margin-bottom:28px">
         <div class="card-header">
-          <p class="card-title">🤖 AI Match Analysis</p>
+          <p class="card-title">AI Match Analysis</p>
         </div>
         <div id="analysisBody"></div>
       </div>
 
       <!-- Reset -->
       <div style="text-align:center; margin-bottom: 40px;">
-        <button class="btn btn-outline" onclick="resetPrediction()">🔄 New Prediction</button>
+        <button class="btn btn-outline" onclick="resetPrediction()">New Prediction</button>
       </div>
     </div> <!-- End of resultsSection -->
 
   </div>
 </main>
 
-<footer class="footer"><p>🏏 IPL Predictor | 8-Factor AI Engine</p></footer>
+<footer class="footer"><p>IPL Predictor | 8-Factor AI Engine</p></footer>
 
 <script src="data.js"></script>
 <script src="h2h_data.js"></script>

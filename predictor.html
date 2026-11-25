@@ -278,7 +278,15 @@
               <span class="prob-short" id="probShortB">B</span>
             </div>
           </div>
-          <div id="ruleAdjustedView" style="display: none; text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--text-2); padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid var(--border);"></div>
+          <!-- Rule-adjusted Estimate Section -->
+          <div id="ruleAdjustedView" style="display: none; width: 100%; margin-top: 18px; padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: var(--radius); text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;">
+              <span style="font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--text-2); letter-spacing: 0.05em;">RULE-ADJUSTED ESTIMATE</span>
+              <span id="ruleAdjustedProb" style="font-family: 'Orbitron', sans-serif; font-size: 0.95rem; font-weight: 700; color: var(--text-1);"></span>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-2); margin-bottom: 3px;">Includes pitch, weather, squad and venue adjustments.</div>
+            <div style="font-size: 0.74rem; color: #64748b;">Separate from the neural network's raw prediction.</div>
+          </div>
         </div>
       </div>
 

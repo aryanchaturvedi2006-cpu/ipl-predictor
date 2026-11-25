@@ -456,11 +456,39 @@ async function runPrediction() {
           })
         );
         const scenarioResults = await Promise.all(scenarioPromises);
-        whatIfScenarios = scenarioResults.map((resData, idx) => {
+        const evaluated = scenarioResults.map((resData, idx) => {
           const s = scenarios[idx];
           const prob = (resData.probabilities[s.team.name] || resData.probabilities[s.team.shortName] || 0) * 100;
-          return `If ${s.team.shortName} win toss & ${s.action}: ${s.team.shortName} ${prob.toFixed(1)}%`;
+          return {
+            teamKey: s.team.key,
+            shortName: s.team.shortName,
+            action: s.action,
+            prob: prob,
+            text: `If ${s.team.shortName} win toss & ${s.action}: ${s.team.shortName} ${prob.toFixed(1)}%`
+          };
         });
+
+        // Select only 2–3 meaningful, non-redundant scenario chips:
+        // 1. Team A win toss & field (primary chasing scenario)
+        // 2. Team B win toss & field (primary chasing scenario)
+        // 3. Batting scenario with the largest impact/shift from fielding
+        const selectedChips = [];
+        const aField = evaluated.find(e => e.teamKey === tA.key && e.action === 'field');
+        const bField = evaluated.find(e => e.teamKey === tB.key && e.action === 'field');
+        if (aField) selectedChips.push(aField);
+        if (bField) selectedChips.push(bField);
+
+        const batScenarios = evaluated.filter(e => e.action === 'bat');
+        if (batScenarios.length > 0) {
+          batScenarios.sort((s1, s2) => {
+            const shift1 = Math.abs(s1.prob - (s1.teamKey === tA.key ? (aField?.prob || 50) : (bField?.prob || 50)));
+            const shift2 = Math.abs(s2.prob - (s2.teamKey === tA.key ? (aField?.prob || 50) : (bField?.prob || 50)));
+            return shift2 - shift1;
+          });
+          selectedChips.push(batScenarios[0]);
+        }
+
+        whatIfScenarios = selectedChips.slice(0, 3).map(s => s.text);
       } catch (err) {
         console.warn("What-if scenarios failed", err);
         whatIfScenarios = null;
@@ -685,15 +713,28 @@ function displayResults(r) {
   document.getElementById('badgeA').style.boxShadow = `0 0 30px ${tA.primaryColor}88`;
   document.getElementById('badgeB').style.boxShadow = `0 0 30px ${tB.primaryColor}88`;
 
-  // Fix 6: Show rule-based adjusted view as a separate line under gauge if active
+  // Fix 6 / UI Refinement: Show rule-adjusted estimate cleanly under gauge if active
   const ruleView = document.getElementById('ruleAdjustedView');
+  const ruleProbEl = document.getElementById('ruleAdjustedProb');
   if (ruleView) {
     if (isAdjustmentActive) {
-      ruleView.textContent = `Rule-based adjusted view: ${adjProbA.toFixed(1)}% / ${adjProbB.toFixed(1)}% (dew, pitch, squad and venue rules, not learned by the model)`;
+      const probText = `${adjProbA.toFixed(1)}% / ${adjProbB.toFixed(1)}%`;
+      if (ruleProbEl) {
+        ruleProbEl.textContent = probText;
+      } else {
+        ruleView.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;">
+            <span style="font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--text-2); letter-spacing: 0.05em;">RULE-ADJUSTED ESTIMATE</span>
+            <span style="font-family: 'Orbitron', sans-serif; font-size: 0.95rem; font-weight: 700; color: var(--text-1);">${probText}</span>
+          </div>
+          <div style="font-size: 0.82rem; color: var(--text-2); margin-bottom: 3px;">Includes pitch, weather, squad and venue adjustments.</div>
+          <div style="font-size: 0.74rem; color: #64748b;">Separate from the neural network's raw prediction.</div>
+        `;
+      }
       ruleView.style.display = 'block';
     } else {
       ruleView.style.display = 'none';
-      ruleView.textContent = '';
+      if (ruleProbEl) ruleProbEl.textContent = '';
     }
   }
 
@@ -875,7 +916,7 @@ function displayResults(r) {
     whyTeamA.textContent = tA.shortName;
     document.getElementById('whyTeamB').textContent = tB.shortName;
     
-    const whyFactors = [
+    const candidateFactors = [
       {
         key: 'elo_diff',
         name: 'Elo',
@@ -938,9 +979,34 @@ function displayResults(r) {
       }
     ];
 
-    let whyHtml = '';
+    if (r.mode === 'post_toss') {
+      const tossImpactVal = f.toss_impact || 0;
+      const twTeam = (r.tossWinner && TEAMS[r.tossWinner]) ? TEAMS[r.tossWinner] : { shortName: r.tossWinner || '?' };
+      const decText = (r.tossDecision === 'bowl' || r.tossDecision === 'field') ? 'field' : 'bat';
+      candidateFactors.push({
+        key: 'toss_impact',
+        name: `Toss Advantage (${twTeam.shortName} chose ${decText})`,
+        diff: tossImpactVal,
+        formatVal: (d) => `${Math.abs(d).toFixed(4)}`
+      });
+    }
 
-    whyFactors.forEach((fac, idx) => {
+    // Rank factors dynamically by normalized gap: |diff| / STD[key]
+    candidateFactors.forEach(fac => {
+      const std = FEATURE_STD[fac.key] || 1;
+      fac.gapRatio = Math.abs(fac.diff) / std;
+    });
+
+    candidateFactors.sort((a, b) => b.gapRatio - a.gapRatio);
+
+    // Dynamically select top 2 or 3 most influential factors (maximum 3)
+    let topFactors = candidateFactors.filter(fac => fac.gapRatio > 0.001).slice(0, 3);
+    if (topFactors.length < 2) {
+      topFactors = candidateFactors.slice(0, 2);
+    }
+
+    let whyHtml = '';
+    topFactors.forEach((fac, idx) => {
       const valStr = fac.formatVal(fac.diff);
       let summaryText = '';
       let cellA = '<span class="impact-val impact-neu">Even</span>';
@@ -965,69 +1031,10 @@ function displayResults(r) {
       </div>`;
     });
 
-    // Fix 3c: In post-toss mode, ALWAYS show these rows in the WHY table (even when near zero, do not hide them):
-    // "Toss: <team> won, chose to <bat/field>" and "Toss impact (model input)" using feature_values_used.toss_impact from the API.
-    if (r.mode === 'post_toss') {
-      const twTeam = (r.tossWinner && TEAMS[r.tossWinner]) ? TEAMS[r.tossWinner] : { shortName: r.tossWinner || '?' };
-      const decText = (r.tossDecision === 'bowl' || r.tossDecision === 'field') ? 'field' : 'bat';
-      const isWinnerA = r.tossWinner === r.aKey;
-
-      const tossDecisionRow = `<div class="why-row" id="whyRowTossDecision">
-        <div>Toss: ${twTeam.shortName} won, chose to ${decText}</div>
-        ${isWinnerA ? '<span class="impact-val impact-pos">Won (' + decText + ')</span>' : '<span class="impact-val impact-neg">Lost</span>'}
-        ${!isWinnerA ? '<span class="impact-val impact-pos">Won (' + decText + ')</span>' : '<span class="impact-val impact-neg">Lost</span>'}
-      </div>`;
-
-      const tossImpactVal = f.toss_impact || 0;
-      const tossImpactStr = Math.abs(tossImpactVal).toFixed(4);
-      let tossSummary = `Toss impact (model input): Even`;
-      let tossCellA = '<span class="impact-val impact-neu">0.0000</span>';
-      let tossCellB = '<span class="impact-val impact-neu">0.0000</span>';
-
-      if (tossImpactVal > 0.00001) {
-        tossSummary = `Toss impact (model input): ${tA.shortName} +${tossImpactStr}`;
-        tossCellA = `<span class="impact-val impact-pos">+${tossImpactStr}</span>`;
-        tossCellB = `<span class="impact-val impact-neg">−${tossImpactStr}</span>`;
-      } else if (tossImpactVal < -0.00001) {
-        tossSummary = `Toss impact (model input): ${tB.shortName} +${tossImpactStr}`;
-        tossCellA = `<span class="impact-val impact-neg">−${tossImpactStr}</span>`;
-        tossCellB = `<span class="impact-val impact-pos">+${tossImpactStr}</span>`;
-      }
-
-      const tossImpactRow = `<div class="why-row" id="whyRowTossImpact">
-        <div>${tossSummary}</div>
-        ${tossCellA}
-        ${tossCellB}
-      </div>`;
-
-      whyHtml += tossDecisionRow + tossImpactRow;
-    }
-
     document.getElementById('whyRows').innerHTML = whyHtml;
 
-    // Fix 5b: Replace "X is the strongest predictor" with "Largest gap vs a typical matchup: X", chosen by |diff|/STD
-    let largestGapFactor = whyFactors[0];
-    let maxGapRatio = Math.abs(whyFactors[0].diff) / (FEATURE_STD[whyFactors[0].key] || 1);
-
-    whyFactors.forEach(fac => {
-      const std = FEATURE_STD[fac.key];
-      if (std) {
-        const ratio = Math.abs(fac.diff) / std;
-        if (ratio > maxGapRatio) {
-          maxGapRatio = ratio;
-          largestGapFactor = fac;
-        }
-      }
-    });
-
-    if (r.mode === 'post_toss') {
-      const tossRatio = Math.abs(f.toss_impact || 0) / FEATURE_STD.toss_impact;
-      if (tossRatio > maxGapRatio) {
-        maxGapRatio = tossRatio;
-        largestGapFactor = { name: 'Toss impact' };
-      }
-    }
-
+    // Largest gap vs a typical matchup: chosen by |diff|/STD
+    const largestGapFactor = topFactors[0] || candidateFactors[0];
     document.getElementById('whyStrongest').textContent = `Largest gap vs a typical matchup: ${largestGapFactor.name}`;
 
     // Fix 5b: Add caption: "Input differences, not model attribution. The neural network’s output is not an additive sum of these."
@@ -1036,15 +1043,15 @@ function displayResults(r) {
       whyCaption = document.createElement('div');
       whyCaption.id = 'whyCaption';
       whyCaption.style.cssText = "margin-top: 10px; font-size: 0.8rem; color: var(--text-2); font-style: italic;";
-      whyCaption.textContent = "Input differences, not model attribution. The neural network’s output is not an additive sum of these.";
       document.getElementById('whyStrongest')?.insertAdjacentElement('afterend', whyCaption);
     }
+    whyCaption.textContent = "Input differences, not model attribution. The neural network’s output is not an additive sum of these.";
 
-    // Fix 4: Real model what-if chips in pre-toss mode, hide in post-toss mode or if failed
+    // Fix 4 / UI Refinement: Real model what-if chips in pre-toss mode (2-3 chips), hide in post-toss mode or if failed
     const whatIfSection = document.getElementById('whatIfSection');
     const whatIfChips = document.getElementById('whatIfChips');
     if (whatIfSection && whatIfChips) {
-      if (r.mode === 'pre_toss' && r.whatIfs && r.whatIfs.length === 4) {
+      if (r.mode === 'pre_toss' && r.whatIfs && r.whatIfs.length >= 2) {
         whatIfChips.innerHTML = r.whatIfs.map(text =>
           `<span class="tag" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border);">${text}</span>`
         ).join('');

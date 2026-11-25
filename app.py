@@ -12,6 +12,7 @@ import numpy as np
 import json
 import urllib.request
 import urllib.error
+import math
 
 # Safe lazy loading for ONNX Runtime and TensorFlow / Keras
 try:
@@ -525,7 +526,21 @@ def predict_live():
     raw_over = float(data.get("over", 0))
     current_score = max(0, int(data.get("current_score", 0)))
     raw_wickets = int(data.get("wickets_lost", 0))
-    target = int(data.get("target", -1))
+    raw_target = data.get("target")
+    if raw_target is None or raw_target == "":
+        target = -1
+    elif isinstance(raw_target, (bool, list, dict, set, tuple)):
+        return jsonify({"error": "Invalid target value. Target must be a valid number."}), 400
+    else:
+        try:
+            f_val = float(raw_target)
+            if not math.isfinite(f_val):
+                return jsonify({"error": "Invalid target value. Target must be a finite number."}), 400
+            if not f_val.is_integer():
+                return jsonify({"error": "Invalid target value. Target must be an integer."}), 400
+            target = int(f_val)
+        except (ValueError, TypeError, OverflowError):
+            return jsonify({"error": "Invalid target value. Target must be a valid number."}), 400
     batting_team = str(data.get("batting_team", "Team A"))
     bowling_team = str(data.get("bowling_team", "Team B"))
 
